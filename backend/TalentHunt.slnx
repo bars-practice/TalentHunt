@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="TalentHunt.API/TalentHunt.API.csproj" />
+  <Project Path="TalentHunt.Application/TalentHunt.Application.csproj" />
+  <Project Path="TalentHunt.Infrastructure/TalentHunt.Infrastructure.csproj" />
+</Solution>
