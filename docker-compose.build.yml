@@ -23,6 +23,7 @@ services:
   backend:
     image: alephod/talenthunt-backend:latest
     container_name: backend
+    build: ./backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,14 +39,11 @@ services:
   frontend:
     image: alephod/talenthunt-frontend:latest
     container_name: frontend
+    build: ./frontend
     depends_on:
       - backend
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /data/letsencrypt/config/live/${DOMAIN_NAME}/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
-      - /data/letsencrypt/config/live/${DOMAIN_NAME}/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
+      - "${FRONTEND_PORT:-5173}:5173"
     restart: unless-stopped
     networks:
       - talenthunt-network
