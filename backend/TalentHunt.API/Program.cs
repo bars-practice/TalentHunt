@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
 using TalentHunt.API.Extensions;
 using TalentHunt.Infrastructure;
 using TalentHunt.Infrastructure.Data;
@@ -33,11 +32,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
-}
+await DbInitializer.InitializeAsync(app.Services);
 
 app.UseSwaggerDocumentation();
 
