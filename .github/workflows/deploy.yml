@@ -20,10 +20,24 @@ jobs:
             --password-stdin
 
       - name: Build images
-        run: docker compose build
+        run: docker compose -f docker-compose.build.yml build
+        env:
+          POSTGRES_USER: build_placeholder
+          POSTGRES_PASSWORD: build_placeholder
+          POSTGRES_DB: build_placeholder
 
       - name: Push images
-        run: docker compose push
+        run: docker compose -f docker-compose.build.yml push
+
+      - name: Copy docker-compose to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: 20052
+          source: "docker-compose.yml"
+          target: "/data/TalentHunt"
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -36,5 +50,3 @@ jobs:
             cd /data/TalentHunt
             docker compose pull
             docker compose up -d --remove-orphans
-
-      
