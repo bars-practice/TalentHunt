@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+**/appsettings.Development.json
+frontend/node_modules/
+.DS_Store
+Thumbs.db
