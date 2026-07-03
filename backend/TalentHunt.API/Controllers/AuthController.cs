@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TalentHunt.API.DTO;
 using TalentHunt.Application.Interfaces;
@@ -38,5 +39,16 @@ public class AuthController(IAuthService authService) : ControllerBase
             });
 
         return Ok(new { login = user.Login, role = user.Role.ToString() });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        return Ok(new
+        {
+            login = User.Identity?.Name,
+            role = User.FindFirst(ClaimTypes.Role)?.Value
+        });
     }
 }
