@@ -2,9 +2,11 @@ using TalentHunt.Application.Enums;
 
 namespace TalentHunt.Application.Entities;
 
-public class Vacancy
+public class Vacancy : ISoftDeletable
 {
     public Guid Id { get; set; }
+
+    public bool IsDeleted { get; set; }
 
     public string Title { get; set; } = string.Empty;
 

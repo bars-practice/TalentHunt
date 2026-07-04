@@ -41,7 +41,7 @@ public static class DbInitializer
 
     private static async Task SeedAdminAsync(AppDbContext context, IPasswordHasher passwordHasher)
     {
-        if (await context.Users.AnyAsync(u => u.Role == Role.Admin))
+        if (await context.Users.IgnoreQueryFilters().AnyAsync(u => u.Role == Role.Admin))
             return;
 
         var admin = new User

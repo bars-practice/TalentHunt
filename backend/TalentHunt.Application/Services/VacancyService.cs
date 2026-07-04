@@ -8,9 +8,11 @@ public class VacancyService(
     IVacancyRepository vacancyRepository,
     ICompetencyRepository competencyRepository) : IVacancyService
 {
-    public async Task<IEnumerable<VacancyResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<VacancyResponse>> GetAllAsync(
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
     {
-        var vacancies = await vacancyRepository.GetAllWithCompetenciesAsync(cancellationToken);
+        var vacancies = await vacancyRepository.GetAllWithCompetenciesAsync(includeDeleted, cancellationToken);
         return vacancies.Select(ToResponse);
     }
 
@@ -40,17 +42,21 @@ public class VacancyService(
 
         await vacancyRepository.SaveAsync(cancellationToken);
 
-        var created = await vacancyRepository.GetByIdWithCompetenciesAsync(vacancy.Id, cancellationToken);
+        var created = await vacancyRepository.GetByIdWithCompetenciesAsync(vacancy.Id, cancellationToken: cancellationToken);
         return ToResponse(created!);
     }
 
     public async Task<VacancyResponse> UpdateAsync(
         Guid id,
         UpdateVacancyRequest request,
+        bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, cancellationToken)
+        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Вакансия не найдена.");
+
+        if (vacancy.IsDeleted)
+            throw new InvalidOperationException("Нельзя изменить удалённую вакансию.");
 
         if (!string.IsNullOrWhiteSpace(request.Title))
             vacancy.Title = NormalizeRequired(request.Title, "Title");
@@ -75,14 +81,20 @@ public class VacancyService(
 
         await vacancyRepository.SaveAsync(cancellationToken);
 
-        var updated = await vacancyRepository.GetByIdWithCompetenciesAsync(id, cancellationToken);
+        var updated = await vacancyRepository.GetByIdWithCompetenciesAsync(id, includeDeleted, cancellationToken);
         return ToResponse(updated!);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(
+        Guid id,
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
     {
-        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, cancellationToken)
+        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Вакансия не найдена.");
+
+        if (vacancy.IsDeleted)
+            return;
 
         await vacancyRepository.DeleteAsync(vacancy);
         await vacancyRepository.SaveAsync(cancellationToken);
@@ -117,8 +129,14 @@ public class VacancyService(
         vacancy.BusinessUnit,
         vacancy.Description,
         vacancy.VacancyCompetencies
-            .Select(vc => new CompetencyResponse(vc.Competency.Id, vc.Competency.Name, vc.Competency.Description))
+            .Where(vc => vc.Competency is not null)
+            .Select(vc => new CompetencyResponse(
+                vc.Competency.Id,
+                vc.Competency.Name,
+                vc.Competency.Description,
+                vc.Competency.IsDeleted))
             .OrderBy(c => c.Name)
-            .ToList()
+            .ToList(),
+        vacancy.IsDeleted
     );
 }

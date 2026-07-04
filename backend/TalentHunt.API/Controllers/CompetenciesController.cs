@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
 using TalentHunt.Application.Interfaces;
 
@@ -13,7 +14,7 @@ public class CompetenciesController(ICompetencyService competencyService) : Cont
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var competencies = await competencyService.GetAllAsync(cancellationToken);
+        var competencies = await competencyService.GetAllAsync(User.IsAdmin(), cancellationToken);
         return Ok(competencies);
     }
 
@@ -41,7 +42,7 @@ public class CompetenciesController(ICompetencyService competencyService) : Cont
     {
         try
         {
-            var competency = await competencyService.UpdateAsync(id, request, cancellationToken);
+            var competency = await competencyService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
             return Ok(competency);
         }
         catch (KeyNotFoundException)
@@ -59,7 +60,7 @@ public class CompetenciesController(ICompetencyService competencyService) : Cont
     {
         try
         {
-            await competencyService.DeleteAsync(id, cancellationToken);
+            await competencyService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
             return NoContent();
         }
         catch (KeyNotFoundException)

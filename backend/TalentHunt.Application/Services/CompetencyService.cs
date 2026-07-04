@@ -6,9 +6,11 @@ namespace TalentHunt.Application.Services;
 
 public class CompetencyService(ICompetencyRepository competencyRepository) : ICompetencyService
 {
-    public async Task<IEnumerable<CompetencyResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CompetencyResponse>> GetAllAsync(
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
     {
-        var competencies = await competencyRepository.GetAllAsync(cancellationToken);
+        var competencies = await competencyRepository.GetAllAsync(includeDeleted, cancellationToken);
         return competencies.Select(ToResponse);
     }
 
@@ -37,10 +39,14 @@ public class CompetencyService(ICompetencyRepository competencyRepository) : ICo
     public async Task<CompetencyResponse> UpdateAsync(
         Guid id,
         UpdateCompetencyRequest request,
+        bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var competency = await competencyRepository.GetByIdAsync(id, cancellationToken)
+        var competency = await competencyRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Компетенция не найдена.");
+
+        if (competency.IsDeleted)
+            throw new InvalidOperationException("Нельзя изменить удалённую компетенцию.");
 
         if (!string.IsNullOrWhiteSpace(request.Name))
         {
@@ -60,13 +66,16 @@ public class CompetencyService(ICompetencyRepository competencyRepository) : ICo
         return ToResponse(competency);
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(
+        Guid id,
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
     {
-        var competency = await competencyRepository.GetByIdAsync(id, cancellationToken)
+        var competency = await competencyRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Компетенция не найдена.");
 
-        if (await competencyRepository.IsUsedInVacanciesAsync(id, cancellationToken))
-            throw new InvalidOperationException("Нельзя удалить компетенцию, привязанную к вакансии.");
+        if (competency.IsDeleted)
+            return;
 
         await competencyRepository.DeleteAsync(competency);
         await competencyRepository.SaveAsync(cancellationToken);
@@ -81,5 +90,5 @@ public class CompetencyService(ICompetencyRepository competencyRepository) : ICo
     }
 
     private static CompetencyResponse ToResponse(Competency competency) =>
-        new(competency.Id, competency.Name, competency.Description);
+        new(competency.Id, competency.Name, competency.Description, competency.IsDeleted);
 }

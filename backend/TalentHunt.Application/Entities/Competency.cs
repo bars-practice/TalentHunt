@@ -1,8 +1,10 @@
 namespace TalentHunt.Application.Entities;
 
-public class Competency
+public class Competency : ISoftDeletable
 {
     public Guid Id { get; set; }
+
+    public bool IsDeleted { get; set; }
 
     public string Name { get; set; } = string.Empty;
 

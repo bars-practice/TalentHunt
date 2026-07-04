@@ -2,23 +2,42 @@ using Microsoft.EntityFrameworkCore;
 using TalentHunt.Application.Entities;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
+using TalentHunt.Infrastructure.Extensions;
 
 namespace TalentHunt.Infrastructure.Repositories;
 
 public class VacancyRepository(AppDbContext context) : IVacancyRepository
 {
-    public async Task<IEnumerable<Vacancy>> GetAllWithCompetenciesAsync(CancellationToken cancellationToken = default) =>
-        await context.Vacancies
+    public async Task<IEnumerable<Vacancy>> GetAllWithCompetenciesAsync(
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancies = await context.Vacancies
+            .IncludeDeletedIf(includeDeleted)
             .Include(v => v.VacancyCompetencies)
-            .ThenInclude(vc => vc.Competency)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
-    public async Task<Vacancy?> GetByIdWithCompetenciesAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await context.Vacancies
+        await AttachCompetenciesAsync(vacancies, includeDeleted, cancellationToken);
+        return vacancies;
+    }
+
+    public async Task<Vacancy?> GetByIdWithCompetenciesAsync(
+        Guid id,
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancy = await context.Vacancies
+            .IncludeDeletedIf(includeDeleted)
             .Include(v => v.VacancyCompetencies)
-            .ThenInclude(vc => vc.Competency)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+
+        if (vacancy is null)
+            return null;
+
+        await AttachCompetenciesAsync([vacancy], includeDeleted, cancellationToken);
+        return vacancy;
+    }
 
     public Task AddAsync(Vacancy vacancy, CancellationToken cancellationToken = default) =>
         context.Vacancies.AddAsync(vacancy, cancellationToken).AsTask();
@@ -31,7 +50,8 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
 
     public Task DeleteAsync(Vacancy vacancy)
     {
-        context.Vacancies.Remove(vacancy);
+        vacancy.IsDeleted = true;
+        context.Vacancies.Update(vacancy);
         return Task.CompletedTask;
     }
 
@@ -57,4 +77,30 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
 
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);
+
+    private async Task AttachCompetenciesAsync(
+        IReadOnlyList<Vacancy> vacancies,
+        bool includeDeleted,
+        CancellationToken cancellationToken)
+    {
+        var competencyIds = vacancies
+            .SelectMany(v => v.VacancyCompetencies)
+            .Select(vc => vc.CompetencyId)
+            .Distinct()
+            .ToList();
+
+        if (competencyIds.Count == 0)
+            return;
+
+        var competencies = await context.Competencies
+            .IncludeDeletedIf(includeDeleted)
+            .Where(c => competencyIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, cancellationToken);
+
+        foreach (var link in vacancies.SelectMany(v => v.VacancyCompetencies))
+        {
+            if (competencies.TryGetValue(link.CompetencyId, out var competency))
+                link.Competency = competency;
+        }
+    }
 }

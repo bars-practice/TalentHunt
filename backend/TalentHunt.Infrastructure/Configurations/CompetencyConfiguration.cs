@@ -19,5 +19,10 @@ public class CompetencyConfiguration : IEntityTypeConfiguration<Competency>
 
         builder.Property(c => c.Description)
             .IsRequired();
+
+        builder.Property(c => c.IsDeleted)
+            .HasDefaultValue(false);
+
+        builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }

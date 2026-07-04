@@ -2,19 +2,27 @@ using Microsoft.EntityFrameworkCore;
 using TalentHunt.Application.Entities;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
+using TalentHunt.Infrastructure.Extensions;
 
 namespace TalentHunt.Infrastructure.Repositories;
 
 public class CompetencyRepository(AppDbContext context) : ICompetencyRepository
 {
-    public async Task<IReadOnlyList<Competency>> GetAllAsync(CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<Competency>> GetAllAsync(
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default) =>
         await context.Competencies
+            .IncludeDeletedIf(includeDeleted)
             .AsNoTracking()
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
-    public async Task<Competency?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+    public async Task<Competency?> GetByIdAsync(
+        Guid id,
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default) =>
         await context.Competencies
+            .IncludeDeletedIf(includeDeleted)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<Competency>> GetByIdsAsync(
@@ -33,11 +41,10 @@ public class CompetencyRepository(AppDbContext context) : ICompetencyRepository
         Guid? excludeId = null,
         CancellationToken cancellationToken = default) =>
         excludeId.HasValue
-            ? context.Competencies.AnyAsync(c => c.Name == name && c.Id != excludeId.Value, cancellationToken)
-            : context.Competencies.AnyAsync(c => c.Name == name, cancellationToken);
-
-    public Task<bool> IsUsedInVacanciesAsync(Guid id, CancellationToken cancellationToken = default) =>
-        context.VacancyCompetencies.AnyAsync(vc => vc.CompetencyId == id, cancellationToken);
+            ? context.Competencies.IgnoreQueryFilters()
+                .AnyAsync(c => c.Name == name && c.Id != excludeId.Value, cancellationToken)
+            : context.Competencies.IgnoreQueryFilters()
+                .AnyAsync(c => c.Name == name, cancellationToken);
 
     public Task AddAsync(Competency competency, CancellationToken cancellationToken = default) =>
         context.Competencies.AddAsync(competency, cancellationToken).AsTask();
@@ -50,7 +57,8 @@ public class CompetencyRepository(AppDbContext context) : ICompetencyRepository
 
     public Task DeleteAsync(Competency competency)
     {
-        context.Competencies.Remove(competency);
+        competency.IsDeleted = true;
+        context.Competencies.Update(competency);
         return Task.CompletedTask;
     }
 
