@@ -8,6 +8,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+    public DbSet<Vacancy> Vacancies => Set<Vacancy>();
+    public DbSet<Competency> Competencies => Set<Competency>();
+    public DbSet<VacancyCompetency> VacancyCompetencies => Set<VacancyCompetency>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +36,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             b.HasOne(up => up.Permission)
              .WithMany()
              .HasForeignKey(up => up.PermissionId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<VacancyCompetency>(b =>
+        {
+            b.HasKey(vc => new { vc.VacancyId, vc.CompetencyId });
+
+            b.HasOne(vc => vc.Vacancy)
+             .WithMany(v => v.VacancyCompetencies)
+             .HasForeignKey(vc => vc.VacancyId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(vc => vc.Competency)
+             .WithMany(c => c.VacancyCompetencies)
+             .HasForeignKey(vc => vc.CompetencyId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }
