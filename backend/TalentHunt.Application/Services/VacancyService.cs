@@ -1,0 +1,124 @@
+using TalentHunt.Application.DTO;
+using TalentHunt.Application.Entities;
+using TalentHunt.Application.Interfaces;
+
+namespace TalentHunt.Application.Services;
+
+public class VacancyService(
+    IVacancyRepository vacancyRepository,
+    ICompetencyRepository competencyRepository) : IVacancyService
+{
+    public async Task<IEnumerable<VacancyResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var vacancies = await vacancyRepository.GetAllWithCompetenciesAsync(cancellationToken);
+        return vacancies.Select(ToResponse);
+    }
+
+    public async Task<VacancyResponse> CreateAsync(
+        CreateVacancyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var title = NormalizeRequired(request.Title, "Title");
+        var businessUnit = NormalizeRequired(request.BusinessUnit, "BusinessUnit");
+        var competencyIds = request.CompetencyIds ?? [];
+
+        await ValidateCompetencyIdsAsync(competencyIds, cancellationToken);
+
+        var vacancy = new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Level = request.Level,
+            BusinessUnit = businessUnit,
+            Description = request.Description?.Trim() ?? string.Empty
+        };
+
+        await vacancyRepository.AddAsync(vacancy, cancellationToken);
+
+        if (competencyIds.Count > 0)
+            await vacancyRepository.ReplaceCompetenciesAsync(vacancy.Id, competencyIds, cancellationToken);
+
+        await vacancyRepository.SaveAsync(cancellationToken);
+
+        var created = await vacancyRepository.GetByIdWithCompetenciesAsync(vacancy.Id, cancellationToken);
+        return ToResponse(created!);
+    }
+
+    public async Task<VacancyResponse> UpdateAsync(
+        Guid id,
+        UpdateVacancyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException("Вакансия не найдена.");
+
+        if (!string.IsNullOrWhiteSpace(request.Title))
+            vacancy.Title = NormalizeRequired(request.Title, "Title");
+
+        if (request.Level.HasValue)
+            vacancy.Level = request.Level.Value;
+
+        if (!string.IsNullOrWhiteSpace(request.BusinessUnit))
+            vacancy.BusinessUnit = NormalizeRequired(request.BusinessUnit, "BusinessUnit");
+
+        if (request.Description is not null)
+            vacancy.Description = request.Description.Trim();
+
+        await vacancyRepository.UpdateAsync(vacancy);
+
+        if (request.CompetencyIds is not null)
+        {
+            var competencyIds = request.CompetencyIds.Distinct().ToList();
+            await ValidateCompetencyIdsAsync(competencyIds, cancellationToken);
+            await vacancyRepository.ReplaceCompetenciesAsync(id, competencyIds, cancellationToken);
+        }
+
+        await vacancyRepository.SaveAsync(cancellationToken);
+
+        var updated = await vacancyRepository.GetByIdWithCompetenciesAsync(id, cancellationToken);
+        return ToResponse(updated!);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException("Вакансия не найдена.");
+
+        await vacancyRepository.DeleteAsync(vacancy);
+        await vacancyRepository.SaveAsync(cancellationToken);
+    }
+
+    private async Task ValidateCompetencyIdsAsync(
+        IReadOnlyList<Guid> competencyIds,
+        CancellationToken cancellationToken)
+    {
+        if (competencyIds.Count == 0)
+            return;
+
+        var distinctIds = competencyIds.Distinct().ToList();
+        var found = await competencyRepository.GetByIdsAsync(distinctIds, cancellationToken);
+
+        if (found.Count != distinctIds.Count)
+            throw new InvalidOperationException("Одна или несколько компетенций не найдены.");
+    }
+
+    private static string NormalizeRequired(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException($"{fieldName} is required.");
+
+        return value.Trim();
+    }
+
+    private static VacancyResponse ToResponse(Vacancy vacancy) => new(
+        vacancy.Id,
+        vacancy.Title,
+        vacancy.Level,
+        vacancy.BusinessUnit,
+        vacancy.Description,
+        vacancy.VacancyCompetencies
+            .Select(vc => new CompetencyResponse(vc.Competency.Id, vc.Competency.Name, vc.Competency.Description))
+            .OrderBy(c => c.Name)
+            .ToList()
+    );
+}
