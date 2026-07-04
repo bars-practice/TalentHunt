@@ -1,25 +1,78 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TalentHunt.API.DTO;
+using TalentHunt.Application.DTO;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
-[Route("users")]
-public class UsersController(IUserRepository userRepository) : ControllerBase
+[Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
+public class UsersController(IUserService userService) : ControllerBase
 {
-    [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll()
     {
-        var users = await userRepository.GetAllAsync(cancellationToken);
+        var users = await userService.GetAllAsync();
+        return Ok(users);
+    }
 
-        var response = users.Select(user => new UserResponse(
-            user.Id,
-            user.Login,
-            user.Role.ToString()));
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
+    {
+        try
+        {
+            var user = await userService.CreateAsync(request);
+            return CreatedAtAction(nameof(GetAll), new { id = user.Id }, user);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 
-        return Ok(response);
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request)
+    {
+        try
+        {
+            var user = await userService.UpdateAsync(id, request);
+            return Ok(user);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Пользователь не найден." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            await userService.DeleteAsync(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Пользователь не найден." });
+        }
+    }
+
+    [HttpGet("permissions")]
+    public IActionResult GetPermissions()
+    {
+        var permissions = new[]
+        {
+            new { name = "CanViewResumes",    displayName = "Просмотр резюме"       },
+            new { name = "CanEditResumes",    displayName = "Редактирование резюме" },
+            new { name = "CanApproveResumes", displayName = "Одобрение резюме"      },
+            new { name = "CanRejectResumes",  displayName = "Отклонение резюме"     },
+        };
+        return Ok(permissions);
     }
 }

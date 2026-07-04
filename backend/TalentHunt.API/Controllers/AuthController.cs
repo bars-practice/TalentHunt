@@ -9,7 +9,7 @@ using TalentHunt.Application.Interfaces;
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
-[Route("auth")]
+[Route("api/[controller]")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("login")]
@@ -17,7 +17,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var user = await authService.LoginAsync(request.Login, request.Password, cancellationToken);
         if (user is null)
-            return Unauthorized();
+            return Unauthorized(new { message = "Неверный логин или пароль." });
 
         var claims = new List<Claim>
         {
