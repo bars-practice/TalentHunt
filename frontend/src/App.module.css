@@ -56,7 +56,7 @@
   }
 }
 
-#center {
+.center {
   display: flex;
   flex-direction: column;
   gap: 25px;
@@ -70,7 +70,7 @@
   }
 }
 
-#next-steps {
+.nextSteps {
   display: flex;
   border-top: 1px solid var(--border);
   text-align: left;
@@ -95,7 +95,7 @@
   }
 }
 
-#docs {
+.docs {
   border-right: 1px solid var(--border);
 
   @media (max-width: 1024px) {
@@ -104,7 +104,7 @@
   }
 }
 
-#next-steps ul {
+.nextSteps ul {
   list-style: none;
   padding: 0;
   display: flex;
@@ -130,7 +130,7 @@
     &:hover {
       box-shadow: var(--shadow);
     }
-    .button-icon {
+    .buttonIcon {
       height: 18px;
       width: 18px;
     }
@@ -153,7 +153,7 @@
   }
 }
 
-#spacer {
+.spacer {
   height: 88px;
   border-top: 1px solid var(--border);
   @media (max-width: 1024px) {
