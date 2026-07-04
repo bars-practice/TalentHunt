@@ -49,7 +49,7 @@ public static class DbInitializer
             Id = Guid.NewGuid(),
             FullName = "System Administrator",
             Login = "admin",
-            PasswordHash = passwordHasher.Hash("admin123"),
+            PasswordHash = passwordHasher.Hash("admin"),
             Role = Role.Admin,
             UserPermissions = new List<UserPermission>()
         };

@@ -24,7 +24,8 @@ public class UserService : IUserService
 
     public async Task<UserResponse> CreateAsync(CreateUserRequest request)
     {
-        var login = GenerateLogin(request.FullName);
+        var fullName = NormalizeFullName(request.FullName);
+        var login = GenerateLogin(fullName);
 
         if (await _userRepository.LoginExistsAsync(login))
             throw new InvalidOperationException($"Пользователь с логином '{login}' уже существует.");
@@ -35,7 +36,7 @@ public class UserService : IUserService
         var user = new User
         {
             Id = Guid.NewGuid(),
-            FullName = request.FullName,
+            FullName = fullName,
             Login = login,
             PasswordHash = _passwordHasher.Hash(request.Password),
             Role = request.Role,
@@ -59,11 +60,12 @@ public class UserService : IUserService
 
         if (!string.IsNullOrWhiteSpace(request.FullName) && request.FullName != user.FullName)
         {
-            var newLogin = GenerateLogin(request.FullName);
+            var fullName = NormalizeFullName(request.FullName);
+            var newLogin = GenerateLogin(fullName);
             if (await _userRepository.LoginExistsAsync(newLogin, id))
                 throw new InvalidOperationException($"Пользователь с логином '{newLogin}' уже существует.");
 
-            user.FullName = request.FullName;
+            user.FullName = fullName;
             user.Login = newLogin;
         }
 
@@ -105,12 +107,25 @@ public class UserService : IUserService
         await _userRepository.SaveAsync();
     }
 
+    private static string NormalizeFullName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new InvalidOperationException("FullName is required.");
+
+        var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(' ', parts);
+    }
+
     private static string GenerateLogin(string fullName)
     {
-        var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 3)
-            throw new InvalidOperationException("FullName must contain exactly 3 parts: Last First Middle.");
-        return $"{parts[0].ToLower()}.{parts[1].ToLower()}";
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 2)
+            throw new InvalidOperationException("FullName must contain at least 2 parts: LastName FirstName.");
+
+        // Format: "Фамилия Имя [Отчество...]" = login: имя.фамилия
+        var lastName = parts[0].ToLowerInvariant();
+        var firstName = parts[1].ToLowerInvariant();
+        return $"{firstName}.{lastName}";
     }
 
     private static UserResponse ToResponse(User u) => new(
