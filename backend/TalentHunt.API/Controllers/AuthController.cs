@@ -1,62 +1,54 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+using TalentHunt.API.DTO;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController(IAuthService authService) : ControllerBase
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
-    private readonly IConfiguration _configuration;
-
-    public AuthController(
-        IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
-        IConfiguration configuration)
-    {
-        _userRepository = userRepository;
-        _passwordHasher = passwordHasher;
-        _configuration = configuration;
-    }
-
-    /// <summary>POST /api/auth/login — получить JWT токен</summary>
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByLoginAsync(request.Login);
-
-        if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
+        var user = await authService.LoginAsync(request.Login, request.Password, cancellationToken);
+        if (user is null)
             return Unauthorized(new { message = "Неверный логин или пароль." });
 
-        var key     = _configuration["Jwt:Key"]!;
-        var issuer  = _configuration["Jwt:Issuer"]!;
-        var audience = _configuration["Jwt:Audience"]!;
-
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name,           user.Login),
-            new Claim(ClaimTypes.Role,           user.Role.ToString())
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.Login),
+            new(ClaimTypes.Role, user.Role.ToString())
         };
 
-        var token = new JwtSecurityToken(
-            issuer:             issuer,
-            audience:           audience,
-            claims:             claims,
-            expires:            DateTime.UtcNow.AddHours(8),
-            signingCredentials: new SigningCredentials(
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-                SecurityAlgorithms.HmacSha256)
-        );
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
 
-        return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+            });
+
+        return Ok(new { login = user.Login, role = user.Role.ToString() });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        return Ok(new
+        {
+            login = User.Identity?.Name,
+            role = User.FindFirst(ClaimTypes.Role)?.Value
+        });
     }
 }
-
-public record LoginRequest(string Login, string Password);

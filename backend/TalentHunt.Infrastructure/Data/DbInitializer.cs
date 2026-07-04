@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using TalentHunt.Application.Entities;
 using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
@@ -7,9 +8,24 @@ namespace TalentHunt.Infrastructure.Data;
 
 public static class DbInitializer
 {
-    public static async Task SeedPermissions(AppDbContext context)
+    public static async Task InitializeAsync(IServiceProvider services)
     {
-        if (await context.Permissions.AnyAsync()) return;
+        using var scope = services.CreateScope();
+        var provider = scope.ServiceProvider;
+
+        var db = provider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+
+        await SeedPermissionsAsync(db);
+
+        var passwordHasher = provider.GetRequiredService<IPasswordHasher>();
+        await SeedAdminAsync(db, passwordHasher);
+    }
+
+    private static async Task SeedPermissionsAsync(AppDbContext context)
+    {
+        if (await context.Permissions.AnyAsync())
+            return;
 
         var permissions = new List<Permission>
         {
@@ -23,7 +39,7 @@ public static class DbInitializer
         await context.SaveChangesAsync();
     }
 
-    public static async Task SeedAdmin(AppDbContext context, IPasswordHasher passwordHasher)
+    private static async Task SeedAdminAsync(AppDbContext context, IPasswordHasher passwordHasher)
     {
         if (await context.Users.AnyAsync(u => u.Role == Role.Admin))
             return;

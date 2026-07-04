@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.Infrastructure.Authentication;
@@ -20,7 +20,9 @@ public class PasswordHasher : IPasswordHasher
     public bool Verify(string password, string passwordHash)
     {
         var parts = passwordHash.Split('.');
-        if (parts.Length != 2) return false;
+        if (parts.Length != 2)
+            return false;
+
         var salt = Convert.FromBase64String(parts[0]);
         var hash = Convert.FromBase64String(parts[1]);
         var testHash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, Algorithm, HashSize);

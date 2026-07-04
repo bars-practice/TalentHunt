@@ -28,6 +28,9 @@ public class UserRepository(AppDbContext context) : IUserRepository
             ? context.Users.AnyAsync(u => u.Login == login && u.Id != excludeId.Value)
             : context.Users.AnyAsync(u => u.Login == login);
 
+    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await context.Users.AsNoTracking().ToListAsync(cancellationToken);
+
     public Task AddAsync(User user, CancellationToken cancellationToken = default) =>
         context.Users.AddAsync(user, cancellationToken).AsTask();
 
