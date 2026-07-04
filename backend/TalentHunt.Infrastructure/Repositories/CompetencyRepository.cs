@@ -13,6 +13,10 @@ public class CompetencyRepository(AppDbContext context) : ICompetencyRepository
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
+    public async Task<Competency?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        await context.Competencies
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
     public async Task<IReadOnlyList<Competency>> GetByIdsAsync(
         IEnumerable<Guid> ids,
         CancellationToken cancellationToken = default)
@@ -22,6 +26,32 @@ public class CompetencyRepository(AppDbContext context) : ICompetencyRepository
         return await context.Competencies
             .Where(c => idList.Contains(c.Id))
             .ToListAsync(cancellationToken);
+    }
+
+    public Task<bool> NameExistsAsync(
+        string name,
+        Guid? excludeId = null,
+        CancellationToken cancellationToken = default) =>
+        excludeId.HasValue
+            ? context.Competencies.AnyAsync(c => c.Name == name && c.Id != excludeId.Value, cancellationToken)
+            : context.Competencies.AnyAsync(c => c.Name == name, cancellationToken);
+
+    public Task<bool> IsUsedInVacanciesAsync(Guid id, CancellationToken cancellationToken = default) =>
+        context.VacancyCompetencies.AnyAsync(vc => vc.CompetencyId == id, cancellationToken);
+
+    public Task AddAsync(Competency competency, CancellationToken cancellationToken = default) =>
+        context.Competencies.AddAsync(competency, cancellationToken).AsTask();
+
+    public Task UpdateAsync(Competency competency)
+    {
+        context.Competencies.Update(competency);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(Competency competency)
+    {
+        context.Competencies.Remove(competency);
+        return Task.CompletedTask;
     }
 
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
