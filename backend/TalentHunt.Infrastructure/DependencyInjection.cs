@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TalentHunt.Application.Interfaces;
+using TalentHunt.Application.Services;
+using TalentHunt.Infrastructure.Authentication;
 using TalentHunt.Infrastructure.Data;
 using TalentHunt.Infrastructure.Repositories;
-using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.Infrastructure;
 
@@ -20,6 +22,8 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IUserService, UserService>();
 
         return services;
     }
