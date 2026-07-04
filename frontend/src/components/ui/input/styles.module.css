@@ -3,8 +3,7 @@
   width: 100%;
   height: calc(var(--spacing) * 9);
   padding-inline: calc(var(--spacing) * 3);
-  transition: all var(--default-transition-duration)
-    var(--default-transition-timing-function);
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
   border: 1px solid var(--color-input);
   border-radius: var(--radius-md);
   outline: none;
@@ -17,6 +16,11 @@
   /* Invalid */
   &[aria-invalid="true"] {
     border-color: var(--color-destructive);
+    color: var(--color-destructive);
+
+    &::placeholder {
+      color: var(--color-destructive);
+    }
   }
 
   /* Placeholder */
@@ -50,13 +54,11 @@
   &:focus {
     &:not([aria-invalid="true"]) {
       border-color: var(--color-ring);
-      box-shadow: 0 0 0 3px
-        color-mix(in oklab, var(--color-ring) 50%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 50%, transparent);
     }
 
     &[aria-invalid="true"] {
-      box-shadow: 0 0 0 3px
-        color-mix(in oklab, var(--color-destructive) 20%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-destructive) 20%, transparent);
     }
   }
 }

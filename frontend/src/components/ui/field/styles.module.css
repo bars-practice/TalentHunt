@@ -104,7 +104,7 @@
 .field {
   display: flex;
   width: 100%;
-  gap: calc(var(--spacing) * 3);
+  gap: calc(var(--spacing) * 1);
 
   /* Invalid */
   &[data-invalid="true"] {
@@ -245,11 +245,7 @@
 :global(.dark) {
   .field-label {
     &:has([data-state="checked"]) {
-      background-color: color-mix(
-        in oklch,
-        var(--color-primary) 10%,
-        transparent
-      );
+      background-color: color-mix(in oklch, var(--color-primary) 10%, transparent);
     }
   }
 }
