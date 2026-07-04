@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
 using TalentHunt.Application.Interfaces;
 
@@ -13,7 +14,7 @@ public class VacanciesController(IVacancyService vacancyService) : ControllerBas
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var vacancies = await vacancyService.GetAllAsync(cancellationToken);
+        var vacancies = await vacancyService.GetAllAsync(User.IsAdmin(), cancellationToken);
         return Ok(vacancies);
     }
 
@@ -41,7 +42,7 @@ public class VacanciesController(IVacancyService vacancyService) : ControllerBas
     {
         try
         {
-            var vacancy = await vacancyService.UpdateAsync(id, request, cancellationToken);
+            var vacancy = await vacancyService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
             return Ok(vacancy);
         }
         catch (KeyNotFoundException)
@@ -59,7 +60,7 @@ public class VacanciesController(IVacancyService vacancyService) : ControllerBas
     {
         try
         {
-            await vacancyService.DeleteAsync(id, cancellationToken);
+            await vacancyService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
             return NoContent();
         }
         catch (KeyNotFoundException)

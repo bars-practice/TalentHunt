@@ -2,9 +2,11 @@
 
 namespace TalentHunt.Application.Entities;
 
-public class User
+public class User : ISoftDeletable
 {
     public Guid Id { get; set; }
+
+    public bool IsDeleted { get; set; }
 
     public string FullName { get; set; } = string.Empty;
 

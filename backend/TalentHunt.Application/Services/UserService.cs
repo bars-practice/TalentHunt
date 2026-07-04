@@ -18,7 +18,7 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserResponse>> GetAllAsync()
     {
-        var users = await _userRepository.GetAllWithPermissionsAsync();
+        var users = await _userRepository.GetAllWithPermissionsAsync(includeDeleted: true);
         return users.Select(ToResponse);
     }
 
@@ -55,7 +55,7 @@ public class UserService : IUserService
 
     public async Task<UserResponse> UpdateAsync(Guid id, UpdateUserRequest request)
     {
-        var user = await _userRepository.GetByIdWithPermissionsAsync(id)
+        var user = await _userRepository.GetByIdWithPermissionsAsync(id, includeDeleted: true)
             ?? throw new KeyNotFoundException("Пользователь не найден.");
 
         if (!string.IsNullOrWhiteSpace(request.FullName) && request.FullName != user.FullName)
@@ -95,13 +95,16 @@ public class UserService : IUserService
 
         await _userRepository.SaveAsync();
 
-        return new UserResponse(user.Id, user.FullName, user.Login, user.Role, responsePermissions);
+        return new UserResponse(user.Id, user.FullName, user.Login, user.Role, responsePermissions, user.IsDeleted);
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        var user = await _userRepository.GetByIdWithPermissionsAsync(id)
+        var user = await _userRepository.GetByIdWithPermissionsAsync(id, includeDeleted: true)
             ?? throw new KeyNotFoundException("Пользователь не найден.");
+
+        if (user.IsDeleted)
+            return;
 
         await _userRepository.DeleteAsync(user);
         await _userRepository.SaveAsync();
@@ -133,6 +136,7 @@ public class UserService : IUserService
         u.FullName,
         u.Login,
         u.Role,
-        u.UserPermissions.Select(up => up.Permission.Name).ToList()
+        u.UserPermissions.Select(up => up.Permission.Name).ToList(),
+        u.IsDeleted
     );
 }

@@ -27,5 +27,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.Role)
             .IsRequired();
+
+        builder.Property(u => u.IsDeleted)
+            .HasDefaultValue(false);
+
+        builder.HasQueryFilter(u => !u.IsDeleted);
     }
 }

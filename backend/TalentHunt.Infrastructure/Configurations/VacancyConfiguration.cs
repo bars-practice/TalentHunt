@@ -23,5 +23,10 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
 
         builder.Property(v => v.Description)
             .IsRequired();
+
+        builder.Property(v => v.IsDeleted)
+            .HasDefaultValue(false);
+
+        builder.HasQueryFilter(v => !v.IsDeleted);
     }
 }

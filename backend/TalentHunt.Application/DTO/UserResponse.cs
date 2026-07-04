@@ -7,5 +7,6 @@ public record UserResponse(
     string FullName,
     string Login,
     Role Role,
-    List<string> Permissions
+    List<string> Permissions,
+    bool IsDeleted
 );

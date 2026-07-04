@@ -4,9 +4,9 @@ namespace TalentHunt.Application.Interfaces;
 
 public interface IUserRepository
 {
-    Task<IEnumerable<User>> GetAllWithPermissionsAsync();
+    Task<IEnumerable<User>> GetAllWithPermissionsAsync(bool includeDeleted = false);
 
-    Task<User?> GetByIdWithPermissionsAsync(Guid id);
+    Task<User?> GetByIdWithPermissionsAsync(Guid id, bool includeDeleted = false);
 
     Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken = default);
 

@@ -2,20 +2,23 @@ using Microsoft.EntityFrameworkCore;
 using TalentHunt.Application.Entities;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
+using TalentHunt.Infrastructure.Extensions;
 
 namespace TalentHunt.Infrastructure.Repositories;
 
 public class UserRepository(AppDbContext context) : IUserRepository
 {
-    public async Task<IEnumerable<User>> GetAllWithPermissionsAsync() =>
+    public async Task<IEnumerable<User>> GetAllWithPermissionsAsync(bool includeDeleted = false) =>
         await context.Users
+            .IncludeDeletedIf(includeDeleted)
             .Include(u => u.UserPermissions)
             .ThenInclude(up => up.Permission)
             .AsNoTracking()
             .ToListAsync();
 
-    public async Task<User?> GetByIdWithPermissionsAsync(Guid id) =>
+    public async Task<User?> GetByIdWithPermissionsAsync(Guid id, bool includeDeleted = false) =>
         await context.Users
+            .IncludeDeletedIf(includeDeleted)
             .Include(u => u.UserPermissions)
             .ThenInclude(up => up.Permission)
             .FirstOrDefaultAsync(u => u.Id == id);
@@ -25,8 +28,8 @@ public class UserRepository(AppDbContext context) : IUserRepository
 
     public Task<bool> LoginExistsAsync(string login, Guid? excludeId = null) =>
         excludeId.HasValue
-            ? context.Users.AnyAsync(u => u.Login == login && u.Id != excludeId.Value)
-            : context.Users.AnyAsync(u => u.Login == login);
+            ? context.Users.IgnoreQueryFilters().AnyAsync(u => u.Login == login && u.Id != excludeId.Value)
+            : context.Users.IgnoreQueryFilters().AnyAsync(u => u.Login == login);
 
     public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await context.Users.AsNoTracking().ToListAsync(cancellationToken);
@@ -42,7 +45,8 @@ public class UserRepository(AppDbContext context) : IUserRepository
 
     public Task DeleteAsync(User user)
     {
-        context.Users.Remove(user);
+        user.IsDeleted = true;
+        context.Users.Update(user);
         return Task.CompletedTask;
     }
 

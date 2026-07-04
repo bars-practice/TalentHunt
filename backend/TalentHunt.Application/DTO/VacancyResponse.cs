@@ -8,5 +8,6 @@ public record VacancyResponse(
     VacancyLevel Level,
     string BusinessUnit,
     string Description,
-    List<CompetencyResponse> Competencies
+    List<CompetencyResponse> Competencies,
+    bool IsDeleted
 );

@@ -4,9 +4,14 @@ namespace TalentHunt.Application.Interfaces;
 
 public interface IVacancyRepository
 {
-    Task<IEnumerable<Vacancy>> GetAllWithCompetenciesAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<Vacancy>> GetAllWithCompetenciesAsync(
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default);
 
-    Task<Vacancy?> GetByIdWithCompetenciesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Vacancy?> GetByIdWithCompetenciesAsync(
+        Guid id,
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default);
 
     Task AddAsync(Vacancy vacancy, CancellationToken cancellationToken = default);
 
