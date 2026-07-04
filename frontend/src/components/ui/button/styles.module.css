@@ -2,8 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--default-transition-duration)
-    var(--default-transition-timing-function);
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   outline: none;
@@ -11,6 +10,7 @@
   font-weight: var(--font-weight-medium);
   line-height: var(--text-sm--line-height);
   gap: calc(var(--spacing) * 2);
+  cursor: pointer;
 
   /* Variant */
   &[data-variant="primary"] {
@@ -18,11 +18,7 @@
     color: var(--color-background);
 
     &:hover {
-      background-color: color-mix(
-        in oklab,
-        var(--color-primary) 90%,
-        transparent
-      );
+      background-color: color-mix(in oklab, var(--color-primary) 90%, transparent);
     }
   }
 
@@ -31,11 +27,7 @@
     color: var(--color-secondary-foreground);
 
     &:hover {
-      background-color: color-mix(
-        in oklab,
-        var(--color-secondary) 80%,
-        transparent
-      );
+      background-color: color-mix(in oklab, var(--color-secondary) 80%, transparent);
     }
   }
 
@@ -66,11 +58,7 @@
     color: var(--color-white);
 
     &:hover {
-      background-color: color-mix(
-        in oklab,
-        var(--color-destructive) 90%,
-        transparent
-      );
+      background-color: color-mix(in oklab, var(--color-destructive) 90%, transparent);
     }
   }
 
@@ -149,16 +137,34 @@
     pointer-events: none;
   }
 
+  /* Loading */
+  &[data-loading="true"] {
+    pointer-events: none;
+  }
+
+  .spinner {
+    width: calc(var(--spacing) * 4);
+    height: calc(var(--spacing) * 4);
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   /* Focus */
   &:focus-visible {
     &:not(&[data-variant="destructive"]) {
-      box-shadow: 0 0 0 3px
-        color-mix(in oklab, var(--color-ring) 50%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 50%, transparent);
     }
 
     &[data-variant="destructive"] {
-      box-shadow: 0 0 0 3px
-        color-mix(in oklab, var(--color-destructive) 20%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-destructive) 20%, transparent);
     }
 
     &[data-variant="outline"] {
@@ -170,35 +176,19 @@
 :global(.dark) {
   .button {
     &[data-variant="destructive"] {
-      background-color: color-mix(
-        in oklab,
-        var(--color-destructive) 60%,
-        transparent
-      );
+      background-color: color-mix(in oklab, var(--color-destructive) 60%, transparent);
     }
 
     &[data-variant="outline"] {
-      background-color: color-mix(
-        in oklab,
-        var(--color-input) 30%,
-        transparent
-      );
+      background-color: color-mix(in oklab, var(--color-input) 30%, transparent);
 
       &:hover {
-        background-color: color-mix(
-          in oklab,
-          var(--color-input) 50%,
-          transparent
-        );
+        background-color: color-mix(in oklab, var(--color-input) 50%, transparent);
       }
     }
 
     &[data-variant="ghost"]:hover {
-      background-color: color-mix(
-        in oklab,
-        var(--color-accent) 50%,
-        transparent
-      );
+      background-color: color-mix(in oklab, var(--color-accent) 50%, transparent);
     }
   }
 }
