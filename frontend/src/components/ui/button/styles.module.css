@@ -137,6 +137,26 @@
     pointer-events: none;
   }
 
+  /* Loading */
+  &[data-loading="true"] {
+    pointer-events: none;
+  }
+
+  .spinner {
+    width: calc(var(--spacing) * 4);
+    height: calc(var(--spacing) * 4);
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   /* Focus */
   &:focus-visible {
     &:not(&[data-variant="destructive"]) {

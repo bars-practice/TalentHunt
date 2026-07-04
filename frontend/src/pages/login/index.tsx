@@ -6,6 +6,10 @@ import styles from "./index.module.css"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { authService } from "@/api/auth"
+import { ApiError } from "@/api/client"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 const loginSchema = z.object({
   login: z.string().min(1, "Логин обязателен"),
@@ -15,16 +19,26 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>
 
 function Login() {
+  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   })
 
-  const onSubmit = (data: LoginFormValues) => {
-    console.log(data)
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      setError(null)
+      await authService.login(data)
+      navigate("/")
+    } catch (error) {
+      const errorMessage = error instanceof ApiError ? error.message : "Ошибка при входе"
+      setError(errorMessage)
+      console.error("Login failed:", error)
+    }
   }
 
   return (
@@ -64,17 +78,23 @@ function Login() {
             </FieldContent>
             <FieldError>{errors.password?.message}</FieldError>
           </Field>
-
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
           <div className={styles.buttonContainer}>
             <Button
               type="submit"
               size="lg"
               className={styles.submitButton}
+              loading={isSubmitting}
             >
               Войти
             </Button>
           </div>
         </form>
+
       </main>
     </div>
   )

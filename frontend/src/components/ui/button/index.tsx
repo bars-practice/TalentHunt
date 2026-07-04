@@ -4,14 +4,15 @@ import type { ComponentProps } from "react";
 
 type ButtonProps = ComponentProps<"button"> & {
   variant?:
-    | "primary"
-    | "secondary"
-    | "outline"
-    | "ghost"
-    | "destructive"
-    | "link";
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "destructive"
+  | "link";
   size?: "sm" | "md" | "lg" | "icon" | "icon-sm" | "icon-lg";
   asChild?: boolean;
+  loading?: boolean;
 };
 
 function Button({
@@ -19,6 +20,9 @@ function Button({
   variant = "primary",
   size = "md",
   asChild = false,
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot : "button";
@@ -27,9 +31,13 @@ function Button({
     <Comp
       data-size={size}
       data-variant={variant}
+      data-loading={loading}
       className={`${styles.button} ${className ?? ""}`.trim()}
+      disabled={disabled || loading}
       {...props}
-    />
+    >
+      {loading ? <span className={styles.spinner} /> : children}
+    </Comp>
   );
 }
 
