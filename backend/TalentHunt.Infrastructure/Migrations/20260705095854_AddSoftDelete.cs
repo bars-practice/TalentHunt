@@ -12,14 +12,14 @@ namespace TalentHunt.Infrastructure.Migrations
         {
             migrationBuilder.AddColumn<bool>(
                 name: "IsDeleted",
-                table: "Users",
+                table: "Vacancies",
                 type: "boolean",
                 nullable: false,
                 defaultValue: false);
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsDeleted",
-                table: "Vacancies",
+                table: "Users",
                 type: "boolean",
                 nullable: false,
                 defaultValue: false);
@@ -37,11 +37,11 @@ namespace TalentHunt.Infrastructure.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "IsDeleted",
-                table: "Users");
+                table: "Vacancies");
 
             migrationBuilder.DropColumn(
                 name: "IsDeleted",
-                table: "Vacancies");
+                table: "Users");
 
             migrationBuilder.DropColumn(
                 name: "IsDeleted",
