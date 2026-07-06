@@ -1,0 +1,108 @@
+.card {
+  background-color: var(--background);
+  border-block-end: none !important;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  gap: 12px;
+  padding: 8px 15px;
+}
+
+[data-state="open"] .header {
+  border-radius: 10px 10px 0 10px;
+}
+
+.trigger {
+  width: 100%;
+  cursor: pointer;
+  text-decoration: none !important;
+}
+
+.trigger:hover .title {
+  text-decoration: underline !important;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.addButton {
+  flex-shrink: 0;
+  color: #22c55e !important;
+}
+
+.menuTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
+  padding: 0;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.menuTrigger:hover {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.list {
+  overflow: hidden;
+  padding: 16px;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0 0 10px 10px;
+  border-top: 0;
+  margin-left: 30px;
+}
+
+.empty {
+  color: var(--muted-foreground);
+}
