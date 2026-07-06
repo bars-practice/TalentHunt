@@ -89,6 +89,8 @@
   --animate-out: fadeOut 150ms ease-out;
   --animate-alert-dialog-in: alertIn 150ms ease-out;
   --animate-alert-dialog-out: alertOut 150ms ease-out;
+  --animate-accordion-down: accordionDown 200ms ease-out;
+  --animate-accordion-up: accordionUp 200ms ease-out;
 }
 
 .sr-only {
@@ -204,5 +206,23 @@ a:visited {
   to {
     opacity: 0;
     transform: translate(-50%, -48%) scale(0.96);
+  }
+}
+
+@keyframes accordionDown {
+  from {
+    grid-template-rows: 0fr;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes accordionUp {
+  from {
+    grid-template-rows: 1fr;
+  }
+  to {
+    grid-template-rows: 0fr;
   }
 }

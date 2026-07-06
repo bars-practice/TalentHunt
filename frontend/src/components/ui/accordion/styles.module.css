@@ -1,0 +1,103 @@
+.accordion-item {
+  color: var(--color-neutral-800);
+
+  &:not(:last-child) {
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  & > [data-slot="accordion-header"] {
+    display: flex;
+  }
+}
+
+.accordion-trigger {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-block: calc(var(--spacing) * 3);
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
+  border: none;
+  border-radius: var(--radius-md);
+  outline: none;
+  background-color: transparent;
+  color: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: var(--text-sm--line-height);
+  text-align: start;
+  gap: calc(var(--spacing) * 4);
+  cursor: pointer;
+
+  /* Icon */
+  & > svg {
+    flex-shrink: 0;
+    width: calc(var(--spacing) * 4);
+    height: calc(var(--spacing) * 4);
+    color: var(--color-muted-foreground);
+    pointer-events: none;
+    rotate: 0deg;
+    translate: 0 calc(var(--spacing) * 0.5);
+    order: -1;
+  }
+
+  /* State */
+  &[data-state="open"] > svg {
+    rotate: 180deg;
+    transition: rotate var(--default-transition-duration) var(--default-transition-timing-function);
+  }
+
+  /* Focus */
+  &:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 50%, transparent);
+  }
+
+  /* Disabled */
+  &:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.accordion-content {
+  overflow-y: clip;
+  animation-duration: 0.15s;
+  animation-timing-function: var(--ease-out);
+  color: inherit;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+
+  &[data-state="open"] {
+    animation-name: accordion-down;
+    height: auto;
+  }
+
+  &[data-state="closed"] {
+    animation-name: accordion-up;
+    animation-fill-mode: forwards;
+  }
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+:global(.dark) {
+  .accordion-item {
+    color: var(--color-neutral-300);
+  }
+}
