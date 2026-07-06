@@ -24,11 +24,13 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IVacancyRepository, VacancyRepository>();
         services.AddScoped<ICompetencyRepository, CompetencyRepository>();
+        services.AddScoped<ICandidateRepository, CandidateRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IVacancyService, VacancyService>();
         services.AddScoped<ICompetencyService, CompetencyService>();
+        services.AddScoped<ICandidateService, CandidateService>();
 
         return services;
     }
