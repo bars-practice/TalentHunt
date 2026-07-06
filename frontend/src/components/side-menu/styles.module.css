@@ -1,15 +1,11 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 260px;
+  width: 250px;
   height: 100vh;
   background-color: var(--foreground);
   font-family: var(--font-sans);
   padding: 10px 0 0;
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 10;
 }
 
 .logo {

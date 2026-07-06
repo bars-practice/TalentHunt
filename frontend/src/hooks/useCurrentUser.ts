@@ -10,7 +10,6 @@ export function useCurrentUser() {
     const fetchUser = async () => {
       try {
         const userData = await authService.me()
-        console.log("User data from /me:", userData)
         setUser(userData)
       } catch (error) {
         console.error("Failed to fetch user:", error)

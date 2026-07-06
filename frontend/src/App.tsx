@@ -25,14 +25,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 }
 
 function Layout() {
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    window.location.href = "/login"
-  }
-
   return (
     <div className={styles.layout}>
-      <SideMenu onLogout={handleLogout} />
+      <SideMenu onLogout={() => { }} />
       <main className={styles.main}>
         <Outlet />
       </main>
