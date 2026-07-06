@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TalentHunt.Application.Entities;
+using ApplicationEntity = TalentHunt.Application.Entities.Application;
 
 namespace TalentHunt.Infrastructure.Data;
 
@@ -12,6 +13,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Competency> Competencies => Set<Competency>();
     public DbSet<VacancyCompetency> VacancyCompetencies => Set<VacancyCompetency>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Candidate> Candidates => Set<Candidate>();
+    public DbSet<ApplicationEntity> Applications => Set<ApplicationEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
