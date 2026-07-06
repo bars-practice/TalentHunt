@@ -17,8 +17,14 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<ApplicationEnti
             .HasConversion<string>()
             .HasMaxLength(50);
 
+        builder.Property(a => a.IsDeleted)
+            .HasDefaultValue(false);
+
+        builder.HasQueryFilter(a => !a.IsDeleted);
+
         builder.HasIndex(a => new { a.CandidateId, a.VacancyId })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
 
         builder.HasOne(a => a.Vacancy)
             .WithMany()

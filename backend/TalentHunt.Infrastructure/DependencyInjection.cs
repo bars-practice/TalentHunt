@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IVacancyRepository, VacancyRepository>();
         services.AddScoped<ICompetencyRepository, CompetencyRepository>();
         services.AddScoped<ICandidateRepository, CandidateRepository>();
+        services.AddScoped<IApplicationRepository, ApplicationRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ICandidateService, CandidateService>();
+        services.AddScoped<IApplicationService, ApplicationService>();
 
         return services;
     }

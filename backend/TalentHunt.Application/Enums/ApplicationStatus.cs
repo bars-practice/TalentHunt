@@ -2,8 +2,8 @@ namespace TalentHunt.Application.Enums;
 
 public enum ApplicationStatus
 {
-    New,
-    Viewed,
+    Applied,
     Approved,
+    InProgress,
     Rejected
 }
