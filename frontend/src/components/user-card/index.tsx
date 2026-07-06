@@ -1,6 +1,8 @@
 import { MoreVertical } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem } from "@/components/ui/menubar";
+import { useModal } from "@/providers/ModalProvider";
+import Button from "@/components/ui/button";
 import styles from "./styles.module.css";
 
 interface UserCardProps {
@@ -18,6 +20,29 @@ const STATUS_CONFIG = {
 
 export function UserCard({ name, status, role, onEdit, onDelete, onRestore }: UserCardProps) {
   const badge = STATUS_CONFIG[status];
+  const { openModal, closeModal } = useModal();
+
+  const handleDeleteClick = () => {
+    openModal(
+      <div className={styles.modalContent}>
+        <p className={styles.modalDescription}>
+          Пользователь будет удален из системы.
+        </p>
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={closeModal}>
+            Отмена
+          </Button>
+          <Button variant="danger" onClick={() => {
+            onDelete?.();
+            closeModal();
+          }}>
+            Удалить
+          </Button>
+        </div>
+      </div>,
+      { title: "Удалить пользователя?", width: "400px" }
+    );
+  };
 
   return (
     <div className={styles.userCard}>
@@ -40,7 +65,9 @@ export function UserCard({ name, status, role, onEdit, onDelete, onRestore }: Us
             {status === "active" && (
               <>
                 <MenubarItem onClick={onEdit}>Изменить пользователя</MenubarItem>
-                <MenubarItem variant="destructive" onClick={onDelete}>Удалить пользователя</MenubarItem>
+                <MenubarItem variant="destructive" onClick={handleDeleteClick}>
+                  Удалить пользователя
+                </MenubarItem>
               </>
             )}
             {status === "inactive" && (

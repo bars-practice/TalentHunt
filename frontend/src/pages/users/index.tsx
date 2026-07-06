@@ -1,9 +1,11 @@
 import { UserCard } from "@/components/user-card";
+import { UserFormModal } from "@/components/user-form-modal";
 import { Role } from "@/api/auth";
 import { getRoleLabel } from "@/utils/role";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { UserPlus } from "lucide-react";
+import { useModal } from "@/providers/ModalProvider";
 
 // !! Mock data - заменить на вызов API
 const mockUsers = [
@@ -42,13 +44,38 @@ const mockUsers = [
 ];
 
 export function Users() {
+  const { openModal } = useModal();
   const sortedUsers = [...mockUsers].sort((a, b) => {
     if (a.isDeleted === b.isDeleted) return 0;
     return a.isDeleted ? 1 : -1;
   });
 
+  const handleAddUser = () => {
+    openModal(
+      <UserFormModal
+        mode="create"
+        onSubmit={(data) => {
+          console.log("Create user:", data);
+        }}
+      />,
+      { title: "Добавить пользователя", width: "450px" }
+    );
+  };
+
   const handleEdit = (userId: string) => {
-    console.log("Edit user:", userId);
+    const user = mockUsers.find((u) => u.id === userId);
+    if (user) {
+      openModal(
+        <UserFormModal
+          mode="edit"
+          initialData={{ fullName: user.fullName, role: user.role }}
+          onSubmit={(data) => {
+            console.log("Edit user:", userId, data);
+          }}
+        />,
+        { title: "Изменить пользователя", width: "450px" }
+      );
+    }
   };
 
   const handleDelete = (userId: string) => {
@@ -63,8 +90,8 @@ export function Users() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Управление пользователями</h1>
-        <Button size="lg" variant="primary" className={styles.addButton}>
-          <Plus />
+        <Button size="lg" variant="primary" className={styles.addButton} onClick={handleAddUser}>
+          <UserPlus size={20} />
           Добавить пользователя
         </Button>
       </div>
