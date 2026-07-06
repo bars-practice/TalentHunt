@@ -1,0 +1,113 @@
+import { UserCard } from "@/components/user-card";
+import { UserFormModal } from "@/components/user-form-modal";
+import { Role } from "@/api/auth";
+import { getRoleLabel } from "@/utils/role";
+import styles from "./styles.module.css";
+import Button from "@/components/ui/button";
+import { UserPlus } from "lucide-react";
+import { useModal } from "@/providers/ModalProvider";
+
+// !! Mock data - заменить на вызов API
+const mockUsers = [
+  {
+    id: "fa91d3ca-ee93-4b68-9431-1f8cdbef58e6",
+    fullName: "Игорь Петров",
+    login: "ipetrov",
+    role: Role.HrDirector,
+    permissions: [],
+    isDeleted: false,
+  },
+  {
+    id: "fb82d4db-ff04-5c79-0542-2g9decfg69f7",
+    fullName: "Анна Сидорова",
+    login: "asidorova",
+    role: Role.Recruiter,
+    permissions: [],
+    isDeleted: false,
+  },
+  {
+    id: "fc93e5ec-gg15-6d80-1653-3h0efdg70g8",
+    fullName: "Михаил Козлов",
+    login: "mkozlov",
+    role: Role.Admin,
+    permissions: [],
+    isDeleted: true,
+  },
+  {
+    id: "gd04f6fd-hh26-7e91-2764-4i1fgeh81h9",
+    fullName: "Елена Новикова",
+    login: "enovikova",
+    role: Role.Recruiter,
+    permissions: [],
+    isDeleted: false,
+  },
+];
+
+export function Users() {
+  const { openModal } = useModal();
+  const sortedUsers = [...mockUsers].sort((a, b) => {
+    if (a.isDeleted === b.isDeleted) return 0;
+    return a.isDeleted ? 1 : -1;
+  });
+
+  const handleAddUser = () => {
+    openModal(
+      <UserFormModal
+        mode="create"
+        onSubmit={(data) => {
+          console.log("Create user:", data);
+        }}
+      />,
+      { title: "Добавить пользователя", width: "450px" }
+    );
+  };
+
+  const handleEdit = (userId: string) => {
+    const user = mockUsers.find((u) => u.id === userId);
+    if (user) {
+      openModal(
+        <UserFormModal
+          mode="edit"
+          initialData={{ fullName: user.fullName, role: user.role }}
+          onSubmit={(data) => {
+            console.log("Edit user:", userId, data);
+          }}
+        />,
+        { title: "Изменить пользователя", width: "450px" }
+      );
+    }
+  };
+
+  const handleDelete = (userId: string) => {
+    console.log("Delete user:", userId);
+  };
+
+  const handleRestore = (userId: string) => {
+    console.log("Restore user:", userId);
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Управление пользователями</h1>
+        <Button size="lg" variant="primary" className={styles.addButton} onClick={handleAddUser}>
+          <UserPlus size={20} />
+          Добавить пользователя
+        </Button>
+      </div>
+      <div className={styles.usersList}>
+        {sortedUsers.map((user) => (
+          <UserCard
+            key={user.id}
+            name={user.fullName}
+            status={user.isDeleted ? "inactive" : "active"}
+            role={getRoleLabel(user.role)}
+            onEdit={() => handleEdit(user.id)}
+            onDelete={() => handleDelete(user.id)}
+            onRestore={() => handleRestore(user.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

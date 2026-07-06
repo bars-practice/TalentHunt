@@ -37,6 +37,8 @@
   --code-number: oklch(56% 0 0deg);
   --success: #a1c527;
   --additional: #5cb3e5;
+  --border-hover: oklch(86% 0 0);
+  --color-secondary-hover: oklch(97% 0 0);
 
   /* Component-specific variables */
   --color-background: var(--background);
@@ -80,6 +82,13 @@
   /* Transitions */
   --default-transition-duration: 150ms;
   --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Animations */
+  --animate-in: fadeIn 150ms ease-out;
+  --animate-out: fadeOut 150ms ease-out;
+  --animate-alert-dialog-in: alertIn 150ms ease-out;
+  --animate-alert-dialog-out: alertOut 150ms ease-out;
 }
 
 .sr-only {
@@ -145,6 +154,10 @@ body {
   margin-left: auto;
 }
 
+p {
+  margin: 0;
+}
+
 svg {
   color: currentColor !important;
   stroke: currentColor !important;
@@ -152,4 +165,44 @@ svg {
 
 a:visited {
   color: currentColor !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes alertIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes alertOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
 }

@@ -38,7 +38,7 @@
     color: var(--color-secondary-foreground);
 
     &:hover {
-      background-color: var(--color-accent);
+      background-color: var(--color-secondary-hover);
       color: var(--color-accent-foreground);
     }
   }
@@ -48,7 +48,7 @@
     color: var(--color-secondary-foreground);
 
     &:hover {
-      background-color: var(--color-accent);
+      background-color: var(--color-secondary-hover);
       color: var(--color-accent-foreground);
     }
   }
@@ -70,6 +70,15 @@
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  &[data-variant="danger"] {
+    background-color: var(--color-destructive);
+    color: var(--color-white);
+
+    &:hover {
+      background-color: color-mix(in oklab, var(--color-destructive) 90%, black);
     }
   }
 
@@ -135,26 +144,6 @@
   &:disabled {
     opacity: 0.5;
     pointer-events: none;
-  }
-
-  /* Loading */
-  &[data-loading="true"] {
-    pointer-events: none;
-  }
-
-  .spinner {
-    width: calc(var(--spacing) * 4);
-    height: calc(var(--spacing) * 4);
-    border: 2px solid currentColor;
-    border-right-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.75s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
   }
 
   /* Focus */
