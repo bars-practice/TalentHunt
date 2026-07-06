@@ -47,6 +47,18 @@ export function Users() {
     return a.isDeleted ? 1 : -1;
   });
 
+  const handleEdit = (userId: string) => {
+    console.log("Edit user:", userId);
+  };
+
+  const handleDelete = (userId: string) => {
+    console.log("Delete user:", userId);
+  };
+
+  const handleRestore = (userId: string) => {
+    console.log("Restore user:", userId);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -63,6 +75,9 @@ export function Users() {
             name={user.fullName}
             status={user.isDeleted ? "inactive" : "active"}
             role={getRoleLabel(user.role)}
+            onEdit={() => handleEdit(user.id)}
+            onDelete={() => handleDelete(user.id)}
+            onRestore={() => handleRestore(user.id)}
           />
         ))}
       </div>

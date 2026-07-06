@@ -54,6 +54,8 @@
   color: var(--muted-foreground);
   cursor: pointer;
   transition: all var(--default-transition-duration) var(--default-transition-timing-function);
+  padding: 0;
+  outline: none;
 }
 
 .menuButton:hover {
