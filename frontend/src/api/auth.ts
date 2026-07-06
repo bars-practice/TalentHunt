@@ -8,7 +8,7 @@ export const Role = {
 
 export type Role = typeof Role[keyof typeof Role]
 
-const convertStringRoleToNumber = (role: string | number): Role => {
+export const convertStringRoleToNumber = (role: string | number): Role => {
   if (typeof role === 'number') {
     return role as Role;
   }

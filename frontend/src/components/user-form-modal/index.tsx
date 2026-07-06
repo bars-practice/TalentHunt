@@ -13,6 +13,7 @@ import styles from "./styles.module.css";
 const createFormSchema = (mode: "create" | "edit") =>
   z.object({
     fullName: z.string().trim().min(1, "Введите ФИО"),
+    login: mode === "create" ? z.string().trim().min(1, "Введите логин") : z.string().optional(),
     role: z.nativeEnum(Role),
     password: mode === "create"
       ? z.string().min(6, "Пароль должен быть не менее 6 символов")
@@ -27,7 +28,7 @@ interface UserFormModalProps {
     fullName?: string;
     role?: Role;
   };
-  onSubmit: (data: { fullName: string; password?: string; role: Role; permissions: string[] }) => void;
+  onSubmit: (data: { fullName: string; login?: string; password?: string; role: Role; permissions: string[] }) => Promise<void>;
 }
 
 export function UserFormModal({ mode = "create", initialData, onSubmit }: UserFormModalProps) {
@@ -42,14 +43,16 @@ export function UserFormModal({ mode = "create", initialData, onSubmit }: UserFo
     resolver: zodResolver(createFormSchema(mode)),
     defaultValues: {
       fullName: initialData?.fullName || "",
+      login: "",
       role: initialData?.role ?? Role.Recruiter,
       password: "",
     },
   });
 
-  const onFormSubmit = (values: UserFormValues) => {
-    onSubmit({
+  const onFormSubmit = async (values: UserFormValues) => {
+    await onSubmit({
       fullName: values.fullName,
+      login: values.login,
       role: values.role,
       password: values.password && values.password.length > 0 ? values.password : undefined,
       permissions: [],
@@ -75,6 +78,23 @@ export function UserFormModal({ mode = "create", initialData, onSubmit }: UserFo
             <FieldError errors={[errors.fullName]} />
           </FieldContent>
         </Field>
+
+        {mode === "create" && (
+          <Field>
+            <FieldLabel htmlFor="login">Логин</FieldLabel>
+            <FieldContent>
+              <Input
+                id="login"
+                type="text"
+                placeholder="Введите логин"
+                aria-invalid={!!errors.login}
+                autoComplete="new-password"
+                {...register("login")}
+              />
+              <FieldError errors={[errors.login]} />
+            </FieldContent>
+          </Field>
+        )}
 
         <Field>
           <FieldLabel htmlFor="password">Пароль</FieldLabel>
