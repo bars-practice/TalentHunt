@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IVacancyService, VacancyService>();
         services.AddScoped<ICompetencyService, CompetencyService>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ICandidateService, CandidateService>();
 
         return services;

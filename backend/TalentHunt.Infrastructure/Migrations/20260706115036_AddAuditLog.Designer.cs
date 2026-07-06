@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TalentHunt.Infrastructure.Data;
@@ -11,9 +12,11 @@ using TalentHunt.Infrastructure.Data;
 namespace TalentHunt.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260706115036_AddAuditLog")]
+    partial class AddAuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -23,7 +26,6 @@ namespace TalentHunt.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("TalentHunt.Application.Entities.AuditLog", b =>
-            modelBuilder.Entity("TalentHunt.Application.Entities.Candidate", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -33,83 +35,20 @@ namespace TalentHunt.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("User")
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Education")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Experience")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.PrimitiveCollection<string>("PlacesOfWork")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("jsonb")
-                        .HasDefaultValueSql("'[]'");
-
-                    b.Property<string>("Skills")
+                    b.Property<string>("ipAddress")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.ToTable("AuditLogs");
-                    b.ToTable("Candidates");
-                });
-
-            modelBuilder.Entity("TalentHunt.Application.Entities.Application", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CandidateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<Guid>("VacancyId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VacancyId");
-
-                    b.HasIndex("CandidateId", "VacancyId")
-                        .IsUnique();
-
-                    b.ToTable("Applications", (string)null);
                 });
 
             modelBuilder.Entity("TalentHunt.Application.Entities.Competency", b =>
@@ -264,25 +203,6 @@ namespace TalentHunt.Infrastructure.Migrations
                     b.ToTable("VacancyCompetencies");
                 });
 
-            modelBuilder.Entity("TalentHunt.Application.Entities.Application", b =>
-                {
-                    b.HasOne("TalentHunt.Application.Entities.Candidate", "Candidate")
-                        .WithMany("Applications")
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TalentHunt.Application.Entities.Vacancy", "Vacancy")
-                        .WithMany()
-                        .HasForeignKey("VacancyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Candidate");
-
-                    b.Navigation("Vacancy");
-                });
-
             modelBuilder.Entity("TalentHunt.Application.Entities.UserPermission", b =>
                 {
                     b.HasOne("TalentHunt.Application.Entities.Permission", "Permission")
@@ -319,11 +239,6 @@ namespace TalentHunt.Infrastructure.Migrations
                     b.Navigation("Competency");
 
                     b.Navigation("Vacancy");
-                });
-
-            modelBuilder.Entity("TalentHunt.Application.Entities.Candidate", b =>
-                {
-                    b.Navigation("Applications");
                 });
 
             modelBuilder.Entity("TalentHunt.Application.Entities.Competency", b =>

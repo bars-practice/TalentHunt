@@ -8,7 +8,8 @@ namespace TalentHunt.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Admin")]
-public class UsersController(IUserService userService) : ControllerBase
+public class UsersController(IUserService userService, IAuditLogService auditLogService) : 
+    BaseController(auditLogService)
 {
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -23,6 +24,7 @@ public class UsersController(IUserService userService) : ControllerBase
         try
         {
             var user = await userService.CreateAsync(request);
+            await LogAsync($"Создан пользователь: {user.Login} с ролью: {user.Role}");
             return CreatedAtAction(nameof(GetAll), new { id = user.Id }, user);
         }
         catch (InvalidOperationException ex)
@@ -37,6 +39,7 @@ public class UsersController(IUserService userService) : ControllerBase
         try
         {
             var user = await userService.UpdateAsync(id, request);
+            await LogAsync($"Обновлён пользователь {user.Login}");
             return Ok(user);
         }
         catch (KeyNotFoundException)
@@ -55,6 +58,7 @@ public class UsersController(IUserService userService) : ControllerBase
         try
         {
             await userService.DeleteAsync(id);
+            await LogAsync($"Удалён пользователь с ID {id}");
             return NoContent();
         }
         catch (KeyNotFoundException)

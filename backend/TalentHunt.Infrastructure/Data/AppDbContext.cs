@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Vacancy> Vacancies => Set<Vacancy>();
     public DbSet<Competency> Competencies => Set<Competency>();
     public DbSet<VacancyCompetency> VacancyCompetencies => Set<VacancyCompetency>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Candidate> Candidates => Set<Candidate>();
     public DbSet<ApplicationEntity> Applications => Set<ApplicationEntity>();
 

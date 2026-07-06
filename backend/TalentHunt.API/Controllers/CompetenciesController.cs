@@ -9,7 +9,8 @@ namespace TalentHunt.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "HR,Admin")]
-public class CompetenciesController(ICompetencyService competencyService) : ControllerBase
+public class CompetenciesController(ICompetencyService competencyService, IAuditLogService auditLogService)
+    : BaseController(auditLogService)
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
@@ -26,6 +27,7 @@ public class CompetenciesController(ICompetencyService competencyService) : Cont
         try
         {
             var competency = await competencyService.CreateAsync(request, cancellationToken);
+            await LogAsync($"Создана компетенция \"{competency.Name}\"");
             return CreatedAtAction(nameof(GetAll), new { id = competency.Id }, competency);
         }
         catch (InvalidOperationException ex)
@@ -43,6 +45,7 @@ public class CompetenciesController(ICompetencyService competencyService) : Cont
         try
         {
             var competency = await competencyService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
+            await LogAsync($"Обновлена компетенция \"{competency.Name}\"");
             return Ok(competency);
         }
         catch (KeyNotFoundException)
@@ -61,6 +64,7 @@ public class CompetenciesController(ICompetencyService competencyService) : Cont
         try
         {
             await competencyService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
+            await LogAsync($"Удалена компетенция с ID {id}");
             return NoContent();
         }
         catch (KeyNotFoundException)
