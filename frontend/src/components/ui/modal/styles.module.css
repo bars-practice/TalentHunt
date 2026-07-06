@@ -1,0 +1,131 @@
+/* Backdrop */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.modalOpen {
+  opacity: 1;
+}
+
+.modalContent {
+  position: relative;
+  background-color: var(--color-background);
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 18px;
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
+  transition: all 150ms ease-out;
+  height: fit-content;
+}
+
+.modalContentOpen {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.modalTitle {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: var(--color-background);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  text-align: start;
+  padding: 1rem 1rem;
+  margin: 0;
+}
+
+.modalInnerContent {
+  padding: 0 1rem 1rem 1rem;
+}
+
+.modalInnerContent:first-child {
+  padding-top: 1rem;
+}
+
+.modalScrollBody {
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 6px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--spacing) * 9);
+  height: calc(var(--spacing) * 9);
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-secondary-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 20%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.backButton {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  padding: 6px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--spacing) * 9);
+  height: calc(var(--spacing) * 9);
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-secondary-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 20%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
