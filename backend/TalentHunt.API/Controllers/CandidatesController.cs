@@ -9,7 +9,8 @@ namespace TalentHunt.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "HR,Admin")]
-public class CandidatesController(ICandidateService candidateService) : ControllerBase
+public class CandidatesController(ICandidateService candidateService, IAuditLogService auditLogService)
+    : BaseController(auditLogService)
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
@@ -40,6 +41,7 @@ public class CandidatesController(ICandidateService candidateService) : Controll
         try
         {
             var candidate = await candidateService.CreateAsync(request, cancellationToken);
+            await LogAsync($"Создан кандидат \"{candidate.FullName}\"");
             return CreatedAtAction(nameof(GetById), new { id = candidate.Id }, candidate);
         }
         catch (InvalidOperationException ex)
@@ -57,6 +59,7 @@ public class CandidatesController(ICandidateService candidateService) : Controll
         try
         {
             var candidate = await candidateService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
+            await LogAsync($"Обновлён кандидат \"{candidate.FullName}\"");
             return Ok(candidate);
         }
         catch (KeyNotFoundException)
@@ -75,6 +78,7 @@ public class CandidatesController(ICandidateService candidateService) : Controll
         try
         {
             await candidateService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
+            await LogAsync($"Удалён кандидат с ID {id}");
             return NoContent();
         }
         catch (KeyNotFoundException)
