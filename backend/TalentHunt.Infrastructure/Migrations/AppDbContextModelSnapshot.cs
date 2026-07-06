@@ -23,7 +23,6 @@ namespace TalentHunt.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("TalentHunt.Application.Entities.AuditLog", b =>
-            modelBuilder.Entity("TalentHunt.Application.Entities.Candidate", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -41,6 +40,20 @@ namespace TalentHunt.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("User")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AuditLogs");
+                });
+
+            modelBuilder.Entity("TalentHunt.Application.Entities.Candidate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -81,7 +94,6 @@ namespace TalentHunt.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs");
                     b.ToTable("Candidates");
                 });
 
