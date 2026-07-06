@@ -1,0 +1,62 @@
+.userCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: var(--background);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
+}
+
+.userCard:hover {
+  border-color: var(--border-hover);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+}
+
+.detailsRow {
+  display: flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.role {
+  font-weight: var(--font-weight-medium);
+}
+
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all var(--default-transition-duration) var(--default-transition-timing-function);
+}
+
+.menuButton:hover {
+  background-color: var(--muted);
+  color: var(--foreground);
+}

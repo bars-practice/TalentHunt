@@ -14,6 +14,7 @@ export interface User {
   login: string
   role: Role
   permissions: string[]
+  isDeleted: boolean
 }
 
 export interface LoginRequest {

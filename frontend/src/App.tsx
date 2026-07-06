@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom"
 import Login from "@/pages/login"
+import { Users } from "@/pages/users"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 import { Role } from "@/api/auth"
 import { SideMenu } from "@/components/side-menu"
@@ -57,7 +58,7 @@ function App() {
             <Route
               element={<ProtectedRoute allowedRoles={[Role.Admin]} />}
             >
-              <Route path="/users" element={<div>Пользователи</div>} />
+              <Route path="/users" element={<Users />} />
             </Route>
 
           </Route>
