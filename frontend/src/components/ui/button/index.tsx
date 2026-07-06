@@ -13,6 +13,7 @@ type ButtonProps = ComponentProps<"button"> & {
   | "danger";
   size?: "sm" | "md" | "lg" | "icon" | "icon-sm" | "icon-lg";
   asChild?: boolean;
+  loading?: boolean;
 };
 
 function Button({
@@ -20,6 +21,7 @@ function Button({
   variant = "primary",
   size = "md",
   asChild = false,
+  loading = false,
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot : "button";
