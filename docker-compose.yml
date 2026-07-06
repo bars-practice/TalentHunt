@@ -28,7 +28,10 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "${BACKEND_PORT:-5105}"
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+    ports:
+      - "${BACKEND_PORT:-5105}:5105"
     restart: unless-stopped
     networks:
       - talenthunt-network

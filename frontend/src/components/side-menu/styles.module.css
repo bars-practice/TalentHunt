@@ -1,0 +1,100 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  height: 100vh;
+  background-color: var(--foreground);
+  font-family: var(--font-sans);
+  padding: 10px 0 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.logoImage {
+  width: 135px;
+  height: auto;
+}
+
+.navigation {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin-top: 20px;
+  color: var(--color-white);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 16px;
+  text-decoration: none;
+  border-left: 4px solid transparent;
+  transition: background-color var(--default-transition-duration) var(--default-transition-timing-function);
+}
+
+.navItem:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.navItemActive {
+  background-color: rgba(0, 0, 0, 0.22);
+  border-left-color: var(--additional);
+}
+
+.navLabel {
+  font-weight: 400;
+  color: var(--color-white);
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: var(--foreground);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userName {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+  line-height: 1.2;
+}
+
+.userRole {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.2;
+}
+
+.logoutButton {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-white);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  transition: opacity var(--default-transition-duration) ease;
+}
+
+.logoutButton:hover {
+  opacity: 1;
+}

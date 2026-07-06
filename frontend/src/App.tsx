@@ -1,19 +1,38 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom"
 import Login from "@/pages/login"
-import { useAuthGuard } from "@/hooks/useAuthGuard"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
+import { Role } from "@/api/auth"
+import { SideMenu } from "@/components/side-menu"
+import styles from "./App.module.css"
 
-export function ProtectedRoute() {
-  const isAuthenticated = useAuthGuard()
+interface ProtectedRouteProps {
+  allowedRoles?: Role[]
+}
 
-  if (isAuthenticated === null) {
+export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
+  const { user, loading } = useCurrentUser()
+  if (loading) {
     return null
   }
-
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />
+  }
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />
   }
 
   return <Outlet />
+}
+
+function Layout() {
+  return (
+    <div className={styles.layout}>
+      <SideMenu onLogout={() => { }} />
+      <main className={styles.main}>
+        <Outlet />
+      </main>
+    </div>
+  )
 }
 
 function App() {
@@ -23,7 +42,25 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<div>Protected</div>} />
+          <Route element={<Layout />}>
+
+            <Route path="/" element={<div>Главная</div>} />
+
+            <Route
+              element={<ProtectedRoute allowedRoles={[Role.HrDirector, Role.Recruiter, Role.Admin]} />}
+            >
+              <Route path="/candidates" element={<div>Кандидаты</div>} />
+              <Route path="/interviews" element={<div>Собеседования</div>} />
+              <Route path="/vacancies" element={<div>Вакансии</div>} />
+            </Route>
+
+            <Route
+              element={<ProtectedRoute allowedRoles={[Role.Admin]} />}
+            >
+              <Route path="/users" element={<div>Пользователи</div>} />
+            </Route>
+
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -31,4 +68,5 @@ function App() {
     </BrowserRouter>
   )
 }
+
 export default App
