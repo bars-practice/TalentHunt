@@ -36,7 +36,8 @@ function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <span className={styles.spinner} /> : children}
+      {loading && <span className={styles.spinner} />}
+      {children}
     </Comp>
   );
 }
