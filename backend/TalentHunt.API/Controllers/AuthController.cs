@@ -41,6 +41,13 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(new { login = user.Login, role = user.Role.ToString() });
     }
 
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return NoContent();
+    }
+
     [Authorize]
     [HttpGet("me")]
     public IActionResult Me()
