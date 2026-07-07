@@ -7,7 +7,6 @@ import Button from "@/components/ui/button";
 import { VacancyStages } from "./VacancyStages";
 import { pluralize } from "@/utils/plural";
 import { CandidateFormModal } from "@/components/candidate-form-modal";
-import { candidatesService } from "@/api/candidates";
 import styles from "./styles.module.css";
 
 export interface VacancyProps {
@@ -22,6 +21,9 @@ export interface VacancyProps {
 
 interface VacancyCardComponentProps {
   vacancy: VacancyProps;
+  responses: any[] | undefined;
+  isLoadingResponses: boolean;
+  onRefreshResponses: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onRestore: () => void;
@@ -34,7 +36,16 @@ const STATUS_CONFIG = {
   inactive: { text: "АРХИВ", variant: "neutral" as const },
 };
 
-export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin, isHR }: VacancyCardComponentProps) {
+export function VacancyCard({
+  vacancy,
+  responses,
+  onRefreshResponses,
+  onEdit,
+  onDelete,
+  onRestore,
+  isAdmin,
+  isHR
+}: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
   const { openModal, closeModal } = useModal();
 
@@ -54,12 +65,9 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin, isH
   const handleAddCandidate = () => {
     openModal(
       <CandidateFormModal
-        onSubmit={async (data) => {
-          try {
-            await candidatesService.create(data);
-          } catch (err) {
-            console.error("Failed to create candidate:", err);
-          }
+        vacancyId={vacancy.id}
+        onSuccess={async () => {
+          onRefreshResponses();
         }}
       />,
       { title: "Добавить кандидата", width: "600px" }
@@ -119,7 +127,7 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin, isH
       </div>
 
       <AccordionContent className={styles.list}>
-        <VacancyStages responses={vacancy.responses} />
+        <VacancyStages responses={responses || []} />
       </AccordionContent>
     </AccordionItem>
   );

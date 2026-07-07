@@ -6,6 +6,8 @@ import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Field, FieldLabel, FieldContent, FieldError } from "@/components/ui/field";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { candidatesService } from "@/api/candidates";
+import { applicationsService } from "@/api/applications";
 import styles from "./styles.module.css";
 
 const formSchema = z.object({
@@ -21,10 +23,12 @@ const formSchema = z.object({
 type CandidateFormValues = z.infer<typeof formSchema>;
 
 interface CandidateFormModalProps {
+  vacancyId?: string;
   onSubmit?: (data: { fullName: string; phone: string; city: string; skills: string; education: string; experience: string; placesOfWork?: string[] }) => Promise<void>;
+  onSuccess?: () => Promise<void>;
 }
 
-export function CandidateFormModal({ onSubmit }: CandidateFormModalProps) {
+export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: CandidateFormModalProps) {
   const { closeModal } = useModal();
 
   const methods = useForm<CandidateFormValues>({
@@ -46,7 +50,8 @@ export function CandidateFormModal({ onSubmit }: CandidateFormModalProps) {
     const placesOfWork = values.placesOfWork
       ? values.placesOfWork.split(",").map(p => p.trim()).filter(p => p.length > 0)
       : undefined;
-    await onSubmit({
+
+    const candidateData = {
       fullName: values.fullName,
       phone: values.phone,
       city: values.city,
@@ -54,7 +59,25 @@ export function CandidateFormModal({ onSubmit }: CandidateFormModalProps) {
       education: values.education,
       experience: values.experience,
       placesOfWork,
-    });
+    };
+
+    if (onSubmit) {
+      await onSubmit(candidateData);
+    } else {
+      // Default behavior: create candidate and link to vacancy
+      const candidate = await candidatesService.create(candidateData);
+      if (vacancyId) {
+        await applicationsService.create({
+          vacancyId,
+          candidateId: candidate.id,
+        });
+      }
+    }
+
+    if (onSuccess) {
+      await onSuccess();
+    }
+
     closeModal();
   };
 

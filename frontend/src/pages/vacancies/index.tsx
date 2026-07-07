@@ -2,14 +2,33 @@ import { VacancyCard } from "@/components/vacancy-card";
 import { VacancyFormModal } from "@/components/vacancy-form-modal";
 import { vacanciesService, type Vacancy, VacancyLevel } from "@/api/vacancies";
 import { competenciesService, type Competency } from "@/api/competencies";
+import { applicationsService } from "@/api/applications";
 import { Role } from "@/api/auth";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
 import { Briefcase } from "lucide-react";
-import { Accordion } from "@radix-ui/react-accordion";
+import { Accordion } from "@/components/ui/accordion";
 import { useModal } from "@/providers/ModalProvider";
 import { useState, useEffect } from "react";
+
+const mapStatusToStage = (status: string | number) => {
+  if (typeof status === "number") {
+    switch (status) {
+      case 0: return "new";
+      case 1: return "interview";
+      case 2: return "decision";
+      case 3: return "offer";
+      default: return "new";
+    }
+  }
+
+  const statusLower = String(status).toLowerCase();
+  if (statusLower.includes("interview")) return "interview";
+  if (statusLower.includes("decision") || statusLower.includes("approved") || statusLower.includes("rejected")) return "decision";
+  if (statusLower.includes("offer")) return "offer";
+  return "new";
+};;
 
 export function Vacancies() {
   const { openModal } = useModal();
@@ -18,6 +37,10 @@ export function Vacancies() {
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedVacancies, setExpandedVacancies] = useState<string[]>([]);
+  const [responsesCache, setResponsesCache] = useState<Record<string, any[]>>({});
+  const [loadingResponses, setLoadingResponses] = useState<Record<string, boolean>>({});
+  const [fetchedVacancyIds, setFetchedVacancyIds] = useState<string[]>([]);
 
   const loadVacancies = async () => {
     try {
@@ -45,6 +68,43 @@ export function Vacancies() {
     loadVacancies();
     loadCompetencies();
   }, []);
+
+  const loadResponsesForVacancy = async (vacancyId: string) => {
+    try {
+      setLoadingResponses(prev => ({ ...prev, [vacancyId]: true }));
+      const allApplications = await applicationsService.getAll();
+      const vacancyApplications = allApplications.filter(app => app.vacancyId === vacancyId && !app.isDeleted);
+
+      const mapped = vacancyApplications.map(app => ({
+        id: app.id,
+        name: app.candidateFullName,
+        stage: mapStatusToStage(app.status),
+        date: app.decidedAt ? new Date(app.decidedAt) : undefined,
+      }));
+
+      setResponsesCache(prev => ({ ...prev, [vacancyId]: mapped }));
+    } catch (err) {
+      console.error("Failed to load applications:", err);
+    } finally {
+      setLoadingResponses(prev => ({ ...prev, [vacancyId]: false }));
+    }
+  };
+
+  const handleAccordionChange = (values: string[]) => {
+    setExpandedVacancies(values);
+
+    const toFetch = values.filter(id => !fetchedVacancyIds.includes(id));
+
+    if (toFetch.length > 0) {
+      setFetchedVacancyIds(prev => [...prev, ...toFetch]);
+
+      setTimeout(() => {
+        toFetch.forEach(id => {
+          loadResponsesForVacancy(id);
+        });
+      }, 250);
+    }
+  };
 
   const sortedVacancies = [...vacancies].sort((a, b) => {
     if (a.isDeleted === b.isDeleted) return 0;
@@ -147,7 +207,12 @@ export function Vacancies() {
       ) : error ? (
         <div className={styles.vacanciesList}>Ошибка: {error}</div>
       ) : (
-        <Accordion type="multiple" className={styles.vacanciesList}>
+        <Accordion
+          type="multiple"
+          className={styles.vacanciesList}
+          value={expandedVacancies}
+          onValueChange={handleAccordionChange}
+        >
           {sortedVacancies.map((vacancy) => {
             const levelLabel = vacancy.level === VacancyLevel.Junior ? "Junior" : vacancy.level === VacancyLevel.Middle ? "Middle" : "Senior";
             return (
@@ -162,6 +227,9 @@ export function Vacancies() {
                   status: vacancy.isDeleted ? "inactive" : "active",
                   responses: [],
                 }}
+                responses={responsesCache[vacancy.id]}
+                isLoadingResponses={loadingResponses[vacancy.id] || false}
+                onRefreshResponses={() => loadResponsesForVacancy(vacancy.id)}
                 onEdit={() => handleEdit(vacancy)}
                 onDelete={() => handleDelete(vacancy.id)}
                 onRestore={() => handleRestore(vacancy.id)}
