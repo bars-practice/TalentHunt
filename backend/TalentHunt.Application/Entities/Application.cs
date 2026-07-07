@@ -16,5 +16,10 @@ public class Application : ISoftDeletable
 
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Applied;
 
+    public Guid? DecidedByUserId { get; set; }
+    public User? DecidedBy { get; set; }
+
+    public DateTime? DecidedAt { get; set; }
+
     public Interview? Interview { get; set; }
 }

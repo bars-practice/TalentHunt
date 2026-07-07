@@ -10,5 +10,8 @@ public record ApplicationResponse(
     string CandidateFullName,
     ApplicationStatus Status,
     Guid? InterviewId,
+    Guid? DecidedByUserId,
+    string? DecidedByFullName,
+    DateTime? DecidedAt,
     bool IsDeleted
 );

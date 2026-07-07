@@ -13,6 +13,7 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
             .IncludeDeletedIf(includeDeleted)
             .Include(a => a.Candidate)
             .Include(a => a.Vacancy)
+            .Include(a => a.DecidedBy)
             .Include(a => a.Interview);
 
     public async Task<IReadOnlyList<ApplicationEntity>> GetAllAsync(

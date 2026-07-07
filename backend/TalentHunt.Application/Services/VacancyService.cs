@@ -24,6 +24,9 @@ public class VacancyService(
         var businessUnit = NormalizeRequired(request.BusinessUnit, "BusinessUnit");
         var competencyIds = request.CompetencyIds ?? [];
 
+        if (competencyIds.Count == 0)
+            throw new InvalidOperationException("Вакансия должна содержать хотя бы одну компетенцию.");
+
         await ValidateCompetencyIdsAsync(competencyIds, cancellationToken);
 
         var vacancy = new Vacancy
@@ -75,6 +78,9 @@ public class VacancyService(
         if (request.CompetencyIds is not null)
         {
             var competencyIds = request.CompetencyIds.Distinct().ToList();
+            if (competencyIds.Count == 0)
+                throw new InvalidOperationException("Вакансия должна содержать хотя бы одну компетенцию.");
+
             await ValidateCompetencyIdsAsync(competencyIds, cancellationToken);
             await vacancyRepository.ReplaceCompetenciesAsync(id, competencyIds, cancellationToken);
         }

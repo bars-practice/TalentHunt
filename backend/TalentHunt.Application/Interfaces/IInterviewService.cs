@@ -1,33 +1,33 @@
 using TalentHunt.Application.DTO;
-using TalentHunt.Application.Enums;
 
 namespace TalentHunt.Application.Interfaces;
 
-public interface IApplicationService
+public interface IInterviewService
 {
-    Task<IEnumerable<ApplicationResponse>> GetAllAsync(
+    Task<IEnumerable<InterviewListItemResponse>> GetAllAsync(
+        Guid? candidateId = null,
+        Guid? vacancyId = null,
+        Enums.ApplicationStatus? applicationStatus = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 
-    Task<ApplicationResponse> GetByIdAsync(
+    Task<InterviewDetailResponse> GetByIdAsync(
         Guid id,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 
-    Task<ApplicationResponse> CreateAsync(
-        CreateApplicationRequest request,
+    Task<InterviewDetailResponse> CreateAsync(
+        CreateInterviewRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<ApplicationResponse> UpdateAsync(
+    Task<InterviewDetailResponse> StartAsync(
         Guid id,
-        UpdateApplicationRequest request,
-        bool includeDeleted = false,
+        Guid interviewerUserId,
         CancellationToken cancellationToken = default);
 
-    Task<ApplicationResponse> DecideAsync(
+    Task<InterviewDetailResponse> UpdateAsync(
         Guid id,
-        ApplicationDecisionRequest request,
-        Guid decidedByUserId,
+        UpdateInterviewRequest request,
         CancellationToken cancellationToken = default);
 
     Task DeleteAsync(
