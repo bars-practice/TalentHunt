@@ -51,7 +51,7 @@ function App() {
               <Route path="/" element={<div>Главная</div>} />
 
               <Route
-                element={<ProtectedRoute allowedRoles={[Role.HrDirector, Role.Recruiter, Role.Admin]} />}
+                element={<ProtectedRoute allowedRoles={[Role.HR, Role.Approver, Role.Admin]} />}
               >
                 <Route path="/candidates" element={<div>Кандидаты</div>} />
                 <Route path="/interviews" element={<div>Собеседования</div>} />

@@ -2,8 +2,8 @@ import { api } from './client.ts'
 
 export const Role = {
   Admin: 0,
-  HrDirector: 1,
-  Recruiter: 2
+  HR: 1,
+  Approver: 2
 } as const
 
 export type Role = typeof Role[keyof typeof Role]
@@ -15,14 +15,14 @@ export const convertStringRoleToNumber = (role: string | number): Role => {
 
   const roleMap: Record<string, Role> = {
     'Admin': Role.Admin,
-    'HrDirector': Role.HrDirector,
-    'Recruiter': Role.Recruiter,
+    'HR': Role.HR,
+    'Approver': Role.Approver,
     '0': Role.Admin,
-    '1': Role.HrDirector,
-    '2': Role.Recruiter,
+    '1': Role.HR,
+    '2': Role.Approver,
   };
 
-  return roleMap[role] ?? Role.Recruiter;
+  return roleMap[role] ?? Role.Approver;
 };
 
 export interface User {

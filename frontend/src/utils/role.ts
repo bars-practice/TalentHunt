@@ -2,8 +2,8 @@ import { Role } from "@/api/auth";
 
 const ROLE_LABELS: Record<Role, string> = {
   [Role.Admin]: "Администратор",
-  [Role.Recruiter]: "Рекрутер",
-  [Role.HrDirector]: "HR Директор",
+  [Role.HR]: "HR",
+  [Role.Approver]: "Approver",
 };
 
 export const getRoleLabel = (role: Role): string => {

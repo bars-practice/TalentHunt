@@ -45,7 +45,6 @@ export function Users() {
           try {
             await usersService.create({
               fullName: data.fullName,
-              login: data.login,
               password: data.password!,
               role: data.role,
             });

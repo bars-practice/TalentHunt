@@ -4,7 +4,6 @@ import { Role, convertStringRoleToNumber } from './auth'
 
 export interface CreateUserRequest {
   fullName: string
-  login: string
   password: string
   role: Role
 }
@@ -12,6 +11,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   fullName: string
   role: Role
+  isDeleted?: boolean
 }
 
 export const usersService = {
@@ -33,5 +33,5 @@ export const usersService = {
     api.delete<void>(`/Users/${id}`),
 
   restore: (id: string) =>
-    api.post<User>(`/Users/${id}/restore`)
+    api.put<User>(`/Users/${id}`, { isDeleted: false })
 }
