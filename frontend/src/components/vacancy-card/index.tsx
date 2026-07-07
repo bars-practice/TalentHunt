@@ -6,9 +6,9 @@ import { useModal } from "@/providers/ModalProvider";
 import Button from "@/components/ui/button";
 import { VacancyStages } from "./VacancyStages";
 import { pluralize } from "@/utils/plural";
+import { CandidateFormModal } from "@/components/candidate-form-modal";
 import styles from "./styles.module.css";
 
-// Описываем структуру объекта вакансии
 export interface VacancyProps {
   id: string;
   title: string;
@@ -16,7 +16,7 @@ export interface VacancyProps {
   businessUnit: string;
   responsesCount: number;
   status: "active" | "inactive";
-  responses: any[]; // Тип из VacancyStages
+  responses: any[];
 }
 
 interface VacancyCardComponentProps {
@@ -24,7 +24,6 @@ interface VacancyCardComponentProps {
   onEdit: () => void;
   onDelete: () => void;
   onRestore: () => void;
-  onAddResponse: () => void;
   isAdmin?: boolean;
 }
 
@@ -33,7 +32,7 @@ const STATUS_CONFIG = {
   inactive: { text: "АРХИВ", variant: "neutral" as const },
 };
 
-export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddResponse, isAdmin }: VacancyCardComponentProps) {
+export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin }: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
   const { openModal, closeModal } = useModal();
 
@@ -47,6 +46,15 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddRespons
         </div>
       </div>,
       { title: "Закрыть вакансию?", width: "400px" }
+    );
+  };
+
+  const handleAddCandidate = () => {
+    openModal(
+      <CandidateFormModal
+
+      />,
+      { title: "Добавить кандидата", width: "600px" }
     );
   };
 
@@ -73,7 +81,7 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddRespons
         </AccordionTrigger>
 
         {vacancy.status === "active" && (
-          <Button size="sm" variant="ghost" asChild className={styles.addButton} onClick={onAddResponse}>
+          <Button size="sm" variant="ghost" asChild className={styles.addButton} onClick={handleAddCandidate}>
             <p>
               <UserPlus size={16} />
               Добавить отклик
@@ -103,7 +111,6 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddRespons
       </div>
 
       <AccordionContent className={styles.list}>
-        {/* Передаем только то, что нужно компоненту этапов */}
         <VacancyStages responses={vacancy.responses} />
       </AccordionContent>
     </AccordionItem>
