@@ -1,4 +1,4 @@
-import { Users, Calendar, Briefcase, User as UserIcon, FileText, type LucideIcon } from "lucide-react";
+import { Users, Calendar, Briefcase, User as UserIcon, FileText, CheckSquare, type LucideIcon } from "lucide-react";
 import { Role } from "@/api/auth";
 
 export interface MenuItem {
@@ -25,6 +25,12 @@ export const menuItems: MenuItem[] = [
     path: "/vacancies",
     label: "Вакансии",
     icon: Briefcase,
+    roles: [Role.HR, Role.Approver, Role.Admin],
+  },
+  {
+    path: "/competency-assessment",
+    label: "Оценка компетенций",
+    icon: CheckSquare,
     roles: [Role.HR, Role.Approver, Role.Admin],
   },
   {
