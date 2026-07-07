@@ -9,7 +9,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   gap: 12px;
-  padding: 8px 15px;
+  padding: 8px 8px;
 }
 
 [data-state="open"] .header {
@@ -29,7 +29,7 @@
 .info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
 }
 
@@ -48,8 +48,8 @@
 .metaRow {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: var(--text-sm);
+  gap: 12px;
+  font-size: 13px;
   color: var(--muted-foreground);
 }
 
@@ -95,7 +95,7 @@
 
 .list {
   overflow: hidden;
-  padding: 16px;
+  padding: 0;
   background-color: var(--background);
   border: 1px solid var(--border);
   border-radius: 0 0 10px 10px;
@@ -105,4 +105,80 @@
 
 .empty {
   color: var(--muted-foreground);
+  padding: 12px 0;
+  margin-left: 35px;
+}
+
+.stageItem {
+  padding: 0 16px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  margin-left: 35px;
+  background-color: transparent;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    .itemMenu {
+      opacity: 1;
+    }
+  }
+}
+
+.itemInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.itemName {
+  font-size: 15px;
+  color: var(--foreground);
+}
+
+.itemDate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.itemMenu {
+  transition: opacity 0.1s ease;
+  opacity: 0;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  min-height: auto !important;
+  height: auto !important;
+  box-shadow: none !important;
+}
+
+.itemMenuTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.itemMenuTrigger:hover {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.stageTrigger {
+  color: var(--foreground);
+
+  padding: 12px 0;
 }
