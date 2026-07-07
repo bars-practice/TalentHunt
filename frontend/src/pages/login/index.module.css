@@ -1,5 +1,4 @@
 .container {
-  background-color: var(--background);
   min-height: 100vh;
   color: var(--foreground);
   font-family: sans-serif;

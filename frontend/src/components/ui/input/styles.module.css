@@ -7,11 +7,11 @@
   border: 1px solid var(--color-input);
   border-radius: var(--radius-md);
   outline: none;
-  background-color: transparent;
   box-shadow: var(--shadow-xs);
   color: var(--color-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
+  background-color: #fff;
 
   /* Invalid */
   &[aria-invalid="true"] {

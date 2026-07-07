@@ -31,9 +31,11 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 }
 
 function Layout() {
+  const { logout } = useCurrentUser()
+
   return (
     <div className={styles.layout}>
-      <SideMenu onLogout={() => { }} />
+      <SideMenu onLogout={logout} />
       <main className={styles.main}>
         <Outlet />
       </main>
