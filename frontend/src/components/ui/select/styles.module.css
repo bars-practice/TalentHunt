@@ -9,7 +9,7 @@
   transition-duration: var(--default-transition-duration);
   transition-timing-function: var(--default-transition-timing-function);
   border: 1px solid var(--color-input);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   outline: none;
   background-color: transparent;
   box-shadow: var(--shadow-xs);
@@ -60,6 +60,7 @@
   /* Invalid */
   &[aria-invalid="true"] {
     border-color: var(--color-destructive);
+    color: var(--color-destructive);
   }
 
   /* Focus */

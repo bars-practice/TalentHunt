@@ -1,0 +1,113 @@
+.autocompleteWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputWithButton {
+  padding-right: 40px;
+}
+
+.addButton {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: calc(var(--spacing) * 6) !important;
+  width: calc(var(--spacing) * 6) !important;
+  border-radius: 8px;
+}
+
+.dropdown {
+  margin-top: 4px;
+  background-color: var(--color-background, #ffffff);
+  border: 1px solid color-mix(in oklab, var(--color-foreground) 15%, transparent);
+  border-radius: 12px;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dropdown :global(.simplebar-scrollbar.simplebar-visible::before) {
+  opacity: 0.8;
+}
+
+.option {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-foreground);
+  transition: background-color 100ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.optionFocused {
+  background-color: var(--color-secondary-hover, #f1f5f9);
+}
+
+.highlight {
+  background-color: color-mix(in oklab, var(--color-primary) 25%, transparent);
+  color: var(--color-foreground);
+  font-weight: 600;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.selectedTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--color-secondary-hover, #f1f5f9);
+  color: var(--color-foreground);
+  padding: 6px 10px;
+  border-radius: 30px;
+  font-size: 13px;
+  max-width: 100%;
+}
+
+.tagText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.removeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: color-mix(in oklab, var(--color-foreground) 40%, transparent);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 100ms ease;
+}
+
+.removeButton:hover {
+  color: #ef4444;
+}
+
+.dropdown :global(.simplebar-content) {
+  padding-right: 11px !important;
+  box-sizing: border-box;
+}
