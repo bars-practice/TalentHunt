@@ -7,6 +7,7 @@ using TalentHunt.Application.Services;
 using TalentHunt.Infrastructure.Authentication;
 using TalentHunt.Infrastructure.Data;
 using TalentHunt.Infrastructure.Repositories;
+using TalentHunt.Infrastructure.Pdf;
 
 namespace TalentHunt.Infrastructure;
 
@@ -42,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<ICandidateService, CandidateService>();
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<IInterviewService, InterviewService>();
+        services.AddScoped<IPdfService, PdfService>();
 
         return services;
     }

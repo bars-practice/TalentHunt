@@ -9,7 +9,9 @@ namespace TalentHunt.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "HR,Admin")]
-public class CandidatesController(ICandidateService candidateService, IAuditLogService auditLogService)
+public class CandidatesController(ICandidateService candidateService,
+    IAuditLogService auditLogService,
+    IPdfService pdfService)
     : BaseController(auditLogService)
 {
     [HttpGet]
@@ -80,6 +82,21 @@ public class CandidatesController(ICandidateService candidateService, IAuditLogS
             await candidateService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
             await LogAsync($"Удалён кандидат с ID {id}");
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Кандидат не найден." });
+        }
+    }
+
+    [HttpGet("{id:guid}/card")]
+    [Authorize(Roles = "HR,Approver")] 
+    public async Task<IActionResult> GetCard(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pdf = await pdfService.GenerateCandidateCardAsync(id, cancellationToken);
+            return File(pdf, "application/pdf", $"candidate-card-{id}.pdf");
         }
         catch (KeyNotFoundException)
         {

@@ -16,5 +16,9 @@ public class Vacancy : ISoftDeletable
 
     public string Description { get; set; } = string.Empty;
 
+    public Guid? ApproverId { get; set; }
+
+    public User? Approver { get; set; }
+
     public ICollection<VacancyCompetency> VacancyCompetencies { get; set; } = new List<VacancyCompetency>();
 }

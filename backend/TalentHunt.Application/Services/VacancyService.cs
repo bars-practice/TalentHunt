@@ -35,7 +35,8 @@ public class VacancyService(
             Title = title,
             Level = request.Level,
             BusinessUnit = businessUnit,
-            Description = request.Description?.Trim() ?? string.Empty
+            Description = request.Description?.Trim() ?? string.Empty,
+            ApproverId = request.ApproverId
         };
 
         await vacancyRepository.AddAsync(vacancy, cancellationToken);
@@ -75,6 +76,9 @@ public class VacancyService(
 
         if (request.IsDeleted.HasValue)
             vacancy.IsDeleted = request.IsDeleted.Value;
+
+        if (request.ApproverId.HasValue)
+            vacancy.ApproverId = request.ApproverId.Value;
 
         await vacancyRepository.UpdateAsync(vacancy);
 
@@ -141,6 +145,8 @@ public class VacancyService(
         vacancy.Level,
         vacancy.BusinessUnit,
         vacancy.Description,
+        vacancy.ApproverId,
+        vacancy.Approver?.FullName,
         vacancy.VacancyCompetencies
             .Where(vc => vc.Competency is not null)
             .Select(vc => new CompetencyResponse(

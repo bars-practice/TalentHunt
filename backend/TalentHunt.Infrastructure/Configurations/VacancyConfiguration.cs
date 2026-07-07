@@ -28,5 +28,10 @@ public class VacancyConfiguration : IEntityTypeConfiguration<Vacancy>
             .HasDefaultValue(false);
 
         builder.HasQueryFilter(v => !v.IsDeleted);
+
+        builder.HasOne(v => v.Approver)
+            .WithMany()
+            .HasForeignKey(v => v.ApproverId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -39,4 +39,9 @@ public interface IInterviewService
         Guid id,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
+
+    Task<InterviewDetailResponse> ForceSetStatusAsync(
+        Guid interviewId,
+        ApplicationStatus status,
+        CancellationToken cancellationToken = default);
 }
