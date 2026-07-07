@@ -30,5 +30,10 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<ApplicationEnti
             .WithMany()
             .HasForeignKey(a => a.VacancyId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(a => a.DecidedBy)
+            .WithMany()
+            .HasForeignKey(a => a.DecidedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

@@ -8,12 +8,12 @@ namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "HR,Admin")]
 public class ApplicationsController(
     IApplicationService applicationService,
     IAuditLogService auditLogService) : BaseController(auditLogService)
 {
     [HttpGet]
+    [Authorize(Roles = "HR,Admin,Approver")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var applications = await applicationService.GetAllAsync(User.IsAdmin(), cancellationToken);
@@ -21,6 +21,7 @@ public class ApplicationsController(
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "HR,Admin,Approver")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         try
@@ -35,6 +36,7 @@ public class ApplicationsController(
     }
 
     [HttpPost]
+    [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Create(
         [FromBody] CreateApplicationRequest request,
         CancellationToken cancellationToken)
@@ -53,6 +55,7 @@ public class ApplicationsController(
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateApplicationRequest request,
@@ -61,7 +64,34 @@ public class ApplicationsController(
         try
         {
             var application = await applicationService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
-            await LogAsync($"Обновлён отклик {id}, статус: {application.Status}");
+            await LogAsync($"Обновлён отклик {id}");
+            return Ok(application);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Отклик не найден." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id:guid}/decision")]
+    [Authorize(Roles = "Approver,Admin")]
+    public async Task<IActionResult> Decide(
+        Guid id,
+        [FromBody] ApplicationDecisionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (userId is null)
+            return Unauthorized(new { message = "Пользователь не авторизован." });
+
+        try
+        {
+            var application = await applicationService.DecideAsync(id, request, userId.Value, cancellationToken);
+            await LogAsync($"По отклику {id} вынесено решение: {application.Status}");
             return Ok(application);
         }
         catch (KeyNotFoundException)
@@ -75,6 +105,7 @@ public class ApplicationsController(
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try

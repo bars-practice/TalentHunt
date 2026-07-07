@@ -44,7 +44,7 @@ public class ApplicationService(
             Id = Guid.NewGuid(),
             VacancyId = request.VacancyId,
             CandidateId = request.CandidateId,
-            Status = request.Status ?? ApplicationStatus.Applied
+            Status = ApplicationStatus.Applied
         };
 
         await applicationRepository.AddAsync(application, cancellationToken);
@@ -66,6 +66,9 @@ public class ApplicationService(
         if (application.IsDeleted && !includeDeleted)
             throw new InvalidOperationException("Нельзя изменить удалённый отклик.");
 
+        if (request.Status.HasValue)
+            throw new InvalidOperationException("Статус отклика изменяется автоматически или через решение Решалы.");
+
         if (request.IsDeleted.HasValue)
         {
             if (!includeDeleted)
@@ -74,13 +77,36 @@ public class ApplicationService(
             application.IsDeleted = request.IsDeleted.Value;
         }
 
-        if (request.Status.HasValue)
-            application.Status = request.Status.Value;
-
         await applicationRepository.UpdateAsync(application);
         await applicationRepository.SaveAsync(cancellationToken);
 
         var updated = await applicationRepository.GetByIdAsync(id, includeDeleted, cancellationToken);
+        return ToResponse(updated!);
+    }
+
+    public async Task<ApplicationResponse> DecideAsync(
+        Guid id,
+        ApplicationDecisionRequest request,
+        Guid decidedByUserId,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.Status is not (ApplicationStatus.Approved or ApplicationStatus.Rejected))
+            throw new InvalidOperationException("Решала может установить только статус Approved или Rejected.");
+
+        var application = await applicationRepository.GetByIdAsync(id, cancellationToken: cancellationToken)
+            ?? throw new KeyNotFoundException("Отклик не найден.");
+
+        if (application.Status != ApplicationStatus.PendingDecision)
+            throw new InvalidOperationException("Решение можно вынести только для отклика в статусе PendingDecision.");
+
+        application.Status = request.Status;
+        application.DecidedByUserId = decidedByUserId;
+        application.DecidedAt = DateTime.UtcNow;
+
+        await applicationRepository.UpdateAsync(application);
+        await applicationRepository.SaveAsync(cancellationToken);
+
+        var updated = await applicationRepository.GetByIdAsync(id, cancellationToken: cancellationToken);
         return ToResponse(updated!);
     }
 
@@ -120,7 +146,10 @@ public class ApplicationService(
         application.CandidateId,
         application.Candidate?.FullName ?? string.Empty,
         application.Status,
-        application.Interview?.Id,
+        application.Interview?.IsDeleted == false ? application.Interview.Id : null,
+        application.DecidedByUserId,
+        application.DecidedBy?.FullName,
+        application.DecidedAt,
         application.IsDeleted
     );
 }

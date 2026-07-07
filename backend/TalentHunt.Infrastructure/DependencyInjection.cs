@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Application.Services;
 using TalentHunt.Infrastructure.Authentication;
@@ -18,14 +19,19 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(dataSource));
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IVacancyRepository, VacancyRepository>();
         services.AddScoped<ICompetencyRepository, CompetencyRepository>();
         services.AddScoped<ICandidateRepository, CandidateRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
+        services.AddScoped<IInterviewRepository, InterviewRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
@@ -35,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ICandidateService, CandidateService>();
         services.AddScoped<IApplicationService, ApplicationService>();
+        services.AddScoped<IInterviewService, InterviewService>();
 
         return services;
     }
