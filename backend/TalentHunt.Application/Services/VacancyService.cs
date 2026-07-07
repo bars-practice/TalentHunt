@@ -84,7 +84,11 @@ public class VacancyService(
 
         await vacancyRepository.SaveAsync(cancellationToken);
 
-        var updated = await vacancyRepository.GetByIdWithCompetenciesAsync(id, includeDeleted, cancellationToken);
+        var updated = await vacancyRepository.GetByIdWithCompetenciesAsync(
+            id, 
+            includeDeleted || vacancy.IsDeleted, 
+            cancellationToken);
+
         return ToResponse(updated!);
     }
 
