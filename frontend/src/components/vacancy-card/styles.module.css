@@ -1,5 +1,4 @@
 .card {
-  background-color: var(--background);
   border-block-end: none !important;
 }
 
@@ -10,6 +9,7 @@
   border-radius: 10px;
   gap: 12px;
   padding: 8px 8px;
+  background-color: var(--background);
 }
 
 [data-state="open"] .header {

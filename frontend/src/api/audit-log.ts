@@ -3,8 +3,7 @@ import { api } from './client'
 export interface AuditLogItem {
   id: string;
   timestamp: string;
-  username: string;
-  role: string;
+  user: string;
   ipAddress: string;
   action: string;
 }

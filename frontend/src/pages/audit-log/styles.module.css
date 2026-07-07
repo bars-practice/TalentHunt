@@ -19,13 +19,21 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.messageCell {
+  padding: 20px;
+}
+
+.errorCell {
+  padding: 20px;
+  color: #ef4444;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
   font-family: inherit;
+  background-color: #ffffff;
 }
-
 .table th {
   background-color: #e5e7eb;
   color: #4b5563;
@@ -46,6 +54,12 @@
 
 .table tr:last-child td {
   border-bottom: none;
+}
+
+.emptyCell {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
 }
 
 .timeCell {

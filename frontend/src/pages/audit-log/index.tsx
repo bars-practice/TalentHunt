@@ -29,9 +29,13 @@ export function AuditLog() {
       <h1 className={styles.title}>Журнал аудита</h1>
 
       {loading ? (
-        <div className={styles.tableWrapper} style={{ padding: '20px' }}>Загрузка логов...</div>
+        <div className={`${styles.tableWrapper} styles.messageCell`}>
+          Загрузка логов...
+        </div>
       ) : error ? (
-        <div className={styles.tableWrapper} style={{ padding: '20px', color: 'red' }}>Ошибка: {error}</div>
+        <div className={`${styles.tableWrapper} styles.errorCell`}>
+          Ошибка: {error}
+        </div>
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
@@ -46,7 +50,7 @@ export function AuditLog() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} style={{ textAlign: 'center', color: '#6b7280', padding: '20px' }}>
+                  <td colSpan={4} className={styles.emptyCell}>
                     Записей в журнале аудита пока нет
                   </td>
                 </tr>
@@ -63,8 +67,7 @@ export function AuditLog() {
                       })}
                     </td>
                     <td className={styles.userCell}>
-                      <div className={styles.username}>{log.username}</div>
-                      <div className={styles.role}>{log.role}</div>
+                      <div className={styles.username}>{log.user}</div>
                     </td>
                     <td className={styles.ipCell}>{log.ipAddress}</td>
                     <td className={styles.actionCell}>{log.action}</td>
