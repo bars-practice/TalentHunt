@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<ICandidateService, CandidateService>();
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<IInterviewService, InterviewService>();
+        services.AddScoped<IGlobalSearchService, GlobalSearchService>();
         services.AddScoped<IPdfService, PdfService>();
 
         return services;
