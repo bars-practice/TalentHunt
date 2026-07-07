@@ -8,6 +8,7 @@ import { ModalProvider } from "@/providers/ModalProvider"
 import Modal from "@/components/ui/modal"
 import styles from "./App.module.css"
 import { Vacancies } from "./pages/vacancies"
+import { AuditLog } from "@/pages/audit-log"
 import "simplebar-react/dist/simplebar.min.css";
 
 interface ProtectedRouteProps {
@@ -64,6 +65,7 @@ function App() {
                 element={<ProtectedRoute allowedRoles={[Role.Admin]} />}
               >
                 <Route path="/users" element={<Users />} />
+                <Route path="/audit-log" element={<AuditLog />} />
               </Route>
 
             </Route>
