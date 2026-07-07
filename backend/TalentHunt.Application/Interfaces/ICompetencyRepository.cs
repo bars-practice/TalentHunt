@@ -24,4 +24,9 @@ public interface ICompetencyRepository
     Task DeleteAsync(Competency competency);
 
     Task SaveAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Competency>> SearchAsync(
+        string query,
+        int limit,
+        CancellationToken cancellationToken = default);
 }

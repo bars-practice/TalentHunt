@@ -27,4 +27,8 @@ public interface ICandidateService
         Guid id,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CandidateSearchResultResponse>> SearchAsync(
+        string query,
+        CancellationToken cancellationToken = default);
 }

@@ -43,4 +43,15 @@ public class CandidateRepository(AppDbContext context) : ICandidateRepository
 
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Candidate>> SearchAsync(
+        string query,
+        int limit,
+        CancellationToken cancellationToken = default) =>
+        await context.Candidates
+            .AsNoTracking()
+            .Where(c => EF.Functions.ILike(c.FullName, $"%{query}%"))
+            .OrderBy(c => c.FullName)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
 }

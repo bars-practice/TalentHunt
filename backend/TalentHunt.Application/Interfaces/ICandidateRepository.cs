@@ -20,4 +20,9 @@ public interface ICandidateRepository
     Task DeleteAsync(Candidate candidate);
 
     Task SaveAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Candidate>> SearchAsync(
+        string query,
+        int limit,
+        CancellationToken cancellationToken = default);
 }
