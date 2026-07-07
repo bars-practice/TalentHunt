@@ -35,5 +35,10 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<ApplicationEnti
             .WithMany()
             .HasForeignKey(a => a.DecidedByUserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(a => a.Approver)
+            .WithMany()
+            .HasForeignKey(a => a.ApproverId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

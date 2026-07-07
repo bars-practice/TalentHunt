@@ -7,5 +7,6 @@ public record CreateVacancyRequest(
     VacancyLevel Level,
     string BusinessUnit,
     string Description,
+    Guid ApproverId,
     List<Guid>? CompetencyIds = null
 );

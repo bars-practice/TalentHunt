@@ -39,12 +39,15 @@ public class ApplicationService(
                 request.CandidateId, request.VacancyId, cancellationToken: cancellationToken))
             throw new InvalidOperationException("Отклик этого кандидата на данную вакансию уже существует.");
 
+        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(request.VacancyId, cancellationToken: cancellationToken);
+
         var application = new ApplicationEntity
         {
             Id = Guid.NewGuid(),
             VacancyId = request.VacancyId,
             CandidateId = request.CandidateId,
-            Status = ApplicationStatus.Applied
+            Status = ApplicationStatus.Applied,
+            ApproverId = vacancy?.ApproverId
         };
 
         await applicationRepository.AddAsync(application, cancellationToken);
@@ -148,6 +151,8 @@ public class ApplicationService(
         application.Status,
         application.Interview?.IsDeleted == false ? application.Interview.Id : null,
         application.DecidedByUserId,
+        application.ApproverId,
+        application.Approver?.FullName,
         application.DecidedBy?.FullName,
         application.DecidedAt,
         application.IsDeleted

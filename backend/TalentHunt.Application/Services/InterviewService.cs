@@ -338,4 +338,21 @@ public class InterviewService(
             interview.IsDeleted
         );
     }
+
+    public async Task<InterviewDetailResponse> ForceSetStatusAsync(
+    Guid interviewId,
+    ApplicationStatus status,
+    CancellationToken cancellationToken = default)
+    {
+    var interview = await interviewRepository.GetByIdAsync(interviewId, includeDeleted: true, cancellationToken)
+        ?? throw new KeyNotFoundException("Собеседование не найдено.");
+
+    interview.Application.Status = status;
+
+    await applicationRepository.UpdateAsync(interview.Application);
+    await interviewRepository.SaveAsync(cancellationToken);
+
+    var updated = await interviewRepository.GetByIdAsync(interviewId, includeDeleted: true, cancellationToken);
+    return ToDetailResponse(updated!);
+    }
 }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TalentHunt.Application.Entities;
@@ -13,9 +14,11 @@ using TalentHunt.Infrastructure.Data;
 namespace TalentHunt.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260707152941_AddApproverToVacancy")]
+    partial class AddApproverToVacancy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,9 +31,6 @@ namespace TalentHunt.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ApproverId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("CandidateId")
@@ -56,8 +56,6 @@ namespace TalentHunt.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ApproverId");
 
                     b.HasIndex("DecidedByUserId");
 
@@ -353,11 +351,6 @@ namespace TalentHunt.Infrastructure.Migrations
 
             modelBuilder.Entity("TalentHunt.Application.Entities.Application", b =>
                 {
-                    b.HasOne("TalentHunt.Application.Entities.User", "Approver")
-                        .WithMany()
-                        .HasForeignKey("ApproverId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("TalentHunt.Application.Entities.Candidate", "Candidate")
                         .WithMany("Applications")
                         .HasForeignKey("CandidateId")
@@ -374,8 +367,6 @@ namespace TalentHunt.Infrastructure.Migrations
                         .HasForeignKey("VacancyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Approver");
 
                     b.Navigation("Candidate");
 

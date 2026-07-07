@@ -8,6 +8,8 @@ public record VacancyResponse(
     VacancyLevel Level,
     string BusinessUnit,
     string Description,
+    Guid? ApproverId,
+    string? ApproverFullName,
     List<CompetencyResponse> Competencies,
     bool IsDeleted
 );

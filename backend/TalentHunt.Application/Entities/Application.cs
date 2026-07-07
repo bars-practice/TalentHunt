@@ -19,6 +19,9 @@ public class Application : ISoftDeletable
     public Guid? DecidedByUserId { get; set; }
     public User? DecidedBy { get; set; }
 
+    public Guid? ApproverId { get; set; }
+    public User? Approver { get; set; }
+
     public DateTime? DecidedAt { get; set; }
 
     public Interview? Interview { get; set; }
