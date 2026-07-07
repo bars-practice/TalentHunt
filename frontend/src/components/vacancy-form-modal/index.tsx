@@ -2,7 +2,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useModal } from "@/providers/ModalProvider";
-import { VACANCY_LEVEL, type VacancyLevel } from "@/shared/types/vacancy";
+import { VacancyLevel } from "@/api/vacancies";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,10 +12,11 @@ import styles from "./styles.module.css";
 
 const formSchema = z.object({
   title: z.string().trim().min(1, "Введите название вакансии"),
-  level: z.nativeEnum(VACANCY_LEVEL).optional().refine((val) => val !== undefined, {
+  level: z.nativeEnum(VacancyLevel).optional().refine((val) => val !== undefined, {
     message: "Выберите уровень вакансии",
   }),
   businessUnit: z.string().trim().min(1, "Введите бизнес-юнит"),
+  description: z.string().optional(),
   competencyIds: z.array(z.string()).min(1, "Выберите хотя бы одну компетенцию"),
 });
 
@@ -26,11 +27,12 @@ interface VacancyFormModalProps {
     title?: string;
     level?: VacancyLevel;
     businessUnit?: string;
+    description?: string;
     competencyIds?: string[];
   };
   onSubmit: (data: VacancyFormValues) => void;
   competencies: Competency[];
-  onAddNewCompetency?: (name: string) => string | undefined;
+  onAddNewCompetency?: (name: string) => string | undefined | Promise<string | undefined>;
 }
 
 export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNewCompetency }: VacancyFormModalProps) {
@@ -49,6 +51,7 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
       title: initialData?.title || "",
       level: initialData?.level || undefined,
       businessUnit: initialData?.businessUnit || "",
+      description: initialData?.description || "",
       competencyIds: initialData?.competencyIds || [],
     },
   });
@@ -95,14 +98,14 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
               control={control}
               name="level"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value?.toString()} onValueChange={(v) => field.onChange(Number(v) as VacancyLevel)}>
                   <SelectTrigger id="level" aria-invalid={!!errors.level}>
                     <SelectValue placeholder="Выберите уровень" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={VACANCY_LEVEL.Junior}>Junior</SelectItem>
-                    <SelectItem value={VACANCY_LEVEL.Middle}>Middle</SelectItem>
-                    <SelectItem value={VACANCY_LEVEL.Senior}>Senior</SelectItem>
+                    <SelectItem value={VacancyLevel.Junior.toString()}>Junior</SelectItem>
+                    <SelectItem value={VacancyLevel.Middle.toString()}>Middle</SelectItem>
+                    <SelectItem value={VacancyLevel.Senior.toString()}>Senior</SelectItem>
                   </SelectContent>
                 </Select>
               )}
