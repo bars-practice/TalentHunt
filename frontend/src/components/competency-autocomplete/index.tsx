@@ -20,7 +20,7 @@ interface CompetencyAutocompleteProps {
   selectedIds: string[];
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
-  onAddNewCompetency?: (name: string) => string | undefined;
+  onAddNewCompetency?: (name: string) => string | undefined | Promise<string | undefined>;
   error?: string;
   placeholder?: string;
 }
@@ -130,9 +130,9 @@ export function CompetencyAutocomplete({
     setIsOpen(false);
   };
 
-  const handleAddNewCompetency = () => {
+  const handleAddNewCompetency = async () => {
     if (searchQuery.trim() && onAddNewCompetency) {
-      const newId = onAddNewCompetency(searchQuery.trim());
+      const newId = await onAddNewCompetency(searchQuery.trim());
       if (newId) {
         setNewCompetencies((prev) => [...prev, { id: newId, name: searchQuery.trim() }]);
         onAdd(newId);
