@@ -1,4 +1,5 @@
 using TalentHunt.Application.DTO;
+using TalentHunt.Application.Enums;
 
 namespace TalentHunt.Application.Interfaces;
 
@@ -7,13 +8,17 @@ public interface IInterviewService
     Task<IEnumerable<InterviewListItemResponse>> GetAllAsync(
         Guid? candidateId = null,
         Guid? vacancyId = null,
-        Enums.ApplicationStatus? applicationStatus = null,
+        ApplicationStatus? applicationStatus = null,
         bool includeDeleted = false,
+        Role? callerRole = null,
+        Guid? callerUserId = null,
         CancellationToken cancellationToken = default);
 
     Task<InterviewDetailResponse> GetByIdAsync(
         Guid id,
         bool includeDeleted = false,
+        Role? callerRole = null,
+        Guid? callerUserId = null,
         CancellationToken cancellationToken = default);
 
     Task<InterviewDetailResponse> CreateAsync(

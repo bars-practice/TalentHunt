@@ -9,42 +9,58 @@ namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "HR,Admin")]
+[Authorize]
 public class InterviewsController(IInterviewService interviewService, IAuditLogService auditLogService)
     : BaseController(auditLogService)
 {
     [HttpGet]
+    [Authorize(Roles = "HR,Admin,Approver")]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? candidateId,
         [FromQuery] Guid? vacancyId,
         [FromQuery] ApplicationStatus? applicationStatus,
         CancellationToken cancellationToken)
     {
-        var interviews = await interviewService.GetAllAsync(
-            candidateId,
-            vacancyId,
-            applicationStatus,
-            User.IsAdmin(),
-            cancellationToken);
+        try
+        {
+            var interviews = await interviewService.GetAllAsync(
+                candidateId,
+                vacancyId,
+                applicationStatus,
+                User.IsAdmin(),
+                User.GetRole(),
+                User.GetUserId(),
+                cancellationToken);
 
-        return Ok(interviews);
+            return Ok(interviews);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "HR,Admin,Approver")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var interview = await interviewService.GetByIdAsync(id, User.IsAdmin(), cancellationToken);
+            var interview = await interviewService.GetByIdAsync(id, User.IsAdmin(), User.GetRole(), User.GetUserId(), cancellationToken);
             return Ok(interview);
         }
         catch (KeyNotFoundException)
         {
             return NotFound(new { message = "Собеседование не найдено." });
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
     }
 
     [HttpPost]
+    [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Create(
         [FromBody] CreateInterviewRequest request,
         CancellationToken cancellationToken)
@@ -62,6 +78,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpPost("{id:guid}/start")]
+    [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Start(Guid id, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -85,6 +102,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateInterviewRequest request,
@@ -93,7 +111,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
         try
         {
             var interview = await interviewService.UpdateAsync(id, request, cancellationToken);
-            var action = request.IsDraft ? "черновик" : "отправка на решение";
+            var action = request.IsDraft ? "черновик" : "сохранение";
             await LogAsync($"Обновлено собеседование {id} ({action})");
             return Ok(interview);
         }
@@ -112,6 +130,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try

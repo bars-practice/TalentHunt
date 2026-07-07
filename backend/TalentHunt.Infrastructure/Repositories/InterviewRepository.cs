@@ -23,6 +23,7 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
         Guid? candidateId = null,
         Guid? vacancyId = null,
         ApplicationStatus? applicationStatus = null,
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
@@ -36,6 +37,14 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
 
         if (applicationStatus.HasValue)
             query = query.Where(i => i.Application.Status == applicationStatus.Value);
+
+        if (approverUserId.HasValue)
+        {
+            query = query.Where(i =>
+                i.Application.Status == ApplicationStatus.PendingDecision
+                || i.Application.Status == ApplicationStatus.Approved
+                || i.Application.Status == ApplicationStatus.Rejected);
+        }
 
         var interviews = await query
             .OrderByDescending(i => i.ScheduledAt)

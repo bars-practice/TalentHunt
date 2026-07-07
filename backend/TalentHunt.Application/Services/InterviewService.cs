@@ -19,12 +19,17 @@ public class InterviewService(
         Guid? vacancyId = null,
         ApplicationStatus? applicationStatus = null,
         bool includeDeleted = false,
+        Role? callerRole = null,
+        Guid? callerUserId = null,
         CancellationToken cancellationToken = default)
     {
+        Guid? approverUserId = callerRole == Role.Approver ? callerUserId : null;
+
         var interviews = await interviewRepository.GetAllAsync(
             candidateId,
             vacancyId,
             applicationStatus,
+            approverUserId,
             includeDeleted,
             cancellationToken);
 
@@ -34,10 +39,15 @@ public class InterviewService(
     public async Task<InterviewDetailResponse> GetByIdAsync(
         Guid id,
         bool includeDeleted = false,
+        Role? callerRole = null,
+        Guid? callerUserId = null,
         CancellationToken cancellationToken = default)
     {
         var interview = await interviewRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Собеседование не найдено.");
+
+        if (callerRole == Role.Approver && !CanApproverView(interview))
+            throw new UnauthorizedAccessException("Нет доступа к этому собеседованию.");
 
         return ToDetailResponse(interview);
     }
@@ -121,11 +131,14 @@ public class InterviewService(
         var interview = await interviewRepository.GetByIdAsync(id, cancellationToken: cancellationToken)
             ?? throw new KeyNotFoundException("Собеседование не найдено.");
 
-        if (interview.Application.Status == ApplicationStatus.PendingDecision)
-            throw new UnauthorizedAccessException("Нельзя редактировать собеседование, ожидающее решения.");
+        var status = interview.Application.Status;
 
-        if (interview.Application.Status != ApplicationStatus.InProgress)
-            throw new InvalidOperationException("Редактировать собеседование можно только в статусе InProgress.");
+        if (status is ApplicationStatus.Approved or ApplicationStatus.Rejected)
+            throw new UnauthorizedAccessException("Нельзя редактировать собеседование с принятым решением.");
+
+        if (status is not (ApplicationStatus.InProgress or ApplicationStatus.PendingDecision))
+            throw new InvalidOperationException(
+                "Редактировать собеседование можно только в статусе InProgress или PendingDecision.");
 
         if (request.ScheduledAt.HasValue)
             interview.ScheduledAt = request.ScheduledAt;
@@ -149,8 +162,12 @@ public class InterviewService(
         if (!request.IsDraft)
         {
             ValidateForSubmission(interview, GetActiveVacancyCompetencyIds(interview.Application.Vacancy));
-            interview.Application.Status = ApplicationStatus.PendingDecision;
-            await applicationRepository.UpdateAsync(interview.Application);
+
+            if (status == ApplicationStatus.InProgress)
+            {
+                interview.Application.Status = ApplicationStatus.PendingDecision;
+                await applicationRepository.UpdateAsync(interview.Application);
+            }
         }
 
         await interviewRepository.UpdateAsync(interview);
@@ -257,6 +274,11 @@ public class InterviewService(
             }
         }
     }
+
+    private static bool CanApproverView(Interview interview) =>
+        interview.Application.Status is ApplicationStatus.PendingDecision
+            or ApplicationStatus.Approved
+            or ApplicationStatus.Rejected;
 
     private static InterviewListItemResponse ToListItemResponse(Interview interview) => new(
         interview.Id,

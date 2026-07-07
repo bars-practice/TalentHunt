@@ -9,6 +9,7 @@ public interface IInterviewRepository
         Guid? candidateId = null,
         Guid? vacancyId = null,
         ApplicationStatus? applicationStatus = null,
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 
