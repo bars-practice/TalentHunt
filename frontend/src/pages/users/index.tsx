@@ -1,51 +1,38 @@
 import { UserCard } from "@/components/user-card";
 import { UserFormModal } from "@/components/user-form-modal";
-import { Role } from "@/api/auth";
 import { getRoleLabel } from "@/utils/role";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { useModal } from "@/providers/ModalProvider";
-
-// !! Mock data - заменить на вызов API
-const mockUsers = [
-  {
-    id: "fa91d3ca-ee93-4b68-9431-1f8cdbef58e6",
-    fullName: "Игорь Петров",
-    login: "ipetrov",
-    role: Role.HrDirector,
-    permissions: [],
-    isDeleted: false,
-  },
-  {
-    id: "fb82d4db-ff04-5c79-0542-2g9decfg69f7",
-    fullName: "Анна Сидорова",
-    login: "asidorova",
-    role: Role.Recruiter,
-    permissions: [],
-    isDeleted: false,
-  },
-  {
-    id: "fc93e5ec-gg15-6d80-1653-3h0efdg70g8",
-    fullName: "Михаил Козлов",
-    login: "mkozlov",
-    role: Role.Admin,
-    permissions: [],
-    isDeleted: true,
-  },
-  {
-    id: "gd04f6fd-hh26-7e91-2764-4i1fgeh81h9",
-    fullName: "Елена Новикова",
-    login: "enovikova",
-    role: Role.Recruiter,
-    permissions: [],
-    isDeleted: false,
-  },
-];
+import { usersService } from "@/api/users";
+import type { User } from "@/api/auth";
+import { useEffect, useState } from "react";
 
 export function Users() {
   const { openModal } = useModal();
-  const sortedUsers = [...mockUsers].sort((a, b) => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await usersService.getAll();
+      setUsers(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const sortedUsers = [...users].sort((a, b) => {
     if (a.isDeleted === b.isDeleted) return 0;
     return a.isDeleted ? 1 : -1;
   });
@@ -54,8 +41,17 @@ export function Users() {
     openModal(
       <UserFormModal
         mode="create"
-        onSubmit={(data) => {
-          console.log("Create user:", data);
+        onSubmit={async (data) => {
+          try {
+            await usersService.create({
+              fullName: data.fullName,
+              password: data.password!,
+              role: data.role,
+            });
+            await loadUsers();
+          } catch (err) {
+            console.error("Failed to create user:", err);
+          }
         }}
       />,
       { title: "Добавить пользователя", width: "450px" }
@@ -63,14 +59,22 @@ export function Users() {
   };
 
   const handleEdit = (userId: string) => {
-    const user = mockUsers.find((u) => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     if (user) {
       openModal(
         <UserFormModal
           mode="edit"
           initialData={{ fullName: user.fullName, role: user.role }}
-          onSubmit={(data) => {
-            console.log("Edit user:", userId, data);
+          onSubmit={async (data) => {
+            try {
+              await usersService.update(userId, {
+                fullName: data.fullName,
+                role: data.role,
+              });
+              await loadUsers();
+            } catch (err) {
+              console.error("Failed to update user:", err);
+            }
           }}
         />,
         { title: "Изменить пользователя", width: "450px" }
@@ -78,12 +82,22 @@ export function Users() {
     }
   };
 
-  const handleDelete = (userId: string) => {
-    console.log("Delete user:", userId);
+  const handleDelete = async (userId: string) => {
+    try {
+      await usersService.delete(userId);
+      await loadUsers();
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+    }
   };
 
-  const handleRestore = (userId: string) => {
-    console.log("Restore user:", userId);
+  const handleRestore = async (userId: string) => {
+    try {
+      await usersService.restore(userId);
+      await loadUsers();
+    } catch (err) {
+      console.error("Failed to restore user:", err);
+    }
   };
 
   return (
@@ -95,19 +109,25 @@ export function Users() {
           Добавить пользователя
         </Button>
       </div>
-      <div className={styles.usersList}>
-        {sortedUsers.map((user) => (
-          <UserCard
-            key={user.id}
-            name={user.fullName}
-            status={user.isDeleted ? "inactive" : "active"}
-            role={getRoleLabel(user.role)}
-            onEdit={() => handleEdit(user.id)}
-            onDelete={() => handleDelete(user.id)}
-            onRestore={() => handleRestore(user.id)}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className={styles.usersList}>Загрузка...</div>
+      ) : error ? (
+        <div className={styles.usersList}>Ошибка: {error}</div>
+      ) : (
+        <div className={styles.usersList}>
+          {sortedUsers.map((user) => (
+            <UserCard
+              key={user.id}
+              name={user.fullName}
+              status={user.isDeleted ? "inactive" : "active"}
+              role={getRoleLabel(user.role)}
+              onEdit={() => handleEdit(user.id)}
+              onDelete={() => handleDelete(user.id)}
+              onRestore={() => handleRestore(user.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

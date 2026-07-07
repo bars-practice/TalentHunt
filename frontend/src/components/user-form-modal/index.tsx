@@ -27,7 +27,7 @@ interface UserFormModalProps {
     fullName?: string;
     role?: Role;
   };
-  onSubmit: (data: { fullName: string; password?: string; role: Role; permissions: string[] }) => void;
+  onSubmit: (data: { fullName: string; password?: string; role: Role; permissions: string[] }) => Promise<void>;
 }
 
 export function UserFormModal({ mode = "create", initialData, onSubmit }: UserFormModalProps) {
@@ -42,13 +42,13 @@ export function UserFormModal({ mode = "create", initialData, onSubmit }: UserFo
     resolver: zodResolver(createFormSchema(mode)),
     defaultValues: {
       fullName: initialData?.fullName || "",
-      role: initialData?.role ?? Role.Recruiter,
+      role: initialData?.role ?? Role.HR,
       password: "",
     },
   });
 
-  const onFormSubmit = (values: UserFormValues) => {
-    onSubmit({
+  const onFormSubmit = async (values: UserFormValues) => {
+    await onSubmit({
       fullName: values.fullName,
       role: values.role,
       password: values.password && values.password.length > 0 ? values.password : undefined,
@@ -75,6 +75,7 @@ export function UserFormModal({ mode = "create", initialData, onSubmit }: UserFo
             <FieldError errors={[errors.fullName]} />
           </FieldContent>
         </Field>
+
 
         <Field>
           <FieldLabel htmlFor="password">Пароль</FieldLabel>
@@ -107,8 +108,8 @@ export function UserFormModal({ mode = "create", initialData, onSubmit }: UserFo
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={Role.Admin.toString()}>{getRoleLabel(Role.Admin)}</SelectItem>
-                    <SelectItem value={Role.HrDirector.toString()}>{getRoleLabel(Role.HrDirector)}</SelectItem>
-                    <SelectItem value={Role.Recruiter.toString()}>{getRoleLabel(Role.Recruiter)}</SelectItem>
+                    <SelectItem value={Role.HR.toString()}>{getRoleLabel(Role.HR)}</SelectItem>
+                    <SelectItem value={Role.Approver.toString()}>{getRoleLabel(Role.Approver)}</SelectItem>
                   </SelectContent>
                 </Select>
               )}

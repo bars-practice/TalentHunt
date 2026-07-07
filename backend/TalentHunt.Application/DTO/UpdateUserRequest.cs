@@ -6,5 +6,6 @@ public record UpdateUserRequest(
     string? FullName,
     string? Password,
     Role? Role,
-    List<string>? Permissions
+    List<string>? Permissions,
+    bool? IsDeleted
 );

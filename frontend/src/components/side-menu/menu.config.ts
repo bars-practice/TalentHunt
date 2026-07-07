@@ -13,19 +13,19 @@ export const menuItems: MenuItem[] = [
     path: "/candidates",
     label: "Кандидаты",
     icon: UserIcon,
-    roles: [Role.HrDirector, Role.Recruiter, Role.Admin],
+    roles: [Role.HR, Role.Approver, Role.Admin],
   },
   {
     path: "/interviews",
     label: "Собеседования",
     icon: Calendar,
-    roles: [Role.HrDirector, Role.Recruiter, Role.Admin],
+    roles: [Role.HR, Role.Approver, Role.Admin],
   },
   {
     path: "/vacancies",
     label: "Вакансии",
     icon: Briefcase,
-    roles: [Role.HrDirector, Role.Recruiter, Role.Admin],
+    roles: [Role.HR, Role.Approver, Role.Admin],
   },
   {
     path: "/users",

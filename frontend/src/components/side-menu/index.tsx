@@ -49,7 +49,7 @@ export function SideMenu({ onLogout }: SideMenuProps) {
       <div className={styles.userSection}>
         <div className={styles.userInfo}>
           <div className={styles.userDetails}>
-            <div className={styles.userName}>{user.fullName || user.login}</div>
+            <div className={styles.userName}>{user.fullName ? user.fullName : user.login}</div>
             <div className={styles.userRole}>{getRoleLabel(user.role)}</div>
           </div>
         </div>
