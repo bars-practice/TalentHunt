@@ -1,4 +1,4 @@
-import { Users, Calendar, Briefcase, User as UserIcon, type LucideIcon } from "lucide-react";
+import { Users, Calendar, Briefcase, User as UserIcon, FileText, type LucideIcon } from "lucide-react";
 import { Role } from "@/api/auth";
 
 export interface MenuItem {
@@ -31,6 +31,12 @@ export const menuItems: MenuItem[] = [
     path: "/users",
     label: "Пользователи",
     icon: Users,
+    roles: [Role.Admin],
+  },
+  {
+    path: "/audit-log",
+    label: "Журнал аудита",
+    icon: FileText,
     roles: [Role.Admin],
   },
 ];

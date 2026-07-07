@@ -1,0 +1,78 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+  margin: 0;
+}
+
+.tableWrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: inherit;
+}
+
+.table th {
+  background-color: #e5e7eb;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 14px 20px;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.timeCell {
+  white-space: pre-line;
+  font-weight: 500;
+  width: 15%;
+}
+
+.userCell {
+  width: 20%;
+}
+
+.username {
+  font-weight: 600;
+}
+
+.role {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.ipCell {
+  color: #4b5563;
+  width: 15%;
+}
+
+.actionCell {
+  line-height: 1.5;
+}
