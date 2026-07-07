@@ -12,7 +12,7 @@
   --radius-xl: 1rem;
   --spacing: 0.25rem;
   --background: oklch(1 0 0);
-  --foreground: #4f4949;
+  --foreground: #4c4c4c;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -89,6 +89,8 @@
   --animate-out: fadeOut 150ms ease-out;
   --animate-alert-dialog-in: alertIn 150ms ease-out;
   --animate-alert-dialog-out: alertOut 150ms ease-out;
+  --animate-accordion-down: accordionDown 200ms ease-out;
+  --animate-accordion-up: accordionUp 200ms ease-out;
 }
 
 .sr-only {
@@ -205,4 +207,65 @@ a:visited {
     opacity: 0;
     transform: translate(-50%, -48%) scale(0.96);
   }
+}
+
+@keyframes accordionDown {
+  from {
+    grid-template-rows: 0fr;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes accordionUp {
+  from {
+    grid-template-rows: 1fr;
+  }
+  to {
+    grid-template-rows: 0fr;
+  }
+}
+.simplebar-track.simplebar-vertical {
+  top: 0 !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  width: 12px !important;
+  background-color: transparent !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+.simplebar-scrollbar {
+  right: 0 !important;
+  width: 12px !important;
+  pointer-events: auto !important;
+}
+
+.simplebar-scrollbar::before {
+  background-color: rgba(171, 171, 171, 0.6) !important;
+  border-radius: 10px !important;
+  left: auto !important;
+  right: 2px !important;
+  width: 4px !important;
+  opacity: 1 !important;
+  transition:
+    background-color 0.15s ease,
+    width 0.15s ease,
+    right 0.15s ease !important;
+}
+
+.simplebar-track.simplebar-vertical:hover .simplebar-scrollbar::before,
+.simplebar-track.simplebar-vertical.simplebar-hover .simplebar-scrollbar::before {
+  background-color: rgba(171, 171, 171, 0.9) !important;
+  width: 6px !important;
+  right: 2px !important;
+}
+
+.simplebar-scrollbar:active::before,
+.simplebar-track.simplebar-vertical:active .simplebar-scrollbar::before,
+.simplebar-dragging .simplebar-scrollbar::before {
+  background-color: rgba(140, 140, 140, 1) !important;
+  width: 7px !important;
+  right: 2px !important;
 }

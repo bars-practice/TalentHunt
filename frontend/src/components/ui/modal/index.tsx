@@ -2,6 +2,7 @@ import { useModal } from "@/providers/ModalProvider";
 import { ArrowLeft, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import SimpleBar from "simplebar-react";
 import styles from "./styles.module.css";
 
 function Modal() {
@@ -92,12 +93,12 @@ function Modal() {
             <X size={24} />
           </button>
 
-          <div className={styles.modalScrollBody}>
+          <SimpleBar className={styles.modalScrollBody}>
             {modal.title && <h2 className={styles.modalTitle}>{modal.title}</h2>}
             <div className={styles.modalInnerContent}>
               {modal.content}
             </div>
-          </div>
+          </SimpleBar>
         </div>
       </div>
     )),
