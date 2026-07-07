@@ -5,6 +5,7 @@ import logo from "@/assets/logo-dark.svg";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { menuItems } from "./menu.config";
 import { getRoleLabel } from "@/utils/role";
+import { authService } from "@/api/auth";
 
 interface SideMenuProps {
   onLogout: () => void;
@@ -54,7 +55,14 @@ export function SideMenu({ onLogout }: SideMenuProps) {
           </div>
         </div>
         <button
-          onClick={onLogout}
+          onClick={async () => {
+            try {
+              await authService.logout();
+            } catch (err) {
+              console.error("Logout failed:", err);
+            }
+            onLogout();
+          }}
           aria-label="Выйти"
           className={styles.logoutButton}
         >
