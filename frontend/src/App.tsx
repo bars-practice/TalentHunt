@@ -7,6 +7,8 @@ import { SideMenu } from "@/components/side-menu"
 import { ModalProvider } from "@/providers/ModalProvider"
 import Modal from "@/components/ui/modal"
 import styles from "./App.module.css"
+import { Vacancies } from "./pages/vacancies"
+import "simplebar-react/dist/simplebar.min.css";
 
 interface ProtectedRouteProps {
   allowedRoles?: Role[]
@@ -55,7 +57,7 @@ function App() {
               >
                 <Route path="/candidates" element={<div>Кандидаты</div>} />
                 <Route path="/interviews" element={<div>Собеседования</div>} />
-                <Route path="/vacancies" element={<div>Вакансии</div>} />
+                <Route path="/vacancies" element={<Vacancies />} />
               </Route>
 
               <Route

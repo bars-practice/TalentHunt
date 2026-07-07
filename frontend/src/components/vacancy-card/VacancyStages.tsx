@@ -43,7 +43,6 @@ function ResponseItem({ response }: { response: CandidateResponse }) {
           </MenubarTrigger>
           <MenubarContent align="end">
             <MenubarItem variant="destructive">Заблокировать кандидата</MenubarItem>
-            <MenubarItem variant="destructive">Удалить отклик</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>

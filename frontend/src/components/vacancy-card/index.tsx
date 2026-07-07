@@ -1,5 +1,4 @@
-import React from "react";
-import { MoreVertical, MapPin, Users, UserPlus } from "lucide-react";
+import { MoreVertical, Users, UserPlus, Building2 } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem } from "@/components/ui/menubar";
@@ -15,7 +14,6 @@ export interface VacancyProps {
   title: string;
   level: string;
   businessUnit: string;
-  location: string;
   responsesCount: number;
   status: "active" | "inactive";
   responses: any[]; // Тип из VacancyStages
@@ -31,7 +29,7 @@ interface VacancyCardComponentProps {
 
 const STATUS_CONFIG = {
   active: { text: "АКТИВНА", variant: "success" as const },
-  inactive: { text: "УДАЛЕНА", variant: "danger" as const },
+  inactive: { text: "АРХИВ", variant: "neutral" as const },
 };
 
 export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddResponse }: VacancyCardComponentProps) {
@@ -41,13 +39,13 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddRespons
   const handleDeleteClick = () => {
     openModal(
       <div className={styles.modalContent}>
-        <p className={styles.modalDescription}>Вакансия будет удалена из системы.</p>
+        <p className={styles.modalDescription}>Вакансия будет перемещена в архив.</p>
         <div className={styles.modalActions}>
           <Button variant="outline" onClick={closeModal}>Отмена</Button>
-          <Button variant="danger" onClick={() => { onDelete(); closeModal(); }}>Удалить</Button>
+          <Button variant="danger" onClick={() => { onDelete(); closeModal(); }}>Подтвердить</Button>
         </div>
       </div>,
-      { title: "Удалить вакансию?", width: "400px" }
+      { title: "Закрыть вакансию?", width: "400px" }
     );
   };
 
@@ -62,8 +60,8 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddRespons
             </div>
             <div className={styles.metaRow}>
               <div className={styles.metaItem}>
-                <MapPin size={16} />
-                <span>{vacancy.location}</span>
+                <Building2 size={16} />
+                <span>{vacancy.businessUnit}</span>
               </div>
               <div className={styles.metaItem}>
                 <Users size={16} />
