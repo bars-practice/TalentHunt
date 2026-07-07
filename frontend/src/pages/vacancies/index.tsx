@@ -51,6 +51,7 @@ export function Vacancies() {
     return a.isDeleted ? 1 : -1;
   });
   const isAdmin = user?.role === Role.Admin;
+  const isHR = user?.role === Role.HR;
 
   const handleAddVacancy = () => {
     openModal(
@@ -132,10 +133,6 @@ export function Vacancies() {
     }
   };
 
-  const handleAddResponse = (id: string) => {
-    console.log("Add response:", id);
-  };
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -168,8 +165,8 @@ export function Vacancies() {
                 onEdit={() => handleEdit(vacancy)}
                 onDelete={() => handleDelete(vacancy.id)}
                 onRestore={() => handleRestore(vacancy.id)}
-                onAddResponse={() => handleAddResponse(vacancy.id)}
                 isAdmin={isAdmin}
+                isHR={isHR}
               />
             );
           })}

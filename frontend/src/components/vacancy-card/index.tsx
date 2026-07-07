@@ -7,6 +7,7 @@ import Button from "@/components/ui/button";
 import { VacancyStages } from "./VacancyStages";
 import { pluralize } from "@/utils/plural";
 import { CandidateFormModal } from "@/components/candidate-form-modal";
+import { candidatesService } from "@/api/candidates";
 import styles from "./styles.module.css";
 
 export interface VacancyProps {
@@ -25,6 +26,7 @@ interface VacancyCardComponentProps {
   onDelete: () => void;
   onRestore: () => void;
   isAdmin?: boolean;
+  isHR?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -32,7 +34,7 @@ const STATUS_CONFIG = {
   inactive: { text: "АРХИВ", variant: "neutral" as const },
 };
 
-export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin }: VacancyCardComponentProps) {
+export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin, isHR }: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
   const { openModal, closeModal } = useModal();
 
@@ -52,7 +54,13 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin }: V
   const handleAddCandidate = () => {
     openModal(
       <CandidateFormModal
-
+        onSubmit={async (data) => {
+          try {
+            await candidatesService.create(data);
+          } catch (err) {
+            console.error("Failed to create candidate:", err);
+          }
+        }}
       />,
       { title: "Добавить кандидата", width: "600px" }
     );
@@ -80,7 +88,7 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, isAdmin }: V
           </div>
         </AccordionTrigger>
 
-        {vacancy.status === "active" && (
+        {vacancy.status === "active" && isHR && (
           <Button size="sm" variant="ghost" asChild className={styles.addButton} onClick={handleAddCandidate}>
             <p>
               <UserPlus size={16} />
