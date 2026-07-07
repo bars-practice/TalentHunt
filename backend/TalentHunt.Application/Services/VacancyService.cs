@@ -55,7 +55,7 @@ public class VacancyService(
         var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Вакансия не найдена.");
 
-        if (vacancy.IsDeleted)
+        if (vacancy.IsDeleted && (!request.IsDeleted.HasValue || request.IsDeleted.Value))
             throw new InvalidOperationException("Нельзя изменить удалённую вакансию.");
 
         if (!string.IsNullOrWhiteSpace(request.Title))
@@ -70,6 +70,9 @@ public class VacancyService(
         if (request.Description is not null)
             vacancy.Description = request.Description.Trim();
 
+        if (request.IsDeleted.HasValue)
+            vacancy.IsDeleted = request.IsDeleted.Value;
+
         await vacancyRepository.UpdateAsync(vacancy);
 
         if (request.CompetencyIds is not null)
@@ -81,7 +84,11 @@ public class VacancyService(
 
         await vacancyRepository.SaveAsync(cancellationToken);
 
-        var updated = await vacancyRepository.GetByIdWithCompetenciesAsync(id, includeDeleted, cancellationToken);
+        var updated = await vacancyRepository.GetByIdWithCompetenciesAsync(
+            id, 
+            includeDeleted || vacancy.IsDeleted, 
+            cancellationToken);
+
         return ToResponse(updated!);
     }
 

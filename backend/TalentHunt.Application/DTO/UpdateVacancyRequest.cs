@@ -7,5 +7,6 @@ public record UpdateVacancyRequest(
     VacancyLevel? Level,
     string? BusinessUnit,
     string? Description,
-    List<Guid>? CompetencyIds
+    List<Guid>? CompetencyIds,
+    bool? IsDeleted
 );

@@ -8,7 +8,7 @@ namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "HR,Admin")]
+[Authorize(Roles = "HR,Admin,Approver")]
 public class CompetenciesController(ICompetencyService competencyService, IAuditLogService auditLogService)
     : BaseController(auditLogService)
 {

@@ -25,6 +25,7 @@ interface VacancyCardComponentProps {
   onDelete: () => void;
   onRestore: () => void;
   onAddResponse: () => void;
+  isAdmin?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -32,7 +33,7 @@ const STATUS_CONFIG = {
   inactive: { text: "АРХИВ", variant: "neutral" as const },
 };
 
-export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddResponse }: VacancyCardComponentProps) {
+export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddResponse, isAdmin }: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
   const { openModal, closeModal } = useModal();
 
@@ -80,23 +81,25 @@ export function VacancyCard({ vacancy, onEdit, onDelete, onRestore, onAddRespons
           </Button>
         )}
 
-        <Menubar>
-          <MenubarMenu>
-            <MenubarTrigger className={styles.menuTrigger}>
-              <MoreVertical size={20} />
-            </MenubarTrigger>
-            <MenubarContent align="end">
-              {vacancy.status === "active" ? (
-                <>
-                  <MenubarItem onClick={onEdit}>Изменить вакансию</MenubarItem>
-                  <MenubarItem variant="destructive" onClick={handleDeleteClick}>Удалить вакансию</MenubarItem>
-                </>
-              ) : (
-                <MenubarItem onClick={onRestore}>Восстановить вакансию</MenubarItem>
-              )}
-            </MenubarContent>
-          </MenubarMenu>
-        </Menubar>
+        {vacancy.status === "active" || isAdmin ? (
+          <Menubar>
+            <MenubarMenu>
+              <MenubarTrigger className={styles.menuTrigger}>
+                <MoreVertical size={20} />
+              </MenubarTrigger>
+              <MenubarContent align="end">
+                {vacancy.status === "active" ? (
+                  <>
+                    <MenubarItem onClick={onEdit}>Изменить вакансию</MenubarItem>
+                    <MenubarItem variant="destructive" onClick={handleDeleteClick}>Удалить вакансию</MenubarItem>
+                  </>
+                ) : (
+                  <MenubarItem onClick={onRestore}>Восстановить вакансию</MenubarItem>
+                )}
+              </MenubarContent>
+            </MenubarMenu>
+          </Menubar>
+        ) : null}
       </div>
 
       <AccordionContent className={styles.list}>

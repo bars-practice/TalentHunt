@@ -8,14 +8,14 @@ namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "HR,Admin")]
+[Authorize(Roles = "HR,Admin,Approver")]
 public class VacanciesController(IVacancyService vacancyService, IAuditLogService auditLogService)
     : BaseController(auditLogService)
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var vacancies = await vacancyService.GetAllAsync(User.IsAdmin(), cancellationToken);
+        var vacancies = await vacancyService.GetAllAsync(true, cancellationToken);
         return Ok(vacancies);
     }
 
