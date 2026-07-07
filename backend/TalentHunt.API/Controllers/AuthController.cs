@@ -23,6 +23,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Login),
+            new("FullName", user.FullName),
             new(ClaimTypes.Role, user.Role.ToString())
         };
 
@@ -54,6 +55,8 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         return Ok(new
         {
+            id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+            fullName = User.FindFirst("FullName")?.Value,
             login = User.Identity?.Name,
             role = User.FindFirst(ClaimTypes.Role)?.Value
         });

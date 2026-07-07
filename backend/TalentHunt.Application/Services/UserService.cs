@@ -75,6 +75,11 @@ public class UserService : IUserService
         if (request.Role.HasValue)
             user.Role = request.Role.Value;
 
+        if (request.IsDeleted.HasValue)
+        {
+            user.IsDeleted = request.IsDeleted.Value;
+        }
+
         await _userRepository.UpdateAsync(user);
 
         var permissionNames = request.Permissions
