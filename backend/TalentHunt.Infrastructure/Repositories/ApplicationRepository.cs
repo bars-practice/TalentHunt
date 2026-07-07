@@ -64,4 +64,27 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
 
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<ApplicationEntity>> SearchForGlobalByCandidateAsync(
+        string query,
+        Guid? approverId,
+        CancellationToken cancellationToken = default)
+    {
+        var pattern = $"%{query}%";
+
+        var applicationQuery = context.Applications
+            .AsNoTracking()
+            .Include(a => a.Candidate)
+            .Where(a => EF.Functions.ILike(a.Candidate.FullName, pattern));
+
+        if (approverId.HasValue)
+        {
+            applicationQuery = applicationQuery.Where(a =>
+                context.Vacancies
+                    .IgnoreQueryFilters()
+                    .Any(v => v.Id == a.VacancyId && v.ApproverId == approverId.Value));
+        }
+
+        return await applicationQuery.ToListAsync(cancellationToken);
+    }
 }

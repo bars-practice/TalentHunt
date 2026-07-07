@@ -22,4 +22,14 @@ public interface IVacancyRepository
     Task ReplaceCompetenciesAsync(Guid vacancyId, IEnumerable<Guid> competencyIds, CancellationToken cancellationToken = default);
 
     Task SaveAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Guid>> SearchIdsByTextAsync(
+        string query,
+        Guid? approverId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Vacancy>> GetByIdsForGlobalSearchAsync(
+        IReadOnlyCollection<Guid> ids,
+        Guid? approverId,
+        CancellationToken cancellationToken = default);
 }
