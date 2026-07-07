@@ -65,7 +65,7 @@ export function Vacancies() {
           try {
             await vacanciesService.create({
               title: data.title,
-              level: data.level,
+              level: data.level!,
               businessUnit: data.businessUnit,
               description: data.description || "",
               competencyIds: data.competencyIds
