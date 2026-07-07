@@ -19,6 +19,13 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
         return Ok(competencies);
     }
 
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
+    {
+        var results = await competencyService.SearchAsync(query, cancellationToken);
+        return Ok(results);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateCompetencyRequest request,

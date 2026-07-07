@@ -6,6 +6,9 @@ namespace TalentHunt.Application.Services;
 
 public class CompetencyService(ICompetencyRepository competencyRepository) : ICompetencyService
 {
+    private const int MinQueryLength = 2;
+    private const int MaxResults = 10;
+
     public async Task<IEnumerable<CompetencyResponse>> GetAllAsync(
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
@@ -79,6 +82,23 @@ public class CompetencyService(ICompetencyRepository competencyRepository) : ICo
 
         await competencyRepository.DeleteAsync(competency);
         await competencyRepository.SaveAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<CompetencySearchResultResponse>> SearchAsync(
+        string query,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < MinQueryLength)
+            return [];
+
+        var competencies = await competencyRepository.SearchAsync(
+            query.Trim(),
+            MaxResults,
+            cancellationToken);
+
+        return competencies
+            .Select(c => new CompetencySearchResultResponse(c.Id, c.Name))
+            .ToList();
     }
 
     private static string NormalizeName(string name)

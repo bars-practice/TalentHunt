@@ -19,6 +19,13 @@ public class CandidatesController(ICandidateService candidateService, IAuditLogS
         return Ok(candidates);
     }
 
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
+    {
+        var results = await candidateService.SearchAsync(query, cancellationToken);
+        return Ok(results);
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {

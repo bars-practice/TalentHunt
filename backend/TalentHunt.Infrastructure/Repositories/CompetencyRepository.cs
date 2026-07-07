@@ -64,4 +64,15 @@ public class CompetencyRepository(AppDbContext context) : ICompetencyRepository
 
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Competency>> SearchAsync(
+        string query,
+        int limit,
+        CancellationToken cancellationToken = default) =>
+        await context.Competencies
+            .AsNoTracking()
+            .Where(c => EF.Functions.ILike(c.Name, $"%{query}%"))
+            .OrderBy(c => c.Name)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
 }
