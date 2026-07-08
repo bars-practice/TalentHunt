@@ -23,4 +23,20 @@
 
 .filterButton {
   flex-shrink: 0;
+  position: relative;
+}
+
+.filterButtonActive {
+  color: var(--color-primary);
+}
+
+.filterBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  border: 1.5px solid var(--color-bg, #fff);
 }

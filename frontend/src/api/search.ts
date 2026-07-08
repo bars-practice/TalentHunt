@@ -13,6 +13,7 @@ export interface SearchVacancyItem {
   vacancyTitle: string;
   businessUnit: string;
   isDeleted: boolean;
+  level: number; // 0=Junior, 1=Middle, 2=Senior
   applications: SearchApplicationItem[];
 }
 
@@ -26,15 +27,36 @@ export interface SearchResponse {
 }
 
 export interface SearchFilters {
-  types?: ('candidate' | 'vacancy' | 'application' | 'interview')[]
-  dateFrom?: string
-  dateTo?: string
-  status?: string
+  vacancyStatus: 'all' | 'active' | 'archived';
+  vacancyLevels: number[];      // пустой = все
+  candidateStatuses: number[];  // пустой = все
+  city: string;
 }
 
+export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
+  vacancyStatus: 'all',
+  vacancyLevels: [],
+  candidateStatuses: [],
+  city: '',
+};
+
 export const searchService = {
-  search: (query: string, page = 1, pageSize = 10) =>
-    api.get<SearchResponse>(
-      `/Search?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`
-    ),
+  search: (query: string, filters: SearchFilters = DEFAULT_SEARCH_FILTERS, page = 1, pageSize = 10) => {
+    const params = new URLSearchParams({
+      query: query,
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+
+    if (filters.vacancyStatus !== "all") {
+      params.set("vacancyStatus", filters.vacancyStatus);
+    }
+    filters.vacancyLevels.forEach(l => params.append("levels", String(l)));
+    filters.candidateStatuses.forEach(s => params.append("candidateStatuses", String(s)));
+    if (filters.city.trim()) {
+      params.set("city", filters.city.trim());
+    }
+
+    return api.get<SearchResponse>(`/Search?${params.toString()}`);
+  },
 }
