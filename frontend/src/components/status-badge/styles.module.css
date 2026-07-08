@@ -10,12 +10,13 @@
 
 .md {
   font-size: var(--text-sm);
-  padding: 4px 12px;
+  padding: 4px 10px;
 }
 
 .lg {
   font-size: var(--text-base);
-  padding: 6px 16px;
+  padding: 6px 12px;
+  border-radius: 50px;
 }
 
 .success {
@@ -36,4 +37,9 @@
 .warning {
   color: #f59e0b;
   background-color: rgba(245, 158, 11, 0.1);
+}
+
+.info {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
 }

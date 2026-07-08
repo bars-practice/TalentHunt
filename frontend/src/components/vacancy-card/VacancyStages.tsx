@@ -1,6 +1,7 @@
 import { Calendar, MoreHorizontal } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem } from "@/components/ui/menubar";
+import { Link } from "react-router-dom";
 import styles from "./styles.module.css";
 
 type ResponseStage = "new" | "interview" | "decision" | "offer";
@@ -28,7 +29,9 @@ function ResponseItem({ response }: { response: CandidateResponse }) {
   return (
     <div className={styles.item}>
       <div className={styles.itemInfo}>
-        <span className={styles.itemName}>{response.name}</span>
+        <Link to={`/assessment/${response.id}`} className={styles.itemName}>
+          {response.name}
+        </Link>
         {response.date && (
           <div className={styles.itemDate}>
             <Calendar size={14} />

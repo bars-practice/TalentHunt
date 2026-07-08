@@ -22,6 +22,8 @@ export interface CreateApplicationRequest {
 export const applicationsService = {
   getAll: () =>
     api.get<Application[]>('/Applications'),
+  getById: (id: string) =>
+    api.get<Application>(`/Applications/${id}`),
   create: (data: CreateApplicationRequest) =>
     api.post<Application>('/Applications', data)
 }

@@ -1,10 +1,11 @@
 import styles from "./styles.module.css";
+import { RatingCircle } from "@/components/rating-circle";
 
 interface CompetencyItem {
   id: string;
   name: string;
   description: string;
-  assessment?: string;
+  assessment?: number;
   comment?: string;
 }
 
@@ -12,7 +13,7 @@ interface CompetencyMatrixProps {
   competencies: CompetencyItem[];
 }
 
-export function CompetencyMatrix({ 
+export function CompetencyMatrix({
   competencies
 }: CompetencyMatrixProps) {
   return (
@@ -42,7 +43,11 @@ export function CompetencyMatrix({
                     <div className={styles.competencyDescription}>{competency.description}</div>
                   </td>
                   <td className={styles.assessmentCell}>
-                    <span className={styles.assessmentValue}>-</span>
+                    {competency.assessment !== undefined ? (
+                      <RatingCircle value={competency.assessment} />
+                    ) : (
+                      <span className={styles.assessmentValue}>-</span>
+                    )}
                   </td>
                   <td className={styles.commentCell}>
                     <span className={styles.commentValue}>-</span>
