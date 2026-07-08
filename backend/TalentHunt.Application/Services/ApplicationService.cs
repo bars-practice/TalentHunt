@@ -157,6 +157,7 @@ public class ApplicationService(
         application.Candidate?.PlacesOfWork ?? [],
         application.Status,
         application.Interview?.IsDeleted == false ? application.Interview.Id : null,
+        application.Interview?.IsDeleted == false ? application.Interview.ScheduledAt : null,
         application.DecidedByUserId,
         application.ApproverId,
         application.Approver?.FullName,

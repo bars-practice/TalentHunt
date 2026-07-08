@@ -6,6 +6,7 @@ export interface SearchApplicationItem {
   candidateFullName: string;
   city: string;
   status: number;
+  interviewScheduledAt?: string | null;
 }
 
 export interface SearchVacancyItem {

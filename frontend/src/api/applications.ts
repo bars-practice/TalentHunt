@@ -13,6 +13,7 @@ export interface Application {
   candidatePlacesOfWork: string[]
   status: string | number
   interviewId?: string
+  interviewScheduledAt?: string
   decidedByUserId?: string
   decidedByFullName?: string
   decidedAt?: string

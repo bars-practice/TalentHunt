@@ -131,7 +131,7 @@ export function VacancyCard({
       </div>
 
       <AccordionContent className={styles.list}>
-        <VacancyStages responses={responses || []} />
+        <VacancyStages responses={responses || []} canManageApplications={canManageApplications} />
       </AccordionContent>
     </AccordionItem>
   );

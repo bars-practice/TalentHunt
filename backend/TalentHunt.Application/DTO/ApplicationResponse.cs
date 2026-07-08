@@ -15,6 +15,7 @@ public record ApplicationResponse(
     List<string> CandidatePlacesOfWork,
     ApplicationStatus Status,
     Guid? InterviewId,
+    DateTime? InterviewScheduledAt,
     Guid? DecidedByUserId,
     Guid? ApproverId,
     string? ApproverFullName,

@@ -390,7 +390,7 @@ export function CompetencyAssessment() {
           {showProtocolPanel && (
             <Button
               size="lg"
-              variant="outline"
+              variant="primary"
               className={styles.startButton}
               onClick={handleDownloadProtocol}
               disabled={downloadingProtocol}

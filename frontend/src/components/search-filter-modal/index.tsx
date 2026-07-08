@@ -21,7 +21,7 @@ const CANDIDATE_STATUSES = [
   { value: 1, label: "В процессе" },
   { value: 2, label: "На рассмотрении" },
   { value: 3, label: "Принят" },
-  { value: 4, label: "Отказ" },
+  { value: 4, label: "Отклонен" },
 ];
 
 export function SearchFiltersModal({ initialFilters, onApplyFilters }: SearchFiltersModalProps) {

@@ -101,7 +101,8 @@ public class GlobalSearchService(
                 a.CandidateId,
                 a.Candidate.FullName,
                 a.Candidate.City,
-                a.Status)).ToList()
+                a.Status,
+                a.Interview?.IsDeleted == false ? a.Interview.ScheduledAt : null)).ToList()
             : [];
 
         return new GlobalSearchVacancyNode(
