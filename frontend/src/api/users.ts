@@ -2,15 +2,23 @@ import { api } from './client.ts'
 import type { User } from './auth'
 import { Role, convertStringRoleToNumber } from './auth'
 
+export interface PermissionInfo {
+  name: string
+  displayName: string
+}
+
 export interface CreateUserRequest {
   fullName: string
   password: string
   role: Role
+  permissions?: string[]
 }
 
 export interface UpdateUserRequest {
-  fullName: string
-  role: Role
+  fullName?: string
+  password?: string
+  role?: Role
+  permissions?: string[]
   isDeleted?: boolean
 }
 
@@ -45,5 +53,8 @@ export const usersService = {
     api.put<User>(`/Users/${id}`, { isDeleted: false }),
 
   getById: (id: string): Promise<User> =>
-    api.get<User>(`/Users/${id}`)
+    api.get<User>(`/Users/${id}`),
+
+  getPermissions: (): Promise<PermissionInfo[]> =>
+    api.get<PermissionInfo[]>('/Users/permissions'),
 }

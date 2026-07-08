@@ -3,10 +3,10 @@ import { VacancyFormModal } from "@/components/vacancy-form-modal";
 import { vacanciesService, type Vacancy, VacancyLevel } from "@/api/vacancies";
 import { competenciesService, type Competency } from "@/api/competencies";
 import { applicationsService } from "@/api/applications";
-import { Role } from "@/api/auth";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { GlobalSearch } from "@/components/global-search";
 import { searchService, type SearchVacancyItem, type SearchFilters, DEFAULT_SEARCH_FILTERS } from "@/api/search";
+import { Permission } from "@/utils/permissions";
+import { usePermissions } from "@/hooks/usePermissions";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
 import { Briefcase } from "lucide-react";
@@ -53,9 +53,10 @@ const mapStatusToNumber = (status: string | number): number => {
 
 export function Vacancies() {
   const { openModal } = useModal();
-  const { user } = useCurrentUser();
-  const [allVacancies, setAllVacancies] = useState<Vacancy[]>([]);
-  const vacanciesRef = useRef<Vacancy[]>([]);
+  const { hasPermission, isAdmin } = usePermissions();
+  const canManageVacancies = hasPermission(Permission.CanManageVacancies);
+  const canManageApplications = hasPermission(Permission.CanManageApplications);
+  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -315,7 +316,13 @@ export function Vacancies() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Управление вакансиями</h1>
-        <Button size="lg" variant="primary" className={styles.addButton} onClick={handleAddVacancy}>
+        <Button
+          size="lg"
+          variant="primary"
+          className={styles.addButton}
+          onClick={handleAddVacancy}
+          disabled={!canManageVacancies}
+        >
           <Briefcase size={20} />
           Добавить вакансию
         </Button>
@@ -361,7 +368,8 @@ export function Vacancies() {
                 onDelete={() => handleDelete(vacancy.id)}
                 onRestore={() => handleRestore(vacancy.id)}
                 isAdmin={isAdmin}
-                isHR={isHR}
+                canManageVacancies={canManageVacancies}
+                canManageApplications={canManageApplications}
               />
             );
           })}

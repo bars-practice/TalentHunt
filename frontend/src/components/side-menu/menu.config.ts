@@ -1,11 +1,13 @@
 import { Users, Calendar, Briefcase, User as UserIcon, FileText, CheckSquare, type LucideIcon } from "lucide-react";
 import { Role } from "@/api/auth";
+import { Permission, type Permission as PermissionType } from "@/utils/permissions";
 
 export interface MenuItem {
   path: string;
   label: string;
   icon: LucideIcon;
-  roles: Role[];
+  roles?: Role[];
+  permission?: PermissionType;
 }
 
 export const menuItems: MenuItem[] = [
@@ -13,25 +15,25 @@ export const menuItems: MenuItem[] = [
     path: "/candidates",
     label: "Кандидаты",
     icon: UserIcon,
-    roles: [Role.HR, Role.Approver, Role.Admin, Role.SuperAdmin],
+    permission: Permission.CanViewCandidates,
   },
   {
     path: "/interviews",
     label: "Собеседования",
     icon: Calendar,
-    roles: [Role.HR, Role.Approver, Role.Admin, Role.SuperAdmin],
+    permission: Permission.CanViewInterviews,
   },
   {
     path: "/vacancies",
     label: "Вакансии",
     icon: Briefcase,
-    roles: [Role.HR, Role.Approver, Role.Admin, Role.SuperAdmin],
+    permission: Permission.CanViewVacancies,
   },
   {
     path: "/competency-assessment",
     label: "Оценка компетенций",
     icon: CheckSquare,
-    roles: [Role.HR, Role.Approver, Role.Admin],
+    permission: Permission.CanManageCompetencies,
   },
   {
     path: "/users",

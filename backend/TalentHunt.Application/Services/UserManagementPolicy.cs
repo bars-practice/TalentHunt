@@ -30,19 +30,28 @@ public static class UserManagementPolicy
         if (target.Id == callerId && requestedRole.HasValue && requestedRole.Value != target.Role)
             throw new InvalidOperationException("Нельзя изменить собственную роль.");
 
-        if (target.Role == Role.SuperAdmin && (requestedRole.HasValue || requestedIsDeleted == true))
+        if (target.Role == Role.SuperAdmin && requestedIsDeleted == true)
+            throw new InvalidOperationException("SuperAdmin нельзя удалить или изменить роль.");
+
+        if (target.Role == Role.SuperAdmin
+            && requestedRole.HasValue
+            && requestedRole.Value != target.Role)
             throw new InvalidOperationException("SuperAdmin нельзя удалить или изменить роль.");
 
         if (callerRole == Role.Admin)
         {
-            if (IsAdministrativeRole(target.Role))
+            if (target.Id != callerId && IsAdministrativeRole(target.Role))
                 throw new InvalidOperationException("Администратор не может изменять пользователей Admin и SuperAdmin.");
 
-            if (requestedRole.HasValue && IsAdministrativeRole(requestedRole.Value))
+            if (requestedRole.HasValue
+                && IsAdministrativeRole(requestedRole.Value)
+                && !(target.Id == callerId && requestedRole.Value == target.Role))
                 throw new InvalidOperationException("Администратор может назначать только роли HR и Approver.");
         }
 
-        if (callerRole != Role.SuperAdmin && requestedRole == Role.Admin)
+        if (callerRole != Role.SuperAdmin
+            && requestedRole == Role.Admin
+            && !(target.Id == callerId && target.Role == Role.Admin))
             throw new InvalidOperationException("Только SuperAdmin может назначать роль Admin.");
 
         if (callerRole != Role.SuperAdmin && requestedRole == Role.SuperAdmin)

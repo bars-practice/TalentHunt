@@ -9,6 +9,9 @@ interface UserCardProps {
   name: string;
   status: "active" | "inactive";
   role: string;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canRestore?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
   onRestore?: () => void;
@@ -18,7 +21,17 @@ const STATUS_CONFIG = {
   inactive: { text: "УДАЛЕН", variant: "danger" as const },
 };
 
-export function UserCard({ name, status, role, onEdit, onDelete, onRestore }: UserCardProps) {
+export function UserCard({
+  name,
+  status,
+  role,
+  canEdit = true,
+  canDelete = true,
+  canRestore = true,
+  onEdit,
+  onDelete,
+  onRestore,
+}: UserCardProps) {
   const badge = STATUS_CONFIG[status];
   const { openModal, closeModal } = useModal();
 
@@ -44,6 +57,10 @@ export function UserCard({ name, status, role, onEdit, onDelete, onRestore }: Us
     );
   };
 
+  const hasActions =
+    (status === "active" && (canEdit || canDelete)) ||
+    (status === "inactive" && canRestore);
+
   return (
     <div className={styles.userCard}>
       <div className={styles.userInfo}>
@@ -56,6 +73,7 @@ export function UserCard({ name, status, role, onEdit, onDelete, onRestore }: Us
         </div>
       </div>
 
+      {hasActions && (
       <Menubar>
         <MenubarMenu>
           <MenubarTrigger className={styles.menuButton}>
@@ -64,18 +82,21 @@ export function UserCard({ name, status, role, onEdit, onDelete, onRestore }: Us
           <MenubarContent align="end">
             {status === "active" && (
               <>
-                <MenubarItem onClick={onEdit}>Изменить пользователя</MenubarItem>
-                <MenubarItem variant="destructive" onClick={handleDeleteClick}>
-                  Удалить пользователя
-                </MenubarItem>
+                {canEdit && <MenubarItem onClick={onEdit}>Изменить пользователя</MenubarItem>}
+                {canDelete && (
+                  <MenubarItem variant="destructive" onClick={handleDeleteClick}>
+                    Удалить пользователя
+                  </MenubarItem>
+                )}
               </>
             )}
-            {status === "inactive" && (
+            {status === "inactive" && canRestore && (
               <MenubarItem onClick={onRestore}>Восстановить пользователя</MenubarItem>
             )}
           </MenubarContent>
         </MenubarMenu>
       </Menubar>
+      )}
     </div>
   );
 }
