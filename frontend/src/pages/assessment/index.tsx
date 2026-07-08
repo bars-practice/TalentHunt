@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CandidateInfo } from "./CandidateInfo";
 import { CompetencyMatrix } from "./CompetencyMatrix";
+import { CompetencyEdit } from "@/components/competency-edit";
 import Button from "@/components/ui/button";
 import { applicationsService } from "@/api/applications";
 import { candidatesService } from "@/api/candidates";
@@ -21,6 +22,7 @@ export function CompetencyAssessment() {
   const [loading, setLoading] = useState(true);
   const [candidateData, setCandidateData] = useState<any>(null);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
+  const [demoRating, setDemoRating] = useState(3);
 
   useEffect(() => {
     async function loadData() {
