@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
-// https://vite.dev/config/
+// https://vite.dev
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -9,13 +10,4 @@ export default defineConfig({
       "@": "/src",
     },
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5105',
-        changeOrigin: true,
-      },
-    },
-  },
 })
-
