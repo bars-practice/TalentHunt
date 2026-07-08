@@ -39,13 +39,7 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
             query = query.Where(i => i.Application.Status == applicationStatus.Value);
 
         if (approverUserId.HasValue)
-        {
-            query = query.Where(i =>
-                i.Application.ApproverId == approverUserId.Value
-                && (i.Application.Status == ApplicationStatus.PendingDecision
-                    || i.Application.Status == ApplicationStatus.Approved
-                    || i.Application.Status == ApplicationStatus.Rejected));
-        }
+            query = query.Where(i => i.Application.ApproverId == approverUserId.Value);
 
         var interviews = await query
             .OrderByDescending(i => i.ScheduledAt)

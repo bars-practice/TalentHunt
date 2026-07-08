@@ -92,6 +92,7 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
         var applicationQuery = context.Applications
             .AsNoTracking()
             .Include(a => a.Candidate)
+            .Include(a => a.Interview)
             .Where(a => EF.Functions.ILike(a.Candidate.FullName, pattern));
 
         if (approverId.HasValue)

@@ -24,6 +24,11 @@
   background-color: rgba(34, 197, 94, 0.1);
 }
 
+.successLight {
+  color: #8bb111;
+  background-color: #b4cf5d59;
+}
+
 .neutral {
   color: #6b7280;
   background-color: rgba(107, 114, 128, 0.1);

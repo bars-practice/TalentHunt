@@ -7,5 +7,6 @@ public record GlobalSearchApplicationItem(
     Guid CandidateId,
     string CandidateFullName,
     string City,
-    ApplicationStatus Status
+    ApplicationStatus Status,
+    DateTime? InterviewScheduledAt
 );

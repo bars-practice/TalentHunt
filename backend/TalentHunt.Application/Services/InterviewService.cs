@@ -100,8 +100,12 @@ public class InterviewService(
         var interview = await interviewRepository.GetByIdAsync(id, cancellationToken: cancellationToken)
             ?? throw new KeyNotFoundException("Собеседование не найдено.");
 
-        if (interview.Application.Status != ApplicationStatus.Applied)
-            throw new InvalidOperationException("Начать можно только собеседование для отклика в статусе Applied.");
+        if (interview.Application.Status != ApplicationStatus.InProgress)
+            throw new InvalidOperationException(
+                "Начать можно только собеседование со статусом «Ожидает собеседования».");
+
+        if (!interview.ScheduledAt.HasValue)
+            throw new InvalidOperationException("Сначала назначьте дату собеседования.");
 
         if (interview.InterviewerId.HasValue)
             throw new InvalidOperationException("Собеседование уже начато.");
@@ -113,7 +117,6 @@ public class InterviewService(
             throw new InvalidOperationException("Интервьюером может быть только пользователь с ролью HR, Admin или SuperAdmin.");
 
         interview.InterviewerId = interviewerUserId;
-        interview.Application.Status = ApplicationStatus.InProgress;
 
         await interviewRepository.UpdateAsync(interview);
         await applicationRepository.UpdateAsync(interview.Application);
@@ -136,9 +139,42 @@ public class InterviewService(
         if (status is ApplicationStatus.Approved or ApplicationStatus.Rejected)
             throw new UnauthorizedAccessException("Нельзя редактировать собеседование с принятым решением.");
 
-        if (status is not (ApplicationStatus.InProgress or ApplicationStatus.PendingDecision))
+        // Для Applied разрешаем только назначение даты — после этого статус «Ожидает собеседования»
+        if (status is ApplicationStatus.Applied)
+        {
+            if (!request.ScheduledAt.HasValue)
+                throw new InvalidOperationException("Необходимо указать дату собеседования.");
+
+            interview.ScheduledAt = request.ScheduledAt;
+            interview.Application.Status = ApplicationStatus.InProgress;
+
+            await interviewRepository.UpdateAsync(interview);
+            await applicationRepository.UpdateAsync(interview.Application);
+            await interviewRepository.SaveAsync(cancellationToken);
+
+            var saved = await interviewRepository.GetByIdAsync(id, cancellationToken: cancellationToken);
+            return ToDetailResponse(saved!);
+        }
+
+        // InProgress без интервьюера — можно только менять дату
+        if (status is ApplicationStatus.InProgress && !interview.InterviewerId.HasValue)
+        {
+            if (request.ScheduledAt.HasValue)
+                interview.ScheduledAt = request.ScheduledAt;
+
+            await interviewRepository.UpdateAsync(interview);
+            await interviewRepository.SaveAsync(cancellationToken);
+
+            var saved = await interviewRepository.GetByIdAsync(id, cancellationToken: cancellationToken);
+            return ToDetailResponse(saved!);
+        }
+
+        if (status is ApplicationStatus.PendingDecision)
+            throw new InvalidOperationException("Нельзя редактировать собеседование после отправки на решение.");
+
+        if (status is not ApplicationStatus.InProgress)
             throw new InvalidOperationException(
-                "Редактировать собеседование можно только в статусе InProgress или PendingDecision.");
+                "Редактировать собеседование можно только в статусе InProgress.");
 
         if (request.ScheduledAt.HasValue)
             interview.ScheduledAt = request.ScheduledAt;
@@ -281,7 +317,9 @@ public class InterviewService(
         && CanApproverView(interview);
 
     private static bool CanApproverView(Interview interview) =>
-        interview.Application.Status is ApplicationStatus.PendingDecision
+        interview.Application.Status is ApplicationStatus.Applied
+            or ApplicationStatus.InProgress
+            or ApplicationStatus.PendingDecision
             or ApplicationStatus.Approved
             or ApplicationStatus.Rejected;
 

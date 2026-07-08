@@ -1,111 +1,455 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { CandidateInfo } from "./CandidateInfo";
 import { CompetencyMatrix } from "./CompetencyMatrix";
 import Button from "@/components/ui/button";
-import { applicationsService } from "@/api/applications";
-import { candidatesService } from "@/api/candidates";
+import { applicationsService, type Application } from "@/api/applications";
 import { vacanciesService } from "@/api/vacancies";
+import {
+  interviewsService,
+  type InterviewDetail,
+  type SkillMatrixItem,
+  ApplicationStatus,
+} from "@/api/interviews";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Permission } from "@/utils/permissions";
+import { useModal } from "@/providers/ModalProvider";
+import { CircleCheck, CircleX, FileDown } from "lucide-react";
 import styles from "./styles.module.css";
 
-interface Competency {
-  id: string;
-  name: string;
-  description: string;
-  assessment?: number;
-  comment?: string;
+function areAllScoresFilled(matrix: SkillMatrixItem[]): boolean {
+  return matrix.length > 0 && matrix.every(item => item.score !== null && item.score !== undefined);
+}
+
+function isGeneralConclusionFilled(conclusion: string): boolean {
+  return conclusion.trim().length > 0;
+}
+
+function parseApplicationStatus(status: Application["status"]): number {
+  if (typeof status === "number") return status;
+  const map: Record<string, number> = {
+    Applied: ApplicationStatus.Applied,
+    InProgress: ApplicationStatus.InProgress,
+    PendingDecision: ApplicationStatus.PendingDecision,
+    Approved: ApplicationStatus.Approved,
+    Rejected: ApplicationStatus.Rejected,
+  };
+  return map[status] ?? ApplicationStatus.Applied;
+}
+
+async function loadEmptyInterviewView(application: Application): Promise<InterviewDetail> {
+  const vacancies = await vacanciesService.getAll();
+  const vacancy = vacancies.find(v => v.id === application.vacancyId);
+
+  const skillMatrix: SkillMatrixItem[] = (vacancy?.competencies ?? [])
+    .map(competency => ({
+      competencyId: competency.id,
+      competencyName: competency.name,
+      competencyDescription: competency.description ?? "",
+      score: null,
+      comment: "",
+    }))
+    .sort((a, b) => a.competencyName.localeCompare(b.competencyName));
+
+  return {
+    id: "",
+    applicationId: application.id,
+    applicationStatus: parseApplicationStatus(application.status),
+    candidateId: application.candidateId,
+    candidateFullName: application.candidateFullName,
+    candidatePhone: application.candidatePhone ?? "",
+    candidateCity: application.candidateCity ?? "",
+    candidateEducation: application.candidateEducation ?? "",
+    candidateExperience: application.candidateExperience ?? "",
+    candidatePlacesOfWork: application.candidatePlacesOfWork ?? [],
+    vacancyId: application.vacancyId,
+    vacancyTitle: vacancy?.title ?? application.vacancyTitle,
+    vacancyLevel: vacancy?.level ?? 0,
+    scheduledAt: null,
+    plan: "",
+    interviewerId: null,
+    interviewerFullName: null,
+    generalConclusion: "",
+    skillMatrix,
+    isDeleted: false,
+  };
 }
 
 export function CompetencyAssessment() {
   const { id } = useParams<{ id: string }>();
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
+  const { openModal, closeModal } = useModal();
+
   const [loading, setLoading] = useState(true);
-  const [candidateData, setCandidateData] = useState<any>(null);
-  const [competencies, setCompetencies] = useState<Competency[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [interview, setInterview] = useState<InterviewDetail | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      if (!id) return;
+  // Локальное состояние матрицы для режима редактирования
+  const [draftMatrix, setDraftMatrix] = useState<SkillMatrixItem[]>([]);
+  const [draftConclusion, setDraftConclusion] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [isSessionActive, setIsSessionActive] = useState(false);
+  const [deciding, setDeciding] = useState(false);
+  const [downloadingProtocol, setDownloadingProtocol] = useState(false);
 
-      try {
-        setLoading(true);
-        const application = await applicationsService.getById(id);
-        const candidate = await candidatesService.getAll();
-        const candidateInfo = candidate.find(c => c.id === application.candidateId);
+  const canManageInterviews = hasPermission(Permission.CanManageInterviews);
+  const canMakeDecision =
+    hasPermission(Permission.CanMakeDecision) &&
+    !hasPermission(Permission.CanManageInterviews);
+  const canExportDocuments = hasPermission(Permission.CanExportDocuments);
 
-        const vacancy = await vacanciesService.getAll();
-        const vacancyInfo = vacancy.find(v => v.id === application.vacancyId);
+  const loadInterview = useCallback(async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      setError(null);
+      setIsSessionActive(false);
 
-        if (candidateInfo && vacancyInfo) {
-          setCandidateData({
-            name: candidateInfo.fullName,
-            role: vacancyInfo.title,
-            location: candidateInfo.city,
-            phone: candidateInfo.phone,
-            education: candidateInfo.education,
-            experience: candidateInfo.placesOfWork || [],
-            totalExperience: candidateInfo.experience,
-            status: 0,
-            interviewDate: "Не назначено",
-          });
+      const application = await applicationsService.getById(id);
 
-          setCompetencies(vacancyInfo.competencies.map((comp, index) => ({
-            id: comp.id,
-            name: comp.name,
-            description: "",
-            assessment: [1, 2, 3, 4, 5][index % 2],
-          })));
-        }
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      } finally {
-        setLoading(false);
+      if (application.interviewId) {
+        const detail = await interviewsService.getById(application.interviewId);
+        setInterview(detail);
+        setDraftMatrix(detail.skillMatrix);
+        setDraftConclusion(detail.generalConclusion);
+      } else {
+        const emptyView = await loadEmptyInterviewView(application);
+        setInterview(emptyView);
+        setDraftMatrix(emptyView.skillMatrix);
+        setDraftConclusion(emptyView.generalConclusion);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось загрузить данные");
+    } finally {
+      setLoading(false);
     }
-
-    loadData();
   }, [id]);
 
-  const handleStartInterview = () => {
-    console.log("Starting interview");
+  useEffect(() => {
+    if (permissionsLoading) return;
+    void loadInterview();
+  }, [loadInterview, permissionsLoading]);
+
+  const ensureInterview = async (): Promise<InterviewDetail> => {
+    if (interview?.id) return interview;
+    if (!id) throw new Error("Отклик не найден");
+
+    const created = await interviewsService.create(id);
+    setInterview(created);
+    setDraftMatrix(created.skillMatrix);
+    setDraftConclusion(created.generalConclusion);
+    return created;
   };
 
-  const handleDateSave = (date: string) => {
-    setCandidateData((prev: any) => ({
-      ...prev,
-      interviewDate: date
-    }));
+  const handleStartInterview = async () => {
+    if (!interview) return;
+    try {
+      setStarting(true);
+      const current = await ensureInterview();
+      const updated = await interviewsService.start(current.id);
+      setInterview(updated);
+      setDraftMatrix(updated.skillMatrix);
+      setDraftConclusion(updated.generalConclusion);
+      setIsSessionActive(true);
+    } catch (err) {
+      console.error("Failed to start interview:", err);
+    } finally {
+      setStarting(false);
+    }
   };
 
-  if (loading) {
-    return <div className={styles.container}>Загрузка...</div>;
-  }
+  const handleScheduledAtSave = async (date: string) => {
+    if (!interview) return;
+    const current = await ensureInterview();
+    const updated = await interviewsService.update(current.id, { scheduledAt: date });
+    setInterview(updated);
+  };
 
-  if (!candidateData) {
-    return <div className={styles.container}>Данные не найдены</div>;
-  }
+  const handleScoreChange = (competencyId: string, score: number) => {
+    setDraftMatrix(prev =>
+      prev.map(item =>
+        item.competencyId === competencyId ? { ...item, score } : item
+      )
+    );
+  };
+
+  const handleCommentChange = (competencyId: string, comment: string) => {
+    setDraftMatrix(prev =>
+      prev.map(item =>
+        item.competencyId === competencyId ? { ...item, comment } : item
+      )
+    );
+  };
+
+  const handleSave = async (isDraft: boolean) => {
+    if (!interview) return;
+    try {
+      setSaving(true);
+      const current = await ensureInterview();
+      const updated = await interviewsService.update(current.id, {
+        skillMatrix: draftMatrix.map(item => ({
+          competencyId: item.competencyId,
+          score: item.score,
+          comment: item.comment || null,
+        })),
+        generalConclusion: draftConclusion,
+        isDraft,
+      });
+      setInterview(updated);
+      setDraftMatrix(updated.skillMatrix);
+      setDraftConclusion(updated.generalConclusion);
+      setIsSessionActive(false);
+    } catch (err) {
+      console.error("Failed to save interview:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const showValidationAlert = (title: string, message: string) => {
+    openModal(
+      <div>
+        <p className={styles.modalDescription}>{message}</p>
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={closeModal}>
+            Понятно
+          </Button>
+        </div>
+      </div>,
+      { title, width: "400px" }
+    );
+  };
+
+  const handleResumeInterview = () => {
+    setDraftMatrix(interview!.skillMatrix);
+    setDraftConclusion(interview!.generalConclusion);
+    setIsSessionActive(true);
+  };
+
+  const handleSubmit = () => {
+    if (!areAllScoresFilled(draftMatrix)) {
+      showValidationAlert(
+        "Не все оценки проставлены",
+        "Для завершения собеседования необходимо проставить оценки по всем компетенциям."
+      );
+      return;
+    }
+    if (!isGeneralConclusionFilled(draftConclusion)) {
+      showValidationAlert(
+        "Общее заключение не заполнено",
+        "Для завершения собеседования необходимо заполнить общее заключение."
+      );
+      return;
+    }
+    void handleSave(false);
+  };
+
+  const handleDecision = async (status: typeof ApplicationStatus.Approved | typeof ApplicationStatus.Rejected) => {
+    if (!id) return;
+    try {
+      setDeciding(true);
+      await applicationsService.decide(id, status);
+      closeModal();
+      await loadInterview();
+    } catch (err) {
+      console.error("Failed to make decision:", err);
+    } finally {
+      setDeciding(false);
+    }
+  };
+
+  const showDecisionConfirm = (approve: boolean) => {
+    const title = approve ? "Принять кандидата?" : "Отклонить кандидата?";
+    const message = approve
+      ? "Кандидат будет принят на работу."
+      : "Кандидат будет отклонён.";
+
+    openModal(
+      <div>
+        <p className={styles.modalDescription}>{message}</p>
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={closeModal} disabled={deciding}>
+            Отмена
+          </Button>
+          <Button
+            variant={approve ? "primary" : "danger"}
+            onClick={() => handleDecision(approve ? ApplicationStatus.Approved : ApplicationStatus.Rejected)}
+            disabled={deciding}
+          >
+            {approve ? "Принять" : "Отклонить"}
+          </Button>
+        </div>
+      </div>,
+      { title, width: "400px" }
+    );
+  };
+
+  const handleDownloadProtocol = async () => {
+    if (!id) return;
+    try {
+      setDownloadingProtocol(true);
+      await applicationsService.downloadProtocol(id);
+    } catch (err) {
+      console.error("Failed to download protocol:", err);
+    } finally {
+      setDownloadingProtocol(false);
+    }
+  };
+
+  if (loading || permissionsLoading) return <div className={styles.container}>Загрузка...</div>;
+  if (error) return <div className={styles.container}>{error}</div>;
+  if (!interview) return <div className={styles.container}>Данные не найдены</div>;
+
+  const appStatus = interview.applicationStatus;
+
+  const hasScheduledDate = !!interview.scheduledAt;
+
+  const canStart =
+    canManageInterviews &&
+    !isSessionActive &&
+    appStatus === ApplicationStatus.InProgress &&
+    !interview.interviewerId &&
+    hasScheduledDate;
+
+  const canResume =
+    canManageInterviews &&
+    !isSessionActive &&
+    appStatus === ApplicationStatus.InProgress &&
+    !!interview.interviewerId;
+
+  const isEditing =
+    canManageInterviews &&
+    isSessionActive &&
+    !!interview.interviewerId &&
+    appStatus === ApplicationStatus.InProgress;
+
+  const canScheduleDate =
+    canManageInterviews &&
+    (appStatus === ApplicationStatus.Applied ||
+      appStatus === ApplicationStatus.InProgress);
+
+  const showDecisionPanel =
+    canMakeDecision && appStatus === ApplicationStatus.PendingDecision;
+
+  const showProtocolPanel =
+    canExportDocuments &&
+    (appStatus === ApplicationStatus.Approved ||
+      appStatus === ApplicationStatus.Rejected);
+
+  const interviewDate = interview.scheduledAt
+    ? new Date(interview.scheduledAt).toLocaleString("ru-RU")
+    : "Не назначено";
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Оценка компетенций</h1>
-        <Button
-          size="lg"
-          variant="primary"
-          className={styles.startButton}
-          onClick={handleStartInterview}
-        >
-          Начать собеседование
-        </Button>
+        <div className={styles.actionButtons}>
+          {canStart && (
+            <Button
+              size="lg"
+              variant="primary"
+              className={styles.startButton}
+              onClick={handleStartInterview}
+              disabled={starting}
+            >
+              {starting ? "Запуск..." : "Начать собеседование"}
+            </Button>
+          )}
+          {canResume && (
+            <Button
+              size="lg"
+              variant="primary"
+              className={styles.startButton}
+              onClick={handleResumeInterview}
+            >
+              Возобновить собеседование
+            </Button>
+          )}
+          {isEditing && (
+            <>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => handleSave(true)}
+                disabled={saving}
+              >
+                Сохранить черновик
+              </Button>
+              <Button
+                size="lg"
+                variant="primary"
+                onClick={handleSubmit}
+                disabled={saving}
+              >
+                Завершить и отправить
+              </Button>
+            </>
+          )}
+          {showProtocolPanel && (
+            <Button
+              size="lg"
+              variant="primary"
+              className={styles.startButton}
+              onClick={handleDownloadProtocol}
+              disabled={downloadingProtocol}
+            >
+              <FileDown size={20} />
+              {downloadingProtocol ? "Формирование..." : "Сформировать протокол"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <CandidateInfo
-        {...candidateData}
-        onDateSave={handleDateSave}
+        name={interview.candidateFullName}
+        role={interview.vacancyTitle}
+        location={interview.candidateCity}
+        phone={interview.candidatePhone}
+        education={interview.candidateEducation}
+        experience={interview.candidatePlacesOfWork}
+        totalExperience={interview.candidateExperience}
+        status={appStatus}
+        interviewDate={interviewDate}
+        scheduledAt={interview.scheduledAt}
+        onDateSave={canScheduleDate ? handleScheduledAtSave : undefined}
       />
 
       <CompetencyMatrix
-        competencies={competencies}
+        competencies={isEditing ? draftMatrix : interview.skillMatrix}
+        editing={isEditing}
+        onScoreChange={handleScoreChange}
+        onCommentChange={handleCommentChange}
+        generalConclusion={isEditing ? draftConclusion : interview.generalConclusion}
+        onConclusionChange={isEditing ? setDraftConclusion : undefined}
       />
+
+      {showDecisionPanel && (
+        <section className={styles.decisionSection}>
+          <h3 className={styles.matrixTitle}>Итоговое решение о приеме на работу</h3>
+          <div className={styles.decisionButtons}>
+            <button
+              type="button"
+              className={`${styles.decisionButton} ${styles.approveButton}`}
+              onClick={() => showDecisionConfirm(true)}
+              disabled={deciding}
+            >
+              <CircleCheck size={24} />
+              Принять
+            </button>
+            <button
+              type="button"
+              className={`${styles.decisionButton} ${styles.rejectButton}`}
+              onClick={() => showDecisionConfirm(false)}
+              disabled={deciding}
+            >
+              <CircleX size={24} />
+              Отклонить
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

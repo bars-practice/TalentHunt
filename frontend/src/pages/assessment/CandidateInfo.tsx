@@ -15,17 +15,18 @@ interface CandidateInfoProps {
   totalExperience?: string;
   status: number;
   interviewDate: string;
-  onDateSave?: (date: string) => void;
+  scheduledAt?: string | null;
+  onDateSave?: (date: string) => void | Promise<void>;
 }
 
-function getStatusInfo(status: number): { text: string; variant: "success" | "neutral" | "danger" | "warning" | "info" } {
+function getStatusInfo(status: number): { text: string; variant: "success" | "successLight" | "neutral" | "danger" | "warning" | "info" } {
   switch (status) {
     case 0:
       return { text: "Новый", variant: "info" };
     case 1:
       return { text: "Ожидает собеседования", variant: "warning" };
     case 2:
-      return { text: "Ожидает решения", variant: "warning" };
+      return { text: "Ожидает решения", variant: "successLight" };
     case 3:
       return { text: "Принят", variant: "success" };
     case 4:
@@ -44,19 +45,21 @@ export function CandidateInfo({
   totalExperience,
   status,
   interviewDate,
+  scheduledAt,
   onDateSave,
 }: CandidateInfoProps) {
-  const { openModal } = useModal();
+  const { openModal, closeModal } = useModal();
   const statusInfo = getStatusInfo(status);
 
   const handleEditDate = () => {
     openModal(
       <DateTimePickerModal
-        initialDate={interviewDate}
-        onSave={(date) => {
-          onDateSave?.(date);
+        initialDate={scheduledAt ?? undefined}
+        onSave={async (date) => {
+          await onDateSave?.(date);
+          closeModal();
         }}
-        onCancel={() => { }}
+        onCancel={closeModal}
       />,
       { title: "Дата собеседования", width: "400px" }
     );
@@ -115,13 +118,15 @@ export function CandidateInfo({
             <span className={styles.dateLabel}>Дата собеседования</span>
             <div className={styles.dateRow}>
               <span className={styles.dateValue}>{interviewDate}</span>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                onClick={handleEditDate}
-              >
-                <Edit2 size={16} />
-              </Button>
+              {onDateSave && (
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={handleEditDate}
+                >
+                  <Edit2 size={16} />
+                </Button>
+              )}
             </div>
           </div>
         </div>

@@ -30,14 +30,16 @@ const mapStatusToStage = (status: string | number) => {
       case 1: return "interview";
       case 2: return "decision";
       case 3: return "offer";
+      case 4: return "rejected";
       default: return "new";
     }
   }
 
   const statusLower = String(status).toLowerCase();
-  if (statusLower.includes("interview")) return "interview";
-  if (statusLower.includes("decision") || statusLower.includes("approved") || statusLower.includes("rejected")) return "decision";
-  if (statusLower.includes("offer")) return "offer";
+  if (statusLower.includes("rejected") || statusLower.includes("отклон")) return "rejected";
+  if (statusLower.includes("approved") || statusLower.includes("принят")) return "offer";
+  if (statusLower.includes("pending") || statusLower.includes("decision") || statusLower.includes("рассмотрен")) return "decision";
+  if (statusLower.includes("inprogress") || statusLower.includes("interview") || statusLower.includes("собеседован")) return "interview";
   return "new";
 };
 
@@ -56,7 +58,8 @@ export function Vacancies() {
   const { hasPermission, isAdmin } = usePermissions();
   const canManageVacancies = hasPermission(Permission.CanManageVacancies);
   const canManageApplications = hasPermission(Permission.CanManageApplications);
-  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [allVacancies, setAllVacancies] = useState<Vacancy[]>([]);
+  const vacanciesRef = useRef<Vacancy[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +114,7 @@ export function Vacancies() {
         id: app.id,
         name: app.candidateFullName,
         stage: mapStatusToStage(app.status),
-        date: app.decidedAt ? new Date(app.decidedAt) : undefined,
+        date: app.interviewScheduledAt ? new Date(app.interviewScheduledAt) : undefined,
         rawStatus: mapStatusToNumber(app.status),
         city: "",
       }));
@@ -184,7 +187,7 @@ export function Vacancies() {
         id: a.applicationId,
         name: a.candidateFullName,
         stage: mapStatusToStage(a.status),
-        date: undefined,
+        date: a.interviewScheduledAt ? new Date(a.interviewScheduledAt) : undefined,
         rawStatus: a.status,
         city: a.city,
       }));
@@ -192,9 +195,6 @@ export function Vacancies() {
 
     return responsesCache[vacancyId];
   }, [rawSearchResults, responsesCache]);
-
-  const isAdmin = user?.role === Role.Admin || user?.role === Role.SuperAdmin;
-  const isHR = user?.role === Role.HR;
 
   const handleAddVacancy = () => {
     openModal(
@@ -316,16 +316,17 @@ export function Vacancies() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Управление вакансиями</h1>
-        <Button
-          size="lg"
-          variant="primary"
-          className={styles.addButton}
-          onClick={handleAddVacancy}
-          disabled={!canManageVacancies}
-        >
-          <Briefcase size={20} />
-          Добавить вакансию
-        </Button>
+        {canManageVacancies && (
+          <Button
+            size="lg"
+            variant="primary"
+            className={styles.addButton}
+            onClick={handleAddVacancy}
+          >
+            <Briefcase size={20} />
+            Добавить вакансию
+          </Button>
+        )}
       </div>
       <div className={styles.searchSection}>
         <GlobalSearch

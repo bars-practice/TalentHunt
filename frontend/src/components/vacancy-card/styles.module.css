@@ -148,6 +148,7 @@
 .itemName {
   font-size: 15px;
   color: var(--foreground);
+  text-decoration: none;
 }
 
 .itemDate {

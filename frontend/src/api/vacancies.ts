@@ -11,6 +11,7 @@ export type VacancyLevel = typeof VacancyLevel[keyof typeof VacancyLevel]
 export interface Competency {
   id: string
   name: string
+  description?: string
 }
 
 export interface Vacancy {

@@ -4,7 +4,7 @@ import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem } fro
 import { Link } from "react-router-dom";
 import styles from "./styles.module.css";
 
-type ResponseStage = "new" | "interview" | "decision" | "offer";
+type ResponseStage = "new" | "interview" | "decision" | "offer" | "rejected";
 
 interface CandidateResponse {
   id: string;
@@ -18,6 +18,7 @@ const STAGES: { id: ResponseStage; title: string }[] = [
   { id: "interview", title: "Ожидают собеседования" },
   { id: "decision", title: "Ожидают решения" },
   { id: "offer", title: "Оффер" },
+  { id: "rejected", title: "Отклонен" },
 ];
 
 function formatDate(d: Date) {
@@ -25,7 +26,7 @@ function formatDate(d: Date) {
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function ResponseItem({ response }: { response: CandidateResponse }) {
+function ResponseItem({ response, canManageApplications }: { response: CandidateResponse; canManageApplications: boolean }) {
   return (
     <div className={styles.item}>
       <div className={styles.itemInfo}>
@@ -39,25 +40,41 @@ function ResponseItem({ response }: { response: CandidateResponse }) {
           </div>
         )}
       </div>
-      <Menubar className={styles.itemMenu}>
-        <MenubarMenu>
-          <MenubarTrigger className={styles.itemMenuTrigger}>
-            <MoreHorizontal size={16} />
-          </MenubarTrigger>
-          <MenubarContent align="end">
-            <MenubarItem variant="destructive">Заблокировать кандидата</MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
-      </Menubar>
+      {canManageApplications && (
+        <Menubar className={styles.itemMenu}>
+          <MenubarMenu>
+            <MenubarTrigger className={styles.itemMenuTrigger}>
+              <MoreHorizontal size={16} />
+            </MenubarTrigger>
+            <MenubarContent align="end">
+              <MenubarItem variant="destructive">Заблокировать кандидата</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+        </Menubar>
+      )}
     </div>
   );
 }
 
-export function VacancyStages({ responses }: { responses: CandidateResponse[] }) {
+function sortByInterviewDate(responses: CandidateResponse[]) {
+  return [...responses].sort((a, b) => {
+    const aTime = a.date?.getTime() ?? Number.POSITIVE_INFINITY;
+    const bTime = b.date?.getTime() ?? Number.POSITIVE_INFINITY;
+    return aTime - bTime;
+  });
+}
+
+export function VacancyStages({
+  responses,
+  canManageApplications = false,
+}: {
+  responses: CandidateResponse[];
+  canManageApplications?: boolean;
+}) {
   return (
     <Accordion type="multiple" className={styles.stagesAccordion}>
       {STAGES.map((stage) => {
-        const stageResponses = responses.filter((r) => r.stage === stage.id);
+        const stageResponses = sortByInterviewDate(responses.filter((r) => r.stage === stage.id));
 
         return (
           <AccordionItem key={stage.id} value={stage.id} className={styles.stageItem}>
@@ -69,7 +86,11 @@ export function VacancyStages({ responses }: { responses: CandidateResponse[] })
             </AccordionTrigger>
             <AccordionContent className={styles.stageContent}>
               {stageResponses.map((response) => (
-                <ResponseItem key={response.id} response={response} />
+                <ResponseItem
+                  key={response.id}
+                  response={response}
+                  canManageApplications={canManageApplications}
+                />
               ))}
               {stageResponses.length === 0 && (
                 <div className={styles.empty}>Нет кандидатов на этом этапе</div>
