@@ -15,16 +15,16 @@ public class CandidatesController(ICandidateService candidateService,
     : BaseController(auditLogService)
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] Guid? excludeVacancyId, CancellationToken cancellationToken)
     {
-        var candidates = await candidateService.GetAllAsync(User.IsAdmin(), cancellationToken);
+        var candidates = await candidateService.GetAllAsync(User.IsAdmin(), excludeVacancyId, cancellationToken);
         return Ok(candidates);
     }
 
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
+    public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] Guid? excludeVacancyId, CancellationToken cancellationToken)
     {
-        var results = await candidateService.SearchAsync(query, cancellationToken);
+        var results = await candidateService.SearchAsync(query, excludeVacancyId, cancellationToken);
         return Ok(results);
     }
 
