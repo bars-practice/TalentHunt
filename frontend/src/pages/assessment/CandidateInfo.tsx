@@ -19,14 +19,14 @@ interface CandidateInfoProps {
   onDateSave?: (date: string) => void | Promise<void>;
 }
 
-function getStatusInfo(status: number): { text: string; variant: "success" | "neutral" | "danger" | "warning" | "info" } {
+function getStatusInfo(status: number): { text: string; variant: "success" | "successLight" | "neutral" | "danger" | "warning" | "info" } {
   switch (status) {
     case 0:
       return { text: "Новый", variant: "info" };
     case 1:
       return { text: "Ожидает собеседования", variant: "warning" };
     case 2:
-      return { text: "Ожидает решения", variant: "warning" };
+      return { text: "Ожидает решения", variant: "successLight" };
     case 3:
       return { text: "Принят", variant: "success" };
     case 4:

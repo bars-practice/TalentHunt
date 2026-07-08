@@ -169,9 +169,12 @@ public class InterviewService(
             return ToDetailResponse(saved!);
         }
 
-        if (status is not (ApplicationStatus.InProgress or ApplicationStatus.PendingDecision))
+        if (status is ApplicationStatus.PendingDecision)
+            throw new InvalidOperationException("Нельзя редактировать собеседование после отправки на решение.");
+
+        if (status is not ApplicationStatus.InProgress)
             throw new InvalidOperationException(
-                "Редактировать собеседование можно только в статусе InProgress или PendingDecision.");
+                "Редактировать собеседование можно только в статусе InProgress.");
 
         if (request.ScheduledAt.HasValue)
             interview.ScheduledAt = request.ScheduledAt;

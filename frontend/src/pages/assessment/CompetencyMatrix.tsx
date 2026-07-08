@@ -99,7 +99,9 @@ export function CompetencyMatrix({
       {generalConclusion && (
         <div className={styles.conclusionSection}>
           <h3 className={styles.matrixTitle}>Общее заключение</h3>
-          <p className={styles.conclusionText}>{generalConclusion}</p>
+          <div className={styles.conclusionView}>
+            <p className={styles.conclusionText}>{generalConclusion}</p>
+          </div>
         </div>
       )}
     </div>

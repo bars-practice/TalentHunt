@@ -48,6 +48,9 @@ export interface PaginatedResponse<T> {
 }
 
 export const candidatesService = {
+  getById: (id: string) =>
+    api.get<Candidate>(`/Candidates/${id}`),
+
   create: (data: CreateCandidateRequest) =>
     api.post<Candidate>('/Candidates', data),
 

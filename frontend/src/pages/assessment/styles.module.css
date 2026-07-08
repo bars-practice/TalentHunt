@@ -325,8 +325,32 @@
   white-space: pre-wrap;
 }
 
+.conclusionView {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-height: 150px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
 .actionButtons {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+.modalDescription {
+  font-weight: 400;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.modalDescription {
+  line-height: 1.5;
 }
