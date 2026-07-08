@@ -10,18 +10,43 @@ interface DateTimePickerModalProps {
   onCancel: () => void;
 }
 
-export function DateTimePickerModal({ initialDate, onSave, onCancel }: DateTimePickerModalProps) {
-  const [date, setDate] = useState(initialDate ? initialDate.split(" ")[0] : "");
-  const [time, setTime] = useState(initialDate ? initialDate.split(" ")[1] : "");
+function parseInitialDate(initialDate?: string): { date: string; time: string } {
+  if (!initialDate) return { date: "", time: "" };
 
-  const today = new Date().toISOString().split('T')[0];
+  const parsed = new Date(initialDate.includes(" ") ? initialDate.replace(" ", "T") : initialDate);
+  if (Number.isNaN(parsed.getTime())) return { date: "", time: "" };
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const hours = String(parsed.getHours()).padStart(2, "0");
+  const minutes = String(parsed.getMinutes()).padStart(2, "0");
+
+  return {
+    date: `${year}-${month}-${day}`,
+    time: `${hours}:${minutes}`,
+  };
+}
+
+function toIsoDateTime(date: string, time?: string): string {
+  const isoLocal = time ? `${date}T${time}:00` : `${date}T00:00:00`;
+  const parsed = new Date(isoLocal);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Invalid date");
+  }
+  return parsed.toISOString();
+}
+
+export function DateTimePickerModal({ initialDate, onSave, onCancel }: DateTimePickerModalProps) {
+  const initial = parseInitialDate(initialDate);
+  const [date, setDate] = useState(initial.date);
+  const [time, setTime] = useState(initial.time);
+
+  const today = new Date().toISOString().split("T")[0];
 
   const handleSave = () => {
-    if (date && time) {
-      onSave(`${date} ${time}`);
-    } else if (date) {
-      onSave(date);
-    }
+    if (!date) return;
+    onSave(toIsoDateTime(date, time || undefined));
   };
 
   return (

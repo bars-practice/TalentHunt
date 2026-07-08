@@ -56,7 +56,8 @@ export function Vacancies() {
   const { hasPermission, isAdmin } = usePermissions();
   const canManageVacancies = hasPermission(Permission.CanManageVacancies);
   const canManageApplications = hasPermission(Permission.CanManageApplications);
-  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [allVacancies, setAllVacancies] = useState<Vacancy[]>([]);
+  const vacanciesRef = useRef<Vacancy[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -192,9 +193,6 @@ export function Vacancies() {
 
     return responsesCache[vacancyId];
   }, [rawSearchResults, responsesCache]);
-
-  const isAdmin = user?.role === Role.Admin || user?.role === Role.SuperAdmin;
-  const isHR = user?.role === Role.HR;
 
   const handleAddVacancy = () => {
     openModal(

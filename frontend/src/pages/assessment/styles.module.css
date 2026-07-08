@@ -303,3 +303,30 @@
 .commentValue {
   color: #6b7280;
 }
+
+.editList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conclusionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.conclusionText {
+  font-size: 14px;
+  color: var(--foreground);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
