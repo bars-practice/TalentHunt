@@ -46,7 +46,6 @@
   font-weight: 600;
   color: var(--color-foreground);
   text-align: start;
-  padding: 1rem 1rem;
   margin: 0;
 }
 
@@ -98,7 +97,6 @@
 }
 
 .backButton {
-  position: absolute;
   left: 1rem;
   top: 1rem;
   padding: 6px;
@@ -128,4 +126,12 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
+
+.modalHeader {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+  padding: 1rem 1rem;
 }

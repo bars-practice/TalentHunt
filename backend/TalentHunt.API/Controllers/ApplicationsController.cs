@@ -10,13 +10,15 @@ namespace TalentHunt.API.Controllers;
 [Route("api/[controller]")]
 public class ApplicationsController(
     IApplicationService applicationService,
-    IAuditLogService auditLogService) : BaseController(auditLogService)
+    IAuditLogService auditLogService,
+    IPdfService pdfService)
+    : BaseController(auditLogService)
 {
     [HttpGet]
     [Authorize(Roles = "HR,Admin,Approver")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var applications = await applicationService.GetAllAsync(User.IsAdmin(), cancellationToken);
+        var applications = await applicationService.GetAllAsync(true, cancellationToken);
         return Ok(applications);
     }
 
@@ -119,4 +121,58 @@ public class ApplicationsController(
             return NotFound(new { message = "Отклик не найден." });
         }
     }
+
+    [HttpGet("{id:guid}/invitation")]
+    [Authorize(Roles = "HR,Approver")]
+    public async Task<IActionResult> GetInvitation(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pdf = await pdfService.GenerateInvitationAsync(id, cancellationToken);
+            return File(pdf, "application/pdf", $"invitation-{id}.pdf");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Отклик не найден." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("{id:guid}/rejection")]
+    [Authorize(Roles = "HR,Approver")]
+    public async Task<IActionResult> GetRejection(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pdf = await pdfService.GenerateRejectionAsync(id, cancellationToken);
+            return File(pdf, "application/pdf", $"rejection-{id}.pdf");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Отклик не найден." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("{id:guid}/protocol")]
+    [Authorize(Roles = "HR,Approver")]
+    public async Task<IActionResult> GetProtocol(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pdf = await pdfService.GenerateInterviewProtocolAsync(id, cancellationToken);
+            return File(pdf, "application/pdf", $"protocol-{id}.pdf");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Интервью не найдено." });
+        }
+    }
+
 }

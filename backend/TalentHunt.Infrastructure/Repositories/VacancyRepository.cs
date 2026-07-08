@@ -78,6 +78,49 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Guid>> SearchIdsByTextAsync(
+        string query,
+        Guid? approverId,
+        CancellationToken cancellationToken = default)
+    {
+        var pattern = $"%{query}%";
+
+        var vacancyQuery = context.Vacancies
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(v =>
+                EF.Functions.ILike(v.Title, pattern) ||
+                EF.Functions.ILike(v.BusinessUnit, pattern));
+
+        if (approverId.HasValue)
+            vacancyQuery = vacancyQuery.Where(v => v.ApproverId == approverId.Value);
+
+        return await vacancyQuery
+            .Select(v => v.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Vacancy>> GetByIdsForGlobalSearchAsync(
+        IReadOnlyCollection<Guid> ids,
+        Guid? approverId,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+            return [];
+
+        var vacancyQuery = context.Vacancies
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(v => ids.Contains(v.Id));
+
+        if (approverId.HasValue)
+            vacancyQuery = vacancyQuery.Where(v => v.ApproverId == approverId.Value);
+
+        return await vacancyQuery
+            .OrderBy(v => v.Title)
+            .ToListAsync(cancellationToken);
+    }
+
     private async Task AttachCompetenciesAsync(
         IReadOnlyList<Vacancy> vacancies,
         bool includeDeleted,

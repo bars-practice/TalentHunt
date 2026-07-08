@@ -20,4 +20,8 @@ public interface ICompetencyService
         Guid id,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CompetencySearchResultResponse>> SearchAsync(
+        string query,
+        CancellationToken cancellationToken = default);
 }

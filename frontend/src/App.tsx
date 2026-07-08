@@ -9,7 +9,7 @@ import Modal from "@/components/ui/modal"
 import styles from "./App.module.css"
 import { Vacancies } from "./pages/vacancies"
 import { AuditLog } from "@/pages/audit-log"
-import { Competencies } from "@/pages/competencies"
+import { CompetencyAssessment } from "@/pages/competency-assessment"
 import "simplebar-react/dist/simplebar.min.css";
 
 interface ProtectedRouteProps {
@@ -62,7 +62,7 @@ function App() {
                 <Route path="/candidates" element={<div>Кандидаты</div>} />
                 <Route path="/interviews" element={<div>Собеседования</div>} />
                 <Route path="/vacancies" element={<Vacancies />} />
-                <Route path="/competencies" element={<Competencies />} />
+                <Route path="/competency-assessment" element={<CompetencyAssessment />} />
               </Route>
 
               <Route

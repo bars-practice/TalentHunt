@@ -11,6 +11,8 @@ public record ApplicationResponse(
     ApplicationStatus Status,
     Guid? InterviewId,
     Guid? DecidedByUserId,
+    Guid? ApproverId,
+    string? ApproverFullName,
     string? DecidedByFullName,
     DateTime? DecidedAt,
     bool IsDeleted

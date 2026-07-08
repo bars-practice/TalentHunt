@@ -6,6 +6,7 @@ public interface ICandidateService
 {
     Task<IEnumerable<CandidateResponse>> GetAllAsync(
         bool includeDeleted = false,
+        Guid? excludeVacancyId = null,
         CancellationToken cancellationToken = default);
 
     Task<CandidateResponse> GetByIdAsync(
@@ -26,5 +27,10 @@ public interface ICandidateService
     Task DeleteAsync(
         Guid id,
         bool includeDeleted = false,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CandidateSearchResultResponse>> SearchAsync(
+        string query,
+        Guid? excludeVacancyId = null,
         CancellationToken cancellationToken = default);
 }

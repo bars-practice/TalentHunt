@@ -115,6 +115,20 @@ public class UserService : IUserService
         await _userRepository.SaveAsync();
     }
 
+    public async Task<IReadOnlyList<UserSearchResultResponse>> SearchByRoleAsync(string role, string? query = null, CancellationToken cancellationToken = default)
+    {
+        var users = await _userRepository.SearchByRoleAsync(role, query, cancellationToken);
+        return users.Select(u => new UserSearchResultResponse(u.Id, u.Login, u.FullName)).ToList();
+    }
+
+    public async Task<UserResponse> GetByIdAsync(Guid id)
+    {
+        var user = await _userRepository.GetByIdWithPermissionsAsync(id, includeDeleted: true)
+            ?? throw new KeyNotFoundException("Пользователь не найден.");
+
+        return ToResponse(user);
+    }
+
     private static string NormalizeFullName(string fullName)
     {
         if (string.IsNullOrWhiteSpace(fullName))

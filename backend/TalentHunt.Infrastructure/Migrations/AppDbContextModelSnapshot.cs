@@ -30,6 +30,9 @@ namespace TalentHunt.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ApproverId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CandidateId")
                         .HasColumnType("uuid");
 
@@ -53,6 +56,8 @@ namespace TalentHunt.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApproverId");
 
                     b.HasIndex("DecidedByUserId");
 
@@ -299,6 +304,9 @@ namespace TalentHunt.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ApproverId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("BusinessUnit")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -323,6 +331,8 @@ namespace TalentHunt.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ApproverId");
+
                     b.ToTable("Vacancies");
                 });
 
@@ -343,6 +353,11 @@ namespace TalentHunt.Infrastructure.Migrations
 
             modelBuilder.Entity("TalentHunt.Application.Entities.Application", b =>
                 {
+                    b.HasOne("TalentHunt.Application.Entities.User", "Approver")
+                        .WithMany()
+                        .HasForeignKey("ApproverId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("TalentHunt.Application.Entities.Candidate", "Candidate")
                         .WithMany("Applications")
                         .HasForeignKey("CandidateId")
@@ -359,6 +374,8 @@ namespace TalentHunt.Infrastructure.Migrations
                         .HasForeignKey("VacancyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Approver");
 
                     b.Navigation("Candidate");
 
@@ -402,6 +419,16 @@ namespace TalentHunt.Infrastructure.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TalentHunt.Application.Entities.Vacancy", b =>
+                {
+                    b.HasOne("TalentHunt.Application.Entities.User", "Approver")
+                        .WithMany()
+                        .HasForeignKey("ApproverId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Approver");
                 });
 
             modelBuilder.Entity("TalentHunt.Application.Entities.VacancyCompetency", b =>

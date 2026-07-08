@@ -26,4 +26,9 @@ public interface IApplicationRepository
     Task DeleteAsync(ApplicationEntity application);
 
     Task SaveAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ApplicationEntity>> SearchForGlobalByCandidateAsync(
+        string query,
+        Guid? approverId,
+        CancellationToken cancellationToken = default);
 }

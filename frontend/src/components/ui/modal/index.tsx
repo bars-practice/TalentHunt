@@ -84,17 +84,22 @@ function Modal() {
           tabIndex={-1}
           onMouseDown={handleContentMouseDown}
         >
-          {modal.showBackButton && (
-            <button type="button" className={styles.backButton} onClick={modal.onBackClick} aria-label="Go back">
-              <ArrowLeft size={24} />
-            </button>
-          )}
+
           <button type="button" className={styles.closeButton} onClick={closeModal} aria-label="Close modal">
             <X size={24} />
           </button>
 
           <SimpleBar className={styles.modalScrollBody}>
-            {modal.title && <h2 className={styles.modalTitle}>{modal.title}</h2>}
+            <div className={styles.modalHeader}>
+              {modal.showBackButton && (
+                <button type="button" className={styles.backButton} onClick={modal.onBackClick} aria-label="Go back">
+                  <ArrowLeft size={24} />
+                </button>
+              )}
+
+              {modal.title && <h2 className={styles.modalTitle}>{modal.title}</h2>}
+            </div>
+
             <div className={styles.modalInnerContent}>
               {modal.content}
             </div>

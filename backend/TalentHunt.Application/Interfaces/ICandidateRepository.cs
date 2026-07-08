@@ -6,6 +6,7 @@ public interface ICandidateRepository
 {
     Task<IReadOnlyList<Candidate>> GetAllAsync(
         bool includeDeleted = false,
+        Guid? excludeVacancyId = null,
         CancellationToken cancellationToken = default);
 
     Task<Candidate?> GetByIdAsync(
@@ -20,4 +21,10 @@ public interface ICandidateRepository
     Task DeleteAsync(Candidate candidate);
 
     Task SaveAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Candidate>> SearchAsync(
+        string query,
+        int limit,
+        Guid? excludeVacancyId = null,
+        CancellationToken cancellationToken = default);
 }

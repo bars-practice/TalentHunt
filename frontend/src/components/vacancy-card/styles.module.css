@@ -103,6 +103,14 @@
   margin-left: 30px;
 }
 
+.list[data-state="open"] {
+  animation: slideDown 150ms linear;
+}
+
+.list[data-state="closed"] {
+  animation: slideUp 150ms linear;
+}
+
 .empty {
   color: var(--muted-foreground);
   padding: 12px 0;
@@ -179,10 +187,36 @@
 
 .stageTrigger {
   color: var(--foreground);
-
   padding: 12px 0;
 }
 
 .modalDescription {
   font-weight: 400;
+}
+
+.loadingText {
+  padding: 12px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }

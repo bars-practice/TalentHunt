@@ -6,11 +6,15 @@ namespace TalentHunt.Application.Services;
 
 public class CandidateService(ICandidateRepository candidateRepository) : ICandidateService
 {
+    private const int MinQueryLength = 1;
+    private const int MaxResults = 10;
+
     public async Task<IEnumerable<CandidateResponse>> GetAllAsync(
         bool includeDeleted = false,
+        Guid? excludeVacancyId = null,
         CancellationToken cancellationToken = default)
     {
-        var candidates = await candidateRepository.GetAllAsync(includeDeleted, cancellationToken);
+        var candidates = await candidateRepository.GetAllAsync(includeDeleted, excludeVacancyId, cancellationToken);
         return candidates.Select(ToResponse);
     }
 
@@ -107,6 +111,25 @@ public class CandidateService(ICandidateRepository candidateRepository) : ICandi
 
         await candidateRepository.DeleteAsync(candidate);
         await candidateRepository.SaveAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<CandidateSearchResultResponse>> SearchAsync(
+        string query,
+        Guid? excludeVacancyId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < MinQueryLength)
+            return [];
+
+        var candidates = await candidateRepository.SearchAsync(
+            query.Trim(),
+            MaxResults,
+            excludeVacancyId,
+            cancellationToken);
+
+        return candidates
+            .Select(c => new CandidateSearchResultResponse(c.Id, c.FullName, c.City))
+            .ToList();
     }
 
     private static string NormalizeRequired(string value, string fieldName)

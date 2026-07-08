@@ -82,3 +82,27 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.approverCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: var(--background-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+}
+
+.approverName {
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  font-size: 0.95rem;
+}
+
+.addApproverButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+}

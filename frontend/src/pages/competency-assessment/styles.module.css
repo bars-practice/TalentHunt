@@ -1,0 +1,290 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: var(--font-weight-bold);
+  color: var(--foreground);
+  margin: 0;
+}
+
+.startButton {
+  width: auto;
+}
+
+/* CandidateInfo styles */
+.candidateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.candidateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.candidateDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.candidateName {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.candidateRole {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.candidateActions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 280px;
+  align-items: flex-end;
+}
+
+.statusSection {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.interviewDateSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.dateLabel {
+  font-size: 13px;
+  font-weight: 800;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.editButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.editButton:hover {
+  background-color: #f3f4f6;
+  color: var(--foreground);
+}
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.infoRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.infoLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  min-width: auto;
+}
+
+.icon {
+  color: #6b7280;
+}
+
+.infoValue {
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.experienceList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.experienceTotal {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.experienceItem {
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+/* CompetencyMatrix styles */
+.matrixSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.matrixTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.tableWrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: inherit;
+  background-color: #ffffff;
+}
+
+.table th {
+  background-color: #e5e7eb;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 14px 20px;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.emptyCell {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+}
+
+.competencyCell {
+  width: 40%;
+}
+
+.competencyName {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.competencyDescription {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.assessmentCell {
+  width: 20%;
+}
+
+.assessmentInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background-color: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.assessmentInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.assessmentValue {
+  color: #6b7280;
+}
+
+.commentCell {
+  width: 40%;
+}
+
+.commentInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background-color: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.commentInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.commentValue {
+  color: #6b7280;
+}

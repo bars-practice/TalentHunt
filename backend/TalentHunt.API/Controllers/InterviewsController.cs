@@ -129,6 +129,25 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
         }
     }
 
+    [HttpPut("{id:guid}/status")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ForceSetStatus(
+        Guid id,
+        [FromBody] AdminSetInterviewStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var interview = await interviewService.ForceSetStatusAsync(id, request.Status, cancellationToken);
+            await LogAsync($"Администратор принудительно установил статус {request.Status} для интервью {id}");
+            return Ok(interview);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Собеседование не найдено." });
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "HR,Admin")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
