@@ -11,19 +11,21 @@ public class ApplicationService(
     IVacancyRepository vacancyRepository) : IApplicationService
 {
     public async Task<IEnumerable<ApplicationResponse>> GetAllAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var applications = await applicationRepository.GetAllAsync(includeDeleted, cancellationToken);
+        var applications = await applicationRepository.GetAllAsync(approverUserId, includeDeleted, cancellationToken);
         return applications.Select(ToResponse);
     }
 
     public async Task<ApplicationResponse> GetByIdAsync(
         Guid id,
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var application = await applicationRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
+        var application = await applicationRepository.GetByIdAsync(id, approverUserId, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Отклик не найден.");
 
         return ToResponse(application);
@@ -53,7 +55,7 @@ public class ApplicationService(
         await applicationRepository.AddAsync(application, cancellationToken);
         await applicationRepository.SaveAsync(cancellationToken);
 
-        var created = await applicationRepository.GetByIdAsync(application.Id, cancellationToken: cancellationToken);
+        var created = await applicationRepository.GetByIdAsync(application.Id, includeDeleted: false, cancellationToken: cancellationToken);
         return ToResponse(created!);
     }
 
@@ -63,7 +65,7 @@ public class ApplicationService(
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var application = await applicationRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
+        var application = await applicationRepository.GetByIdAsync(id, includeDeleted: includeDeleted, cancellationToken: cancellationToken)
             ?? throw new KeyNotFoundException("Отклик не найден.");
 
         if (application.IsDeleted && !includeDeleted)
@@ -83,7 +85,7 @@ public class ApplicationService(
         await applicationRepository.UpdateAsync(application);
         await applicationRepository.SaveAsync(cancellationToken);
 
-        var updated = await applicationRepository.GetByIdAsync(id, includeDeleted, cancellationToken);
+        var updated = await applicationRepository.GetByIdAsync(id, includeDeleted: includeDeleted, cancellationToken: cancellationToken);
         return ToResponse(updated!);
     }
 
@@ -118,7 +120,7 @@ public class ApplicationService(
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var application = await applicationRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
+        var application = await applicationRepository.GetByIdAsync(id, includeDeleted: includeDeleted, cancellationToken: cancellationToken)
             ?? throw new KeyNotFoundException("Отклик не найден.");
 
         if (application.IsDeleted)

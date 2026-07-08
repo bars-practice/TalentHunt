@@ -5,6 +5,7 @@ namespace TalentHunt.Application.Interfaces;
 public interface IVacancyService
 {
     Task<IEnumerable<VacancyResponse>> GetAllAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 

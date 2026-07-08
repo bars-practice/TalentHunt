@@ -5,6 +5,7 @@ namespace TalentHunt.Application.Interfaces;
 public interface IVacancyRepository
 {
     Task<IEnumerable<Vacancy>> GetAllWithCompetenciesAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 

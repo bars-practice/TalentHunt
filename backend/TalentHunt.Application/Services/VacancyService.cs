@@ -9,10 +9,11 @@ public class VacancyService(
     ICompetencyRepository competencyRepository) : IVacancyService
 {
     public async Task<IEnumerable<VacancyResponse>> GetAllAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var vacancies = await vacancyRepository.GetAllWithCompetenciesAsync(includeDeleted, cancellationToken);
+        var vacancies = await vacancyRepository.GetAllWithCompetenciesAsync(approverUserId, includeDeleted, cancellationToken);
         return vacancies.Select(ToResponse);
     }
 

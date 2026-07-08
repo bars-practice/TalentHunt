@@ -1,25 +1,29 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Authorization;
 using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
+using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "HR,Admin,Approver")]
+[Authorize]
 public class CompetenciesController(ICompetencyService competencyService, IAuditLogService auditLogService)
     : BaseController(auditLogService)
 {
     [HttpGet]
+    [RequirePermission(PermissionType.CanManageCompetencies)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var competencies = await competencyService.GetAllAsync(User.IsAdmin(), cancellationToken);
+        var competencies = await competencyService.GetAllAsync(User.IsPrivilegedUser(), cancellationToken);
         return Ok(competencies);
     }
 
     [HttpGet("search")]
+    [RequirePermission(PermissionType.CanManageCompetencies)]
     public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
     {
         var results = await competencyService.SearchAsync(query, cancellationToken);
@@ -27,6 +31,7 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
     }
 
     [HttpPost]
+    [RequirePermission(PermissionType.CanManageCompetencies)]
     public async Task<IActionResult> Create(
         [FromBody] CreateCompetencyRequest request,
         CancellationToken cancellationToken)
@@ -44,6 +49,7 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
     }
 
     [HttpPut("{id:guid}")]
+    [RequirePermission(PermissionType.CanManageCompetencies)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateCompetencyRequest request,
@@ -51,7 +57,7 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
     {
         try
         {
-            var competency = await competencyService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
+            var competency = await competencyService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Обновлена компетенция \"{competency.Name}\"");
             return Ok(competency);
         }
@@ -66,11 +72,12 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
     }
 
     [HttpDelete("{id:guid}")]
+    [RequirePermission(PermissionType.CanManageCompetencies)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            await competencyService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
+            await competencyService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Удалена компетенция с ID {id}");
             return NoContent();
         }

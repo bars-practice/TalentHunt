@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Authorization;
 using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
 using TalentHunt.Application.Enums;
@@ -10,11 +11,13 @@ namespace TalentHunt.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class InterviewsController(IInterviewService interviewService, IAuditLogService auditLogService)
+public class InterviewsController(
+    IInterviewService interviewService,
+    IAuditLogService auditLogService)
     : BaseController(auditLogService)
 {
     [HttpGet]
-    [Authorize(Roles = "HR,Admin,Approver")]
+    [RequirePermission(PermissionType.CanViewInterviews)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? candidateId,
         [FromQuery] Guid? vacancyId,
@@ -27,7 +30,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
                 candidateId,
                 vacancyId,
                 applicationStatus,
-                User.IsAdmin(),
+                User.IsPrivilegedUser(),
                 User.GetRole(),
                 User.GetUserId(),
                 cancellationToken);
@@ -41,12 +44,18 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "HR,Admin,Approver")]
+    [RequirePermission(PermissionType.CanViewInterviews)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var interview = await interviewService.GetByIdAsync(id, User.IsAdmin(), User.GetRole(), User.GetUserId(), cancellationToken);
+            var interview = await interviewService.GetByIdAsync(
+                id,
+                User.IsPrivilegedUser(),
+                User.GetRole(),
+                User.GetUserId(),
+                cancellationToken);
+
             return Ok(interview);
         }
         catch (KeyNotFoundException)
@@ -60,7 +69,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpPost]
-    [Authorize(Roles = "HR,Admin")]
+    [RequirePermission(PermissionType.CanManageInterviews)]
     public async Task<IActionResult> Create(
         [FromBody] CreateInterviewRequest request,
         CancellationToken cancellationToken)
@@ -78,7 +87,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpPost("{id:guid}/start")]
-    [Authorize(Roles = "HR,Admin")]
+    [RequirePermission(PermissionType.CanManageInterviews)]
     public async Task<IActionResult> Start(Guid id, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -102,7 +111,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "HR,Admin")]
+    [RequirePermission(PermissionType.CanManageInterviews)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateInterviewRequest request,
@@ -130,7 +139,7 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpPut("{id:guid}/status")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> ForceSetStatus(
         Guid id,
         [FromBody] AdminSetInterviewStatusRequest request,
@@ -149,12 +158,12 @@ public class InterviewsController(IInterviewService interviewService, IAuditLogS
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "HR,Admin")]
+    [RequirePermission(PermissionType.CanManageInterviews)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            await interviewService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
+            await interviewService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Удалено собеседование {id}");
             return NoContent();
         }

@@ -10,7 +10,11 @@ public interface IUserRepository
 
     Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken = default);
 
+    Task<User?> GetByLoginWithPermissionsAsync(string login, CancellationToken cancellationToken = default);
+
     Task<bool> LoginExistsAsync(string login, Guid? excludeId = null);
+
+    Task<int> CountActiveAdministratorsAsync(Guid? excludeUserId = null, CancellationToken cancellationToken = default);
 
     Task AddAsync(User user, CancellationToken cancellationToken = default);
 

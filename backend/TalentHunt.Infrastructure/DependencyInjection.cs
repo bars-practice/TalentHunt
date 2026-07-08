@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<IInterviewService, InterviewService>();
         services.AddScoped<IGlobalSearchService, GlobalSearchService>();
         services.AddScoped<IPdfService, PdfService>();
+        services.AddScoped<IDataScopeService, DataScopeService>();
 
         return services;
     }

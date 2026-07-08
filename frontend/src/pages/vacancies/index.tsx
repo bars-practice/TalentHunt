@@ -110,7 +110,7 @@ export function Vacancies() {
     if (a.isDeleted === b.isDeleted) return 0;
     return a.isDeleted ? 1 : -1;
   });
-  const isAdmin = user?.role === Role.Admin;
+  const isAdmin = user?.role === Role.Admin || user?.role === Role.SuperAdmin;
   const isHR = user?.role === Role.HR;
 
   const handleAddVacancy = () => {

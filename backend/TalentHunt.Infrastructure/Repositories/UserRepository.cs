@@ -27,13 +27,29 @@ public class UserRepository(AppDbContext context) : IUserRepository
     public Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken = default) =>
         context.Users.FirstOrDefaultAsync(u => u.Login == login, cancellationToken);
 
+    public Task<User?> GetByLoginWithPermissionsAsync(string login, CancellationToken cancellationToken = default) =>
+        context.Users
+            .Include(u => u.UserPermissions)
+            .ThenInclude(up => up.Permission)
+            .FirstOrDefaultAsync(u => u.Login == login, cancellationToken);
+
     public Task<bool> LoginExistsAsync(string login, Guid? excludeId = null) =>
         excludeId.HasValue
             ? context.Users.IgnoreQueryFilters().AnyAsync(u => u.Login == login && u.Id != excludeId.Value)
             : context.Users.IgnoreQueryFilters().AnyAsync(u => u.Login == login);
 
-    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        await context.Users.AsNoTracking().ToListAsync(cancellationToken);
+    public Task<int> CountActiveAdministratorsAsync(
+        Guid? excludeUserId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = context.Users
+            .Where(u => !u.IsDeleted && (u.Role == Role.Admin || u.Role == Role.SuperAdmin));
+
+        if (excludeUserId.HasValue)
+            query = query.Where(u => u.Id != excludeUserId.Value);
+
+        return query.CountAsync(cancellationToken);
+    }
 
     public Task AddAsync(User user, CancellationToken cancellationToken = default) =>
         context.Users.AddAsync(user, cancellationToken).AsTask();

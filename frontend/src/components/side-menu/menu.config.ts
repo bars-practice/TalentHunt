@@ -13,19 +13,19 @@ export const menuItems: MenuItem[] = [
     path: "/candidates",
     label: "Кандидаты",
     icon: UserIcon,
-    roles: [Role.HR, Role.Approver, Role.Admin],
+    roles: [Role.HR, Role.Approver, Role.Admin, Role.SuperAdmin],
   },
   {
     path: "/interviews",
     label: "Собеседования",
     icon: Calendar,
-    roles: [Role.HR, Role.Approver, Role.Admin],
+    roles: [Role.HR, Role.Approver, Role.Admin, Role.SuperAdmin],
   },
   {
     path: "/vacancies",
     label: "Вакансии",
     icon: Briefcase,
-    roles: [Role.HR, Role.Approver, Role.Admin],
+    roles: [Role.HR, Role.Approver, Role.Admin, Role.SuperAdmin],
   },
   {
     path: "/competency-assessment",
@@ -37,12 +37,12 @@ export const menuItems: MenuItem[] = [
     path: "/users",
     label: "Пользователи",
     icon: Users,
-    roles: [Role.Admin],
+    roles: [Role.Admin, Role.SuperAdmin],
   },
   {
     path: "/audit-log",
     label: "Журнал аудита",
     icon: FileText,
-    roles: [Role.Admin],
+    roles: [Role.Admin, Role.SuperAdmin],
   },
 ];
