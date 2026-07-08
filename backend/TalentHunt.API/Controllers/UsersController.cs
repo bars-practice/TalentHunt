@@ -7,7 +7,7 @@ namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "HR,Admin")]
 public class UsersController(IUserService userService, IAuditLogService auditLogService) : 
     BaseController(auditLogService)
 {
@@ -52,6 +52,20 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
         }
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        try
+        {
+            var user = await userService.GetByIdAsync(id);
+            return Ok(user);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Пользователь не найден." });
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -78,5 +92,12 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
             new { name = "CanRejectResumes",  displayName = "Отклонение резюме"     },
         };
         return Ok(permissions);
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchByRole([FromQuery] string role, [FromQuery] string? query, CancellationToken cancellationToken)
+    {
+        var results = await userService.SearchByRoleAsync(role, query, cancellationToken);
+        return Ok(results);
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TalentHunt.Application.Entities;
+using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
 using TalentHunt.Infrastructure.Extensions;
@@ -71,6 +72,20 @@ public class UserRepository(AppDbContext context) : IUserRepository
         await context.Permissions
             .Where(p => names.Contains(p.Name))
             .ToListAsync();
+
+    public async Task<IReadOnlyList<User>> SearchByRoleAsync(string role, string? query = null, CancellationToken cancellationToken = default)
+    {
+        var usersQuery = context.Users
+            .AsNoTracking()
+            .Where(u => u.Role.ToString() == role);
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            usersQuery = usersQuery.Where(u => EF.Functions.ILike(u.Login, $"%{query}%"));
+        }
+
+        return await usersQuery.ToListAsync(cancellationToken);
+    }
 
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);

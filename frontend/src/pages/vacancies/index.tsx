@@ -129,6 +129,7 @@ export function Vacancies() {
               level: data.level!,
               businessUnit: data.businessUnit,
               description: data.description || "",
+              approverId: data.approverId,
               competencyIds: data.competencyIds
             });
             await loadVacancies();
@@ -149,6 +150,8 @@ export function Vacancies() {
           level: vacancy.level,
           businessUnit: vacancy.businessUnit,
           description: vacancy.description,
+          approverId: vacancy.approverId,
+          competencyIds: vacancy.competencies?.map((c) => c.id) || [],
         }}
         competencies={competencies}
         onAddNewCompetency={async (name) => {
@@ -163,6 +166,7 @@ export function Vacancies() {
               level: data.level,
               businessUnit: data.businessUnit,
               description: data.description || "",
+              approverId: data.approverId,
               competencyIds: data.competencyIds
             });
             await loadVacancies();
