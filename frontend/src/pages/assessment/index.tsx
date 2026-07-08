@@ -4,7 +4,6 @@ import { CandidateInfo } from "./CandidateInfo";
 import { CompetencyMatrix } from "./CompetencyMatrix";
 import Button from "@/components/ui/button";
 import { applicationsService, type Application } from "@/api/applications";
-import { candidatesService } from "@/api/candidates";
 import { vacanciesService } from "@/api/vacancies";
 import {
   interviewsService,
@@ -15,6 +14,7 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { Permission } from "@/utils/permissions";
 import { useModal } from "@/providers/ModalProvider";
+import { CircleCheck, CircleX } from "lucide-react";
 import styles from "./styles.module.css";
 
 function areAllScoresFilled(matrix: SkillMatrixItem[]): boolean {
@@ -38,11 +38,7 @@ function parseApplicationStatus(status: Application["status"]): number {
 }
 
 async function loadEmptyInterviewView(application: Application): Promise<InterviewDetail> {
-  const [candidate, vacancies] = await Promise.all([
-    candidatesService.getById(application.candidateId),
-    vacanciesService.getAll(),
-  ]);
-
+  const vacancies = await vacanciesService.getAll();
   const vacancy = vacancies.find(v => v.id === application.vacancyId);
 
   const skillMatrix: SkillMatrixItem[] = (vacancy?.competencies ?? [])
@@ -60,12 +56,12 @@ async function loadEmptyInterviewView(application: Application): Promise<Intervi
     applicationId: application.id,
     applicationStatus: parseApplicationStatus(application.status),
     candidateId: application.candidateId,
-    candidateFullName: candidate.fullName,
-    candidatePhone: candidate.phone,
-    candidateCity: candidate.city,
-    candidateEducation: candidate.education,
-    candidateExperience: candidate.experience,
-    candidatePlacesOfWork: candidate.placesOfWork,
+    candidateFullName: application.candidateFullName,
+    candidatePhone: application.candidatePhone ?? "",
+    candidateCity: application.candidateCity ?? "",
+    candidateEducation: application.candidateEducation ?? "",
+    candidateExperience: application.candidateExperience ?? "",
+    candidatePlacesOfWork: application.candidatePlacesOfWork ?? [],
     vacancyId: application.vacancyId,
     vacancyTitle: vacancy?.title ?? application.vacancyTitle,
     vacancyLevel: vacancy?.level ?? 0,
@@ -83,7 +79,6 @@ export function CompetencyAssessment() {
   const { id } = useParams<{ id: string }>();
   const { hasPermission, loading: permissionsLoading } = usePermissions();
   const { openModal, closeModal } = useModal();
-  const canManageInterviews = hasPermission(Permission.CanManageInterviews);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +90,12 @@ export function CompetencyAssessment() {
   const [saving, setSaving] = useState(false);
   const [starting, setStarting] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
+  const [deciding, setDeciding] = useState(false);
+
+  const canManageInterviews = hasPermission(Permission.CanManageInterviews);
+  const canMakeDecision =
+    hasPermission(Permission.CanMakeDecision) &&
+    !hasPermission(Permission.CanManageInterviews);
 
   const loadInterview = useCallback(async () => {
     if (!id) return;
@@ -242,6 +243,46 @@ export function CompetencyAssessment() {
     void handleSave(false);
   };
 
+  const handleDecision = async (status: typeof ApplicationStatus.Approved | typeof ApplicationStatus.Rejected) => {
+    if (!id) return;
+    try {
+      setDeciding(true);
+      await applicationsService.decide(id, status);
+      closeModal();
+      await loadInterview();
+    } catch (err) {
+      console.error("Failed to make decision:", err);
+    } finally {
+      setDeciding(false);
+    }
+  };
+
+  const showDecisionConfirm = (approve: boolean) => {
+    const title = approve ? "Принять кандидата?" : "Отклонить кандидата?";
+    const message = approve
+      ? "Кандидат будет принят на работу."
+      : "Кандидат будет отклонён.";
+
+    openModal(
+      <div>
+        <p className={styles.modalDescription}>{message}</p>
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={closeModal} disabled={deciding}>
+            Отмена
+          </Button>
+          <Button
+            variant={approve ? "primary" : "danger"}
+            onClick={() => handleDecision(approve ? ApplicationStatus.Approved : ApplicationStatus.Rejected)}
+            disabled={deciding}
+          >
+            {approve ? "Принять" : "Отклонить"}
+          </Button>
+        </div>
+      </div>,
+      { title, width: "400px" }
+    );
+  };
+
   if (loading || permissionsLoading) return <div className={styles.container}>Загрузка...</div>;
   if (error) return <div className={styles.container}>{error}</div>;
   if (!interview) return <div className={styles.container}>Данные не найдены</div>;
@@ -273,6 +314,9 @@ export function CompetencyAssessment() {
     canManageInterviews &&
     (appStatus === ApplicationStatus.Applied ||
       appStatus === ApplicationStatus.InProgress);
+
+  const showDecisionPanel =
+    canMakeDecision && appStatus === ApplicationStatus.PendingDecision;
 
   const interviewDate = interview.scheduledAt
     ? new Date(interview.scheduledAt).toLocaleString("ru-RU")
@@ -349,6 +393,32 @@ export function CompetencyAssessment() {
         generalConclusion={isEditing ? draftConclusion : interview.generalConclusion}
         onConclusionChange={isEditing ? setDraftConclusion : undefined}
       />
+
+      {showDecisionPanel && (
+        <section className={styles.decisionSection}>
+          <h3 className={styles.matrixTitle}>Итоговое решение о приеме на работу</h3>
+          <div className={styles.decisionButtons}>
+            <button
+              type="button"
+              className={`${styles.decisionButton} ${styles.approveButton}`}
+              onClick={() => showDecisionConfirm(true)}
+              disabled={deciding}
+            >
+              <CircleCheck size={24} />
+              Принять
+            </button>
+            <button
+              type="button"
+              className={`${styles.decisionButton} ${styles.rejectButton}`}
+              onClick={() => showDecisionConfirm(false)}
+              disabled={deciding}
+            >
+              <CircleX size={24} />
+              Отклонить
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

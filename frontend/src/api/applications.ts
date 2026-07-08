@@ -6,7 +6,12 @@ export interface Application {
   vacancyTitle: string
   candidateId: string
   candidateFullName: string
-  status: string
+  candidatePhone: string
+  candidateCity: string
+  candidateEducation: string
+  candidateExperience: string
+  candidatePlacesOfWork: string[]
+  status: string | number
   interviewId?: string
   decidedByUserId?: string
   decidedByFullName?: string
@@ -25,5 +30,7 @@ export const applicationsService = {
   getById: (id: string) =>
     api.get<Application>(`/Applications/${id}`),
   create: (data: CreateApplicationRequest) =>
-    api.post<Application>('/Applications', data)
+    api.post<Application>('/Applications', data),
+  decide: (id: string, status: number) =>
+    api.put<Application>(`/Applications/${id}/decision`, { status }),
 }

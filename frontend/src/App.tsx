@@ -96,7 +96,7 @@ function App() {
                 <Route path="/vacancies" element={<Vacancies />} />
               </Route>
 
-              <Route element={<ProtectedRoute requiredPermission={Permission.CanManageCompetencies} />}>
+              <Route element={<ProtectedRoute requiredPermission={Permission.CanViewInterviews} />}>
                 <Route path="/assessment/:id" element={<CompetencyAssessment />} />
               </Route>
 

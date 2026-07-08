@@ -317,7 +317,9 @@ public class InterviewService(
         && CanApproverView(interview);
 
     private static bool CanApproverView(Interview interview) =>
-        interview.Application.Status is ApplicationStatus.PendingDecision
+        interview.Application.Status is ApplicationStatus.Applied
+            or ApplicationStatus.InProgress
+            or ApplicationStatus.PendingDecision
             or ApplicationStatus.Approved
             or ApplicationStatus.Rejected;
 

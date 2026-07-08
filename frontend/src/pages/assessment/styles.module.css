@@ -351,6 +351,71 @@
   margin-top: 20px;
 }
 
+.decisionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.decisionButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.decisionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 20px 24px;
+  height: 100px;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
+}
+
+.decisionButton:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.approveButton {
+  background-color: #61D38B;
+  color: #15803d;
+  box-shadow: none;
+}
+
+.approveButton:hover:not(:disabled) {
+  background-color: #32C36B;
+  color: #166534;
+}
+
+.rejectButton {
+  background-color: #f16767;
+  color: #b91c1c;
+  box-shadow: none;
+}
+
+.rejectButton:hover:not(:disabled) {
+  background-color: #ff5b5b;
+  color: #991b1b;
+}
+
+.decisionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .modalDescription {
   line-height: 1.5;
 }
