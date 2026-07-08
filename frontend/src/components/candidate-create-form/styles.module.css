@@ -1,0 +1,44 @@
+.modalContainer {
+  width: 100%;
+  background-color: var(--background-modal, #ffffff);
+  border-radius: 12px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0 0 20px 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  padding: 0px 3px;
+}
+
+.fields::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fields::-webkit-scrollbar-thumb {
+  background-color: var(--border-color, #e5e7eb);
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
