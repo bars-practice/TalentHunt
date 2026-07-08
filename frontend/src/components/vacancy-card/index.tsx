@@ -28,7 +28,8 @@ interface VacancyCardComponentProps {
   onDelete: () => void;
   onRestore: () => void;
   isAdmin?: boolean;
-  isHR?: boolean;
+  canManageVacancies?: boolean;
+  canManageApplications?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -44,7 +45,8 @@ export function VacancyCard({
   onDelete,
   onRestore,
   isAdmin,
-  isHR
+  canManageVacancies = false,
+  canManageApplications = false,
 }: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
   const { openModal, closeModal } = useModal();
@@ -96,7 +98,7 @@ export function VacancyCard({
           </div>
         </AccordionTrigger>
 
-        {vacancy.status === "active" && isHR && (
+        {vacancy.status === "active" && canManageApplications && (
           <Button size="sm" variant="ghost" asChild className={styles.addButton} onClick={handleAddCandidate}>
             <p>
               <UserPlus size={16} />
@@ -105,7 +107,7 @@ export function VacancyCard({
           </Button>
         )}
 
-        {vacancy.status === "active" || isAdmin ? (
+        {(vacancy.status === "active" && canManageVacancies) || isAdmin ? (
           <Menubar>
             <MenubarMenu>
               <MenubarTrigger className={styles.menuTrigger}>
@@ -114,11 +116,13 @@ export function VacancyCard({
               <MenubarContent align="end">
                 {vacancy.status === "active" ? (
                   <>
-                    <MenubarItem onClick={onEdit}>Изменить вакансию</MenubarItem>
-                    <MenubarItem variant="destructive" onClick={handleDeleteClick}>Удалить вакансию</MenubarItem>
+                    {canManageVacancies && <MenubarItem onClick={onEdit}>Изменить вакансию</MenubarItem>}
+                    {canManageVacancies && (
+                      <MenubarItem variant="destructive" onClick={handleDeleteClick}>Удалить вакансию</MenubarItem>
+                    )}
                   </>
                 ) : (
-                  <MenubarItem onClick={onRestore}>Восстановить вакансию</MenubarItem>
+                  isAdmin && <MenubarItem onClick={onRestore}>Восстановить вакансию</MenubarItem>
                 )}
               </MenubarContent>
             </MenubarMenu>

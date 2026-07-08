@@ -3,8 +3,8 @@ import { VacancyFormModal } from "@/components/vacancy-form-modal";
 import { vacanciesService, type Vacancy, VacancyLevel } from "@/api/vacancies";
 import { competenciesService, type Competency } from "@/api/competencies";
 import { applicationsService } from "@/api/applications";
-import { Role } from "@/api/auth";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { Permission } from "@/utils/permissions";
+import { usePermissions } from "@/hooks/usePermissions";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
 import { Briefcase } from "lucide-react";
@@ -32,7 +32,9 @@ const mapStatusToStage = (status: string | number) => {
 
 export function Vacancies() {
   const { openModal } = useModal();
-  const { user } = useCurrentUser();
+  const { hasPermission, isAdmin } = usePermissions();
+  const canManageVacancies = hasPermission(Permission.CanManageVacancies);
+  const canManageApplications = hasPermission(Permission.CanManageApplications);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,9 +112,6 @@ export function Vacancies() {
     if (a.isDeleted === b.isDeleted) return 0;
     return a.isDeleted ? 1 : -1;
   });
-  const isAdmin = user?.role === Role.Admin || user?.role === Role.SuperAdmin;
-  const isHR = user?.role === Role.HR;
-
   const handleAddVacancy = () => {
     openModal(
       <VacancyFormModal
@@ -201,7 +200,13 @@ export function Vacancies() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Управление вакансиями</h1>
-        <Button size="lg" variant="primary" className={styles.addButton} onClick={handleAddVacancy}>
+        <Button
+          size="lg"
+          variant="primary"
+          className={styles.addButton}
+          onClick={handleAddVacancy}
+          disabled={!canManageVacancies}
+        >
           <Briefcase size={20} />
           Добавить вакансию
         </Button>
@@ -238,7 +243,8 @@ export function Vacancies() {
                 onDelete={() => handleDelete(vacancy.id)}
                 onRestore={() => handleRestore(vacancy.id)}
                 isAdmin={isAdmin}
-                isHR={isHR}
+                canManageVacancies={canManageVacancies}
+                canManageApplications={canManageApplications}
               />
             );
           })}

@@ -79,6 +79,9 @@ public class UserService(IUserRepository userRepository, IPasswordHasher passwor
 
         if (!string.IsNullOrWhiteSpace(request.FullName) && request.FullName != user.FullName)
         {
+            if (user.Id == caller.UserId && user.Role == Role.SuperAdmin)
+                throw new InvalidOperationException("SuperAdmin не может изменить собственное ФИО.");
+
             var fullName = NormalizeFullName(request.FullName);
             var newLogin = GenerateLogin(fullName);
             if (await userRepository.LoginExistsAsync(newLogin, id))
