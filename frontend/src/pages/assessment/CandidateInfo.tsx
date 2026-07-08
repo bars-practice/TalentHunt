@@ -1,6 +1,8 @@
 import { StatusBadge } from "@/components/status-badge";
 import Button from "@/components/ui/button";
 import { Edit2, MapPin, Phone, GraduationCap, Briefcase } from "lucide-react";
+import { useModal } from "@/providers/ModalProvider";
+import { DateTimePickerModal } from "@/components/date-time-picker-modal";
 import styles from "./styles.module.css";
 
 interface CandidateInfoProps {
@@ -11,9 +13,24 @@ interface CandidateInfoProps {
   education: string;
   experience: string[];
   totalExperience?: string;
-  status: string;
+  status: number;
   interviewDate: string;
-  onEditDate?: () => void;
+  onDateSave?: (date: string) => void;
+}
+
+function getStatusInfo(status: number): { text: string; variant: "success" | "neutral" | "danger" | "warning" | "info" } {
+  switch (status) {
+    case 0:
+      return { text: "Новый", variant: "info" };
+    case 1:
+      return { text: "Ожидает собеседования", variant: "warning" };
+    case 2:
+      return { text: "Ожидает решения", variant: "warning" };
+    case 3:
+      return { text: "Принят", variant: "success" };
+    case 4:
+      return { text: "Отклонен", variant: "danger" };
+  }
 }
 
 export function CandidateInfo({
@@ -26,15 +43,32 @@ export function CandidateInfo({
   totalExperience,
   status,
   interviewDate,
-  onEditDate,
+  onDateSave,
 }: CandidateInfoProps) {
+  const { openModal } = useModal();
+  const statusInfo = getStatusInfo(status);
+
+  const handleEditDate = () => {
+    openModal(
+      <DateTimePickerModal
+        initialDate={interviewDate}
+        onSave={(date) => {
+          onDateSave?.(date);
+        }}
+        onCancel={() => { }}
+      />,
+      { title: "Дата собеседования", width: "400px" }
+    );
+  };
   return (
     <div className={styles.candidateInfo}>
       <div className={styles.candidateHeader}>
         <div className={styles.candidateDetails}>
-          <h2 className={styles.candidateName}>{name}</h2>
-          <div className={styles.candidateRole}>{role}</div>
-          
+          <div>
+            <h2 className={styles.candidateName}>{name}<StatusBadge text={statusInfo.text} variant={statusInfo.variant} size="lg" /> </h2>
+            <div className={styles.candidateRole}>{role}</div>
+          </div>
+
           <div className={styles.infoSection}>
             <div className={styles.infoRow}>
               <div className={styles.infoLabel}>
@@ -54,14 +88,13 @@ export function CandidateInfo({
               </div>
               <span className={styles.infoValue}>{education}</span>
             </div>
-            <div className={styles.infoRow}>
-              <div className={styles.infoLabel}>
-                <Briefcase size={16} className={styles.icon} />
-              </div>
+            <div className={styles.infoWork}>
+              <Briefcase size={16} className={styles.icon} />
+              {totalExperience && (
+                <span className={styles.experienceTotal}>{totalExperience}</span>
+              )}
               <div className={styles.experienceList}>
-                {totalExperience && (
-                  <span className={styles.experienceTotal}>{totalExperience}</span>
-                )}
+
                 {experience.map((exp, index) => (
                   <span key={index} className={styles.experienceItem}>
                     {exp}
@@ -71,20 +104,20 @@ export function CandidateInfo({
             </div>
           </div>
         </div>
-        
+
+
         <div className={styles.candidateActions}>
           <div className={styles.statusSection}>
-            <StatusBadge text={status} variant="warning" size="lg" />
           </div>
-          
+
           <div className={styles.interviewDateSection}>
             <span className={styles.dateLabel}>Дата собеседования</span>
             <div className={styles.dateRow}>
               <span className={styles.dateValue}>{interviewDate}</span>
-              <Button 
-                size="icon-sm" 
-                variant="ghost" 
-                onClick={onEditDate}
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={handleEditDate}
               >
                 <Edit2 size={16} />
               </Button>

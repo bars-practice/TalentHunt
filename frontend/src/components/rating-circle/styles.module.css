@@ -1,0 +1,31 @@
+.circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.red {
+  background-color: #d74738;
+}
+
+.orange {
+  background-color: #f59e0b;
+}
+
+.yellow {
+  background-color: #f4cb23;
+}
+
+.lightGreen {
+  background-color: #84c527;
+}
+
+.green {
+  background-color: #a1c527;
+}

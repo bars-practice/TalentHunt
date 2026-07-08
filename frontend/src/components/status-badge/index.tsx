@@ -2,7 +2,7 @@ import styles from "./styles.module.css";
 
 interface StatusBadgeProps {
   text: string;
-  variant: "success" | "neutral" | "danger" | "warning";
+  variant: "success" | "neutral" | "danger" | "warning" | "info";
   size?: "sm" | "md" | "lg";
 }
 
