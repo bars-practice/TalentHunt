@@ -14,7 +14,7 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { Permission } from "@/utils/permissions";
 import { useModal } from "@/providers/ModalProvider";
-import { CircleCheck, CircleX } from "lucide-react";
+import { CircleCheck, CircleX, FileDown } from "lucide-react";
 import styles from "./styles.module.css";
 
 function areAllScoresFilled(matrix: SkillMatrixItem[]): boolean {
@@ -91,11 +91,13 @@ export function CompetencyAssessment() {
   const [starting, setStarting] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [deciding, setDeciding] = useState(false);
+  const [downloadingProtocol, setDownloadingProtocol] = useState(false);
 
   const canManageInterviews = hasPermission(Permission.CanManageInterviews);
   const canMakeDecision =
     hasPermission(Permission.CanMakeDecision) &&
     !hasPermission(Permission.CanManageInterviews);
+  const canExportDocuments = hasPermission(Permission.CanExportDocuments);
 
   const loadInterview = useCallback(async () => {
     if (!id) return;
@@ -283,6 +285,18 @@ export function CompetencyAssessment() {
     );
   };
 
+  const handleDownloadProtocol = async () => {
+    if (!id) return;
+    try {
+      setDownloadingProtocol(true);
+      await applicationsService.downloadProtocol(id);
+    } catch (err) {
+      console.error("Failed to download protocol:", err);
+    } finally {
+      setDownloadingProtocol(false);
+    }
+  };
+
   if (loading || permissionsLoading) return <div className={styles.container}>Загрузка...</div>;
   if (error) return <div className={styles.container}>{error}</div>;
   if (!interview) return <div className={styles.container}>Данные не найдены</div>;
@@ -317,6 +331,11 @@ export function CompetencyAssessment() {
 
   const showDecisionPanel =
     canMakeDecision && appStatus === ApplicationStatus.PendingDecision;
+
+  const showProtocolPanel =
+    canExportDocuments &&
+    (appStatus === ApplicationStatus.Approved ||
+      appStatus === ApplicationStatus.Rejected);
 
   const interviewDate = interview.scheduledAt
     ? new Date(interview.scheduledAt).toLocaleString("ru-RU")
@@ -367,6 +386,18 @@ export function CompetencyAssessment() {
                 Завершить и отправить
               </Button>
             </>
+          )}
+          {showProtocolPanel && (
+            <Button
+              size="lg"
+              variant="outline"
+              className={styles.startButton}
+              onClick={handleDownloadProtocol}
+              disabled={downloadingProtocol}
+            >
+              <FileDown size={20} />
+              {downloadingProtocol ? "Формирование..." : "Сформировать протокол"}
+            </Button>
           )}
         </div>
       </div>

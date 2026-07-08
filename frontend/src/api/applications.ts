@@ -33,4 +33,7 @@ export const applicationsService = {
     api.post<Application>('/Applications', data),
   decide: (id: string, status: number) =>
     api.put<Application>(`/Applications/${id}/decision`, { status }),
+
+  downloadProtocol: (id: string) =>
+    api.download(`/Applications/${id}/protocol`, `protocol-${id}.pdf`),
 }

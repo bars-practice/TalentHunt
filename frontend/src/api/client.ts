@@ -99,6 +99,43 @@ class ApiClient {
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' })
   }
+
+  async download(endpoint: string, fallbackFilename = 'download.pdf'): Promise<void> {
+    const url = `${this.baseUrl}${endpoint}`
+    const response = await fetch(url, { credentials: 'include' })
+
+    if (!response.ok) {
+      let errorData: unknown
+      try {
+        errorData = await response.json()
+      } catch {
+        errorData = { error: 'Unknown error' }
+      }
+      const message =
+        typeof errorData === 'object' &&
+        errorData !== null &&
+        ('message' in errorData || 'error' in errorData)
+          ? String((errorData as { message?: string; error?: string }).message
+              ?? (errorData as { error?: string }).error)
+          : `HTTP ${response.status}`
+      throw new ApiError(message, response.status, errorData)
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get('Content-Disposition')
+    const filename =
+      disposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)"?/)?.[1]
+        ?? fallbackFilename
+
+    const objectUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = objectUrl
+    link.download = decodeURIComponent(filename)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL)
