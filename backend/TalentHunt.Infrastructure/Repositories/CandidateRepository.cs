@@ -10,12 +10,28 @@ public class CandidateRepository(AppDbContext context) : ICandidateRepository
 {
     public async Task<IReadOnlyList<Candidate>> GetAllAsync(
         bool includeDeleted = false,
-        CancellationToken cancellationToken = default) =>
-        await context.Candidates
+        Guid? excludeVacancyId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = context.Candidates
             .IncludeDeletedIf(includeDeleted)
-            .AsNoTracking()
+            .AsNoTracking();
+
+        if (excludeVacancyId.HasValue)
+        {
+            var existingCandidateIds = await context.Applications
+                .Where(a => a.VacancyId == excludeVacancyId.Value)
+                .Select(a => a.CandidateId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            query = query.Where(c => !existingCandidateIds.Contains(c.Id));
+        }
+
+        return await query
             .OrderBy(c => c.FullName)
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<Candidate?> GetByIdAsync(
         Guid id,
@@ -47,11 +63,27 @@ public class CandidateRepository(AppDbContext context) : ICandidateRepository
     public async Task<IReadOnlyList<Candidate>> SearchAsync(
         string query,
         int limit,
-        CancellationToken cancellationToken = default) =>
-        await context.Candidates
+        Guid? excludeVacancyId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var candidatesQuery = context.Candidates
             .AsNoTracking()
-            .Where(c => EF.Functions.ILike(c.FullName, $"%{query}%"))
+            .Where(c => EF.Functions.ILike(c.FullName, $"%{query}%"));
+
+        if (excludeVacancyId.HasValue)
+        {
+            var existingCandidateIds = await context.Applications
+                .Where(a => a.VacancyId == excludeVacancyId.Value)
+                .Select(a => a.CandidateId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            candidatesQuery = candidatesQuery.Where(c => !existingCandidateIds.Contains(c.Id));
+        }
+
+        return await candidatesQuery
             .OrderBy(c => c.FullName)
             .Take(limit)
             .ToListAsync(cancellationToken);
+    }
 }

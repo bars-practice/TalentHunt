@@ -1,7 +1,6 @@
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useModal } from "@/providers/ModalProvider";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Field, FieldLabel, FieldContent, FieldError } from "@/components/ui/field";
@@ -22,25 +21,18 @@ const formSchema = z.object({
 
 type CandidateFormValues = z.infer<typeof formSchema>;
 
-interface CandidateFormModalProps {
+interface CandidateCreateFormProps {
   vacancyId?: string;
-  onSubmit?: (data: { fullName: string; phone: string; city: string; skills: string; education: string; experience: string; placesOfWork?: string[] }) => Promise<void>;
-  onSuccess?: () => Promise<void>;
+  onSubmit?: (data: any) => Promise<void>;
+  onSuccess?: () => Promise<void> | void;
+  onCancel?: () => void;
 }
 
-export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: CandidateFormModalProps) {
-  const { closeModal } = useModal();
-
+export function CandidateCreateForm({ vacancyId, onSubmit, onSuccess, onCancel }: CandidateCreateFormProps) {
   const methods = useForm<CandidateFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: "",
-      phone: "",
-      city: "",
-      skills: "",
-      education: "",
-      experience: "",
-      placesOfWork: "",
+      fullName: "", phone: "", city: "", skills: "", education: "", experience: "", placesOfWork: "",
     },
   });
 
@@ -52,33 +44,24 @@ export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: Candidate
       : undefined;
 
     const candidateData = {
-      fullName: values.fullName,
-      phone: values.phone,
-      city: values.city,
-      skills: values.skills,
-      education: values.education,
-      experience: values.experience,
+      ...values,
       placesOfWork,
     };
 
-    if (onSubmit) {
-      await onSubmit(candidateData);
-    } else {
-      // Default behavior: create candidate and link to vacancy
-      const candidate = await candidatesService.create(candidateData);
-      if (vacancyId) {
-        await applicationsService.create({
-          vacancyId,
-          candidateId: candidate.id,
-        });
+    try {
+      if (onSubmit) {
+        await onSubmit(candidateData);
+      } else {
+        const candidate = await candidatesService.create(candidateData);
+        if (vacancyId) {
+          await applicationsService.create({ vacancyId, candidateId: candidate.id });
+        }
       }
-    }
 
-    if (onSuccess) {
-      await onSuccess();
+      if (onSuccess) await onSuccess();
+    } catch (err) {
+      console.error("Ошибка при сохранении кандидата:", err);
     }
-
-    closeModal();
   };
 
   return (
@@ -88,13 +71,7 @@ export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: Candidate
           <Field>
             <FieldLabel htmlFor="fullName">ФИО</FieldLabel>
             <FieldContent>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Иванов Иван Иванович"
-                aria-invalid={!!errors.fullName}
-                {...register("fullName")}
-              />
+              <Input id="fullName" type="text" placeholder="Иванов Иван Иванович" aria-invalid={!!errors.fullName} {...register("fullName")} />
               <FieldError errors={[errors.fullName]} />
             </FieldContent>
           </Field>
@@ -104,13 +81,7 @@ export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: Candidate
           <Field>
             <FieldLabel htmlFor="city">Город</FieldLabel>
             <FieldContent>
-              <Input
-                id="city"
-                type="text"
-                placeholder="Москва"
-                aria-invalid={!!errors.city}
-                {...register("city")}
-              />
+              <Input id="city" type="text" placeholder="Москва" aria-invalid={!!errors.city} {...register("city")} />
               <FieldError errors={[errors.city]} />
             </FieldContent>
           </Field>
@@ -118,13 +89,7 @@ export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: Candidate
           <Field>
             <FieldLabel htmlFor="skills">Навыки</FieldLabel>
             <FieldContent>
-              <Input
-                id="skills"
-                type="text"
-                placeholder="React, TypeScript, Node.js"
-                aria-invalid={!!errors.skills}
-                {...register("skills")}
-              />
+              <Input id="skills" type="text" placeholder="React, TypeScript" aria-invalid={!!errors.skills} {...register("skills")} />
               <FieldError errors={[errors.skills]} />
             </FieldContent>
           </Field>
@@ -132,13 +97,7 @@ export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: Candidate
           <Field>
             <FieldLabel htmlFor="education">Образование</FieldLabel>
             <FieldContent>
-              <Input
-                id="education"
-                type="text"
-                placeholder="МГТУ им. Баумана, 2020"
-                aria-invalid={!!errors.education}
-                {...register("education")}
-              />
+              <Input id="education" type="text" placeholder="Высшее" aria-invalid={!!errors.education} {...register("education")} />
               <FieldError errors={[errors.education]} />
             </FieldContent>
           </Field>
@@ -146,13 +105,7 @@ export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: Candidate
           <Field>
             <FieldLabel htmlFor="experience">Опыт работы</FieldLabel>
             <FieldContent>
-              <Input
-                id="experience"
-                type="text"
-                placeholder="5 лет в разработке"
-                aria-invalid={!!errors.experience}
-                {...register("experience")}
-              />
+              <Input id="experience" type="text" placeholder="3 года" aria-invalid={!!errors.experience} {...register("experience")} />
               <FieldError errors={[errors.experience]} />
             </FieldContent>
           </Field>
@@ -160,21 +113,20 @@ export function CandidateFormModal({ vacancyId, onSubmit, onSuccess }: Candidate
           <Field>
             <FieldLabel htmlFor="placesOfWork">Места работы (через запятую)</FieldLabel>
             <FieldContent>
-              <Input
-                id="placesOfWork"
-                type="text"
-                placeholder="Яндекс, Сбер, Тинькофф"
-                aria-invalid={!!errors.placesOfWork}
-                {...register("placesOfWork")}
-              />
+              <Input id="placesOfWork" type="text" placeholder="Компании..." aria-invalid={!!errors.placesOfWork} {...register("placesOfWork")} />
               <FieldError errors={[errors.placesOfWork]} />
             </FieldContent>
           </Field>
         </div>
 
         <div className={styles.actions}>
-          <Button type="submit" variant="primary" className={styles.submitButton} disabled={isSubmitting}>
-            Добавить кандидата
+          {onCancel && (
+            <Button type="button" variant="ghost" onClick={onCancel}>
+              Отмена
+            </Button>
+          )}
+          <Button type="submit" variant="primary" disabled={isSubmitting}>
+            Создать и привязать
           </Button>
         </div>
       </form>

@@ -18,7 +18,7 @@ public class ApplicationsController(
     [Authorize(Roles = "HR,Admin,Approver")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var applications = await applicationService.GetAllAsync(User.IsAdmin(), cancellationToken);
+        var applications = await applicationService.GetAllAsync(true, cancellationToken);
         return Ok(applications);
     }
 
