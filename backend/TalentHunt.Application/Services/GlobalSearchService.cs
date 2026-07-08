@@ -9,40 +9,55 @@ public class GlobalSearchService(
     IVacancyRepository vacancyRepository,
     IApplicationRepository applicationRepository) : IGlobalSearchService
 {
-    private const int MinQueryLength = 2;
+    private const int MinQueryLength = 1;
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 20;
 
     public async Task<GlobalSearchResponse> SearchAsync(
-        string query,
+        string? query,
         int page,
         int pageSize,
         Role callerRole,
         Guid? callerUserId,
+        IReadOnlyList<int>? levels = null,
+        IReadOnlyList<int>? candidateStatuses = null,
+        string? city = null,
+        string? vacancyStatus = null,
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = NormalizePagination(page, pageSize);
 
-        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < MinQueryLength)
+        var cleanQuery = (query ?? string.Empty).Trim();
+        var hasQuery = cleanQuery.Length >= MinQueryLength;
+        var hasCandidateFilter = candidateStatuses is { Count: > 0 } || !string.IsNullOrWhiteSpace(city);
+        var hasFilters = levels is { Count: > 0 }
+            || hasCandidateFilter
+            || !string.IsNullOrWhiteSpace(vacancyStatus);
+
+        if (!hasQuery && !hasFilters)
             return Empty(page, pageSize);
 
-        var cleanQuery = query.Trim();
         Guid? approverId = callerRole == Role.Approver ? callerUserId : null;
 
         var titleMatchIds = await vacancyRepository.SearchIdsByTextAsync(
             cleanQuery,
             approverId,
+            levels,
+            vacancyStatus,
             cancellationToken);
 
         var applicationMatches = await applicationRepository.SearchForGlobalByCandidateAsync(
             cleanQuery,
             approverId,
+            candidateStatuses,
+            city,
             cancellationToken);
 
-        var allVacancyIds = titleMatchIds
-            .Concat(applicationMatches.Select(a => a.VacancyId))
-            .Distinct()
-            .ToList();
+        // Когда активны фильтры по кандидатам, показываем только вакансии,
+        // у которых есть подходящие кандидаты (пустые вакансии скрываем).
+        var allVacancyIds = hasCandidateFilter
+            ? applicationMatches.Select(a => a.VacancyId).Distinct().ToList()
+            : titleMatchIds.Concat(applicationMatches.Select(a => a.VacancyId)).Distinct().ToList();
 
         if (allVacancyIds.Count == 0)
             return Empty(page, pageSize);
@@ -50,6 +65,8 @@ public class GlobalSearchService(
         var vacancies = await vacancyRepository.GetByIdsForGlobalSearchAsync(
             allVacancyIds,
             approverId,
+            levels,
+            vacancyStatus,
             cancellationToken);
 
         var totalCount = vacancies.Count;
@@ -92,6 +109,7 @@ public class GlobalSearchService(
             vacancy.Title,
             vacancy.BusinessUnit,
             vacancy.IsDeleted,
+            vacancy.Level,
             applications);
     }
 

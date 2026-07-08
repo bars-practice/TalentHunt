@@ -3,6 +3,8 @@ import { VacancyFormModal } from "@/components/vacancy-form-modal";
 import { vacanciesService, type Vacancy, VacancyLevel } from "@/api/vacancies";
 import { competenciesService, type Competency } from "@/api/competencies";
 import { applicationsService } from "@/api/applications";
+import { GlobalSearch } from "@/components/global-search";
+import { searchService, type SearchVacancyItem, type SearchFilters, DEFAULT_SEARCH_FILTERS } from "@/api/search";
 import { Permission } from "@/utils/permissions";
 import { usePermissions } from "@/hooks/usePermissions";
 import styles from "./styles.module.css";
@@ -10,7 +12,16 @@ import Button from "@/components/ui/button";
 import { Briefcase } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import { useModal } from "@/providers/ModalProvider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+
+interface MappedResponse {
+  id: string;
+  name: string;
+  stage: string;
+  date: Date | undefined;
+  rawStatus: number;
+  city: string;
+}
 
 const mapStatusToStage = (status: string | number) => {
   if (typeof status === "number") {
@@ -28,7 +39,17 @@ const mapStatusToStage = (status: string | number) => {
   if (statusLower.includes("decision") || statusLower.includes("approved") || statusLower.includes("rejected")) return "decision";
   if (statusLower.includes("offer")) return "offer";
   return "new";
-};;
+};
+
+const mapStatusToNumber = (status: string | number): number => {
+  if (typeof status === "number") return status;
+  const s = String(status).toLowerCase();
+  if (s === "inprogress" || s.includes("progress")) return 1;
+  if (s === "pendingdecision" || s.includes("pending")) return 2;
+  if (s === "approved") return 3;
+  if (s === "rejected") return 4;
+  return 0;
+};
 
 export function Vacancies() {
   const { openModal } = useModal();
@@ -40,16 +61,19 @@ export function Vacancies() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedVacancies, setExpandedVacancies] = useState<string[]>([]);
-  const [responsesCache, setResponsesCache] = useState<Record<string, any[]>>({});
+  const [responsesCache, setResponsesCache] = useState<Record<string, MappedResponse[]>>({});
   const [loadingResponses, setLoadingResponses] = useState<Record<string, boolean>>({});
   const [fetchedVacancyIds, setFetchedVacancyIds] = useState<string[]>([]);
+  const [rawSearchResults, setRawSearchResults] = useState<SearchVacancyItem[] | null>(null);
+  const [activeFilters, setActiveFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
+  const currentQueryRef = useRef("");
 
   const loadVacancies = async () => {
     try {
-      setLoading(true);
-      setError(null);
       const data = await vacanciesService.getAll();
-      setVacancies(data);
+      setError(null);
+      setAllVacancies(data);
+      vacanciesRef.current = data;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load vacancies");
     } finally {
@@ -67,9 +91,15 @@ export function Vacancies() {
   };
 
   useEffect(() => {
-    loadVacancies();
-    loadCompetencies();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadVacancies();
+    void loadCompetencies();
   }, []);
+
+  const reloadVacancies = async () => {
+    setLoading(true);
+    await loadVacancies();
+  };
 
   const loadResponsesForVacancy = async (vacancyId: string) => {
     try {
@@ -77,11 +107,13 @@ export function Vacancies() {
       const allApplications = await applicationsService.getAll();
       const vacancyApplications = allApplications.filter(app => app.vacancyId === vacancyId && !app.isDeleted);
 
-      const mapped = vacancyApplications.map(app => ({
+      const mapped: MappedResponse[] = vacancyApplications.map(app => ({
         id: app.id,
         name: app.candidateFullName,
         stage: mapStatusToStage(app.status),
         date: app.decidedAt ? new Date(app.decidedAt) : undefined,
+        rawStatus: mapStatusToNumber(app.status),
+        city: "",
       }));
 
       setResponsesCache(prev => ({ ...prev, [vacancyId]: mapped }));
@@ -94,6 +126,8 @@ export function Vacancies() {
 
   const handleAccordionChange = (values: string[]) => {
     setExpandedVacancies(values);
+
+    if (rawSearchResults !== null) return;
 
     const toFetch = values.filter(id => !fetchedVacancyIds.includes(id));
 
@@ -108,10 +142,60 @@ export function Vacancies() {
     }
   };
 
-  const sortedVacancies = [...vacancies].sort((a, b) => {
-    if (a.isDeleted === b.isDeleted) return 0;
-    return a.isDeleted ? 1 : -1;
-  });
+  const sortedVacancies = useMemo(() => {
+    let vacancies: Vacancy[];
+
+    if (rawSearchResults !== null) {
+      vacancies = rawSearchResults.map(item => ({
+        id: item.vacancyId,
+        title: item.vacancyTitle,
+        level: item.level as VacancyLevel,
+        businessUnit: item.businessUnit,
+        description: "",
+        approverId: "",
+        competencies: [],
+        isDeleted: item.isDeleted,
+      }));
+    } else {
+      vacancies = [...allVacancies];
+    }
+
+    if (activeFilters.vacancyStatus === "active") {
+      vacancies = vacancies.filter(v => !v.isDeleted);
+    } else if (activeFilters.vacancyStatus === "archived") {
+      vacancies = vacancies.filter(v => v.isDeleted);
+    }
+
+    if (activeFilters.vacancyLevels.length > 0) {
+      vacancies = vacancies.filter(v => activeFilters.vacancyLevels.includes(v.level));
+    }
+
+    return vacancies.sort((a, b) => {
+      if (a.isDeleted === b.isDeleted) return 0;
+      return a.isDeleted ? 1 : -1;
+    });
+  }, [rawSearchResults, allVacancies, activeFilters]);
+
+  const getResponsesForVacancy = useCallback((vacancyId: string): MappedResponse[] | undefined => {
+    if (rawSearchResults !== null) {
+      const item = rawSearchResults.find(i => i.vacancyId === vacancyId);
+      if (!item) return [];
+      return item.applications.map(a => ({
+        id: a.applicationId,
+        name: a.candidateFullName,
+        stage: mapStatusToStage(a.status),
+        date: undefined,
+        rawStatus: a.status,
+        city: a.city,
+      }));
+    }
+
+    return responsesCache[vacancyId];
+  }, [rawSearchResults, responsesCache]);
+
+  const isAdmin = user?.role === Role.Admin || user?.role === Role.SuperAdmin;
+  const isHR = user?.role === Role.HR;
+
   const handleAddVacancy = () => {
     openModal(
       <VacancyFormModal
@@ -131,7 +215,7 @@ export function Vacancies() {
               approverId: data.approverId,
               competencyIds: data.competencyIds
             });
-            await loadVacancies();
+            await reloadVacancies();
           } catch (err) {
             console.error("Failed to create vacancy:", err);
           }
@@ -168,7 +252,7 @@ export function Vacancies() {
               approverId: data.approverId,
               competencyIds: data.competencyIds
             });
-            await loadVacancies();
+            await reloadVacancies();
           } catch (err) {
             console.error("Failed to update vacancy:", err);
           }
@@ -181,7 +265,7 @@ export function Vacancies() {
   const handleDelete = async (id: string) => {
     try {
       await vacanciesService.update(id, { isDeleted: true });
-      await loadVacancies();
+      await reloadVacancies();
     } catch (err) {
       console.error("Failed to delete vacancy:", err);
     }
@@ -190,11 +274,43 @@ export function Vacancies() {
   const handleRestore = async (id: string) => {
     try {
       await vacanciesService.update(id, { isDeleted: false });
-      await loadVacancies();
+      await reloadVacancies();
     } catch (err) {
       console.error("Failed to restore vacancy:", err);
     }
   };
+
+  const runSearch = useCallback(async (query: string, filters: SearchFilters) => {
+    const hasQuery = query.trim().length > 0;
+    const hasFilters =
+      filters.vacancyStatus !== "all" ||
+      filters.vacancyLevels.length > 0 ||
+      filters.candidateStatuses.length > 0 ||
+      filters.city.trim().length > 0;
+
+    if (!hasQuery && !hasFilters) {
+      setRawSearchResults(null);
+      return;
+    }
+
+    try {
+      const results = await searchService.search(query, filters);
+      setRawSearchResults(results.items);
+    } catch (err) {
+      console.error("Search failed:", err);
+      setRawSearchResults(null);
+    }
+  }, []);
+
+  const handleSearch = useCallback(async (query: string) => {
+    currentQueryRef.current = query;
+    await runSearch(query, activeFilters);
+  }, [activeFilters, runSearch]);
+
+  const handleFiltersChange = useCallback(async (filters: SearchFilters) => {
+    setActiveFilters(filters);
+    await runSearch(currentQueryRef.current, filters);
+  }, [runSearch]);
 
   return (
     <div className={styles.container}>
@@ -211,6 +327,14 @@ export function Vacancies() {
           Добавить вакансию
         </Button>
       </div>
+      <div className={styles.searchSection}>
+        <GlobalSearch
+          onSearch={handleSearch}
+          onFiltersChange={handleFiltersChange}
+          filters={activeFilters}
+          placeholder="Поиск по вакансиям и кандидатам..."
+        />
+      </div>
       {loading ? (
         <div className={styles.vacanciesList}>Загрузка...</div>
       ) : error ? (
@@ -224,6 +348,7 @@ export function Vacancies() {
         >
           {sortedVacancies.map((vacancy) => {
             const levelLabel = vacancy.level === VacancyLevel.Junior ? "Junior" : vacancy.level === VacancyLevel.Middle ? "Middle" : "Senior";
+            const responses = getResponsesForVacancy(vacancy.id);
             return (
               <VacancyCard
                 key={vacancy.id}
@@ -232,12 +357,12 @@ export function Vacancies() {
                   title: vacancy.title,
                   level: levelLabel,
                   businessUnit: vacancy.businessUnit,
-                  responsesCount: 0,
+                  responsesCount: responses?.length ?? 0,
                   status: vacancy.isDeleted ? "inactive" : "active",
                   responses: [],
                 }}
-                responses={responsesCache[vacancy.id]}
-                isLoadingResponses={loadingResponses[vacancy.id] || false}
+                responses={responses}
+                isLoadingResponses={rawSearchResults !== null ? false : (loadingResponses[vacancy.id] || false)}
                 onRefreshResponses={() => loadResponsesForVacancy(vacancy.id)}
                 onEdit={() => handleEdit(vacancy)}
                 onDelete={() => handleDelete(vacancy.id)}

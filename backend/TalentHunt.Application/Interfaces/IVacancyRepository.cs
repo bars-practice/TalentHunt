@@ -27,10 +27,14 @@ public interface IVacancyRepository
     Task<IReadOnlyList<Guid>> SearchIdsByTextAsync(
         string query,
         Guid? approverId,
+        IReadOnlyList<int>? levels = null,
+        string? vacancyStatus = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Vacancy>> GetByIdsForGlobalSearchAsync(
         IReadOnlyCollection<Guid> ids,
         Guid? approverId,
+        IReadOnlyList<int>? levels = null,
+        string? vacancyStatus = null,
         CancellationToken cancellationToken = default);
 }

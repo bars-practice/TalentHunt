@@ -86,6 +86,8 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
     public async Task<IReadOnlyList<Guid>> SearchIdsByTextAsync(
         string query,
         Guid? approverId,
+        IReadOnlyList<int>? levels = null,
+        string? vacancyStatus = null,
         CancellationToken cancellationToken = default)
     {
         var pattern = $"%{query}%";
@@ -100,6 +102,11 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
         if (approverId.HasValue)
             vacancyQuery = vacancyQuery.Where(v => v.ApproverId == approverId.Value);
 
+        vacancyQuery = ApplyVacancyStatusFilter(vacancyQuery, vacancyStatus);
+
+        if (levels is { Count: > 0 })
+            vacancyQuery = vacancyQuery.Where(v => levels.Contains((int)v.Level));
+
         return await vacancyQuery
             .Select(v => v.Id)
             .ToListAsync(cancellationToken);
@@ -108,6 +115,8 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
     public async Task<IReadOnlyList<Vacancy>> GetByIdsForGlobalSearchAsync(
         IReadOnlyCollection<Guid> ids,
         Guid? approverId,
+        IReadOnlyList<int>? levels = null,
+        string? vacancyStatus = null,
         CancellationToken cancellationToken = default)
     {
         if (ids.Count == 0)
@@ -121,10 +130,23 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
         if (approverId.HasValue)
             vacancyQuery = vacancyQuery.Where(v => v.ApproverId == approverId.Value);
 
+        vacancyQuery = ApplyVacancyStatusFilter(vacancyQuery, vacancyStatus);
+
+        if (levels is { Count: > 0 })
+            vacancyQuery = vacancyQuery.Where(v => levels.Contains((int)v.Level));
+
         return await vacancyQuery
             .OrderBy(v => v.Title)
             .ToListAsync(cancellationToken);
     }
+
+    private static IQueryable<Vacancy> ApplyVacancyStatusFilter(IQueryable<Vacancy> query, string? vacancyStatus) =>
+        vacancyStatus switch
+        {
+            "active" => query.Where(v => !v.IsDeleted),
+            "archived" => query.Where(v => v.IsDeleted),
+            _ => query
+        };
 
     private async Task AttachCompetenciesAsync(
         IReadOnlyList<Vacancy> vacancies,

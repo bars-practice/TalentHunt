@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
 using TalentHunt.Infrastructure.Extensions;
@@ -82,6 +83,8 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
     public async Task<IReadOnlyList<ApplicationEntity>> SearchForGlobalByCandidateAsync(
         string query,
         Guid? approverId,
+        IReadOnlyList<int>? candidateStatuses = null,
+        string? city = null,
         CancellationToken cancellationToken = default)
     {
         var pattern = $"%{query}%";
@@ -98,6 +101,20 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
                     .IgnoreQueryFilters()
                     .Any(v => v.Id == a.VacancyId && v.ApproverId == approverId.Value));
         }
+
+        if (candidateStatuses is { Count: > 0 })
+        {
+            var statusEnums = candidateStatuses
+                .Where(s => Enum.IsDefined(typeof(ApplicationStatus), s))
+                .Select(s => (ApplicationStatus)s)
+                .ToList();
+
+            if (statusEnums.Count > 0)
+                applicationQuery = applicationQuery.Where(a => statusEnums.Contains(a.Status));
+        }
+
+        if (!string.IsNullOrWhiteSpace(city))
+            applicationQuery = applicationQuery.Where(a => EF.Functions.ILike(a.Candidate.City, $"%{city.Trim()}%"));
 
         return await applicationQuery.ToListAsync(cancellationToken);
     }

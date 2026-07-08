@@ -19,9 +19,13 @@ public class SearchController(IGlobalSearchService globalSearchService) : Contro
         PermissionType.CanViewInterviews,
         PermissionType.CanViewVacancies)]
     public async Task<IActionResult> Search(
-        [FromQuery] string query,
+        [FromQuery] string? query = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] int[]? levels = null,
+        [FromQuery] int[]? candidateStatuses = null,
+        [FromQuery] string? city = null,
+        [FromQuery] string? vacancyStatus = null,
         CancellationToken cancellationToken = default)
     {
         var role = User.GetRole();
@@ -34,6 +38,10 @@ public class SearchController(IGlobalSearchService globalSearchService) : Contro
             pageSize,
             role.Value,
             User.GetUserId(),
+            levels,
+            candidateStatuses,
+            city,
+            vacancyStatus,
             cancellationToken);
 
         return Ok(result);

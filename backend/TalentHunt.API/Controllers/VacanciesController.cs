@@ -24,7 +24,7 @@ public class VacanciesController(
         var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
         var vacancies = await vacancyService.GetAllAsync(
             approverFilter,
-            User.IsPrivilegedUser(),
+            includeDeleted: true,
             cancellationToken);
 
         return Ok(vacancies);

@@ -32,5 +32,7 @@ public interface IApplicationRepository
     Task<IReadOnlyList<ApplicationEntity>> SearchForGlobalByCandidateAsync(
         string query,
         Guid? approverId,
+        IReadOnlyList<int>? candidateStatuses = null,
+        string? city = null,
         CancellationToken cancellationToken = default);
 }
