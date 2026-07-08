@@ -22,5 +22,7 @@ public interface IUserRepository
 
     Task<IEnumerable<Permission>> GetPermissionsByNamesAsync(IEnumerable<string> names);
 
+    Task<IReadOnlyList<User>> SearchByRoleAsync(string role, string? query = null, CancellationToken cancellationToken = default);
+
     Task SaveAsync(CancellationToken cancellationToken = default);
 }

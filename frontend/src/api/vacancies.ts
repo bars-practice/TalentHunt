@@ -19,6 +19,7 @@ export interface Vacancy {
   level: VacancyLevel
   businessUnit: string
   description: string
+  approverId: string
   competencies: Competency[]
   isDeleted: boolean
 }
@@ -28,14 +29,18 @@ export interface CreateVacancyRequest {
   level: VacancyLevel
   businessUnit: string
   description: string
+  approverId: string
   competencyIds: string[]
 }
+
+
 
 export interface UpdateVacancyRequest {
   title?: string
   level?: VacancyLevel
   businessUnit?: string
   description?: string
+  approverId?: string
   competencyIds?: string[]
   isDeleted?: boolean
 }

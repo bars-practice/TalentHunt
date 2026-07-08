@@ -14,6 +14,12 @@ export interface UpdateUserRequest {
   isDeleted?: boolean
 }
 
+export interface UserSearchResult {
+  id: string
+  login: string
+  fullName: string
+}
+
 export const usersService = {
   getAll: async (): Promise<User[]> => {
     const users = await api.get<User[]>('/Users')
@@ -22,6 +28,9 @@ export const usersService = {
       role: typeof user.role === 'string' ? convertStringRoleToNumber(user.role) : user.role
     }))
   },
+
+  searchByRole: (role: string, query?: string): Promise<UserSearchResult[]> =>
+    api.get<UserSearchResult[]>(`/Users/search?role=${role}${query ? `&query=${encodeURIComponent(query)}` : ''}`),
 
   create: (data: CreateUserRequest) =>
     api.post<User>('/Users', data),
@@ -33,5 +42,8 @@ export const usersService = {
     api.delete<void>(`/Users/${id}`),
 
   restore: (id: string) =>
-    api.put<User>(`/Users/${id}`, { isDeleted: false })
+    api.put<User>(`/Users/${id}`, { isDeleted: false }),
+
+  getById: (id: string): Promise<User> =>
+    api.get<User>(`/Users/${id}`)
 }
