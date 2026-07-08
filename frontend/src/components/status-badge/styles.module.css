@@ -1,8 +1,21 @@
 .badge {
-  font-size: var(--text-xs);
   font-weight: 600;
-  padding: 2px 12px;
   border-radius: 10px;
+}
+
+.sm {
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+}
+
+.md {
+  font-size: var(--text-sm);
+  padding: 4px 12px;
+}
+
+.lg {
+  font-size: var(--text-base);
+  padding: 6px 16px;
 }
 
 .success {

@@ -6,7 +6,7 @@ import { useModal } from "@/providers/ModalProvider";
 import Button from "@/components/ui/button";
 import { VacancyStages } from "./VacancyStages";
 import { pluralize } from "@/utils/plural";
-import { CandidateFormModal } from "@/components/candidate-form-modal";
+import { CandidateSearchModal } from "@/components/candidate-search-modal";
 import styles from "./styles.module.css";
 
 export interface VacancyProps {
@@ -64,13 +64,13 @@ export function VacancyCard({
 
   const handleAddCandidate = () => {
     openModal(
-      <CandidateFormModal
+      <CandidateSearchModal
         vacancyId={vacancy.id}
         onSuccess={async () => {
           onRefreshResponses();
         }}
       />,
-      { title: "Добавить кандидата", width: "600px" }
+      { title: "Добавить кандидата", width: "600px", showBackButton: false }
     );
   };
 

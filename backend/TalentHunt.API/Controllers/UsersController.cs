@@ -9,18 +9,46 @@ namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,SuperAdmin")]
+[Authorize]
 public class UsersController(IUserService userService, IAuditLogService auditLogService)
     : BaseController(auditLogService)
 {
     [HttpGet]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> GetAll()
     {
         var users = await userService.GetAllAsync();
         return Ok(users);
     }
 
+    [HttpGet("search")]
+    [Authorize(Roles = "HR,Admin,SuperAdmin")]
+    public async Task<IActionResult> SearchByRole(
+        [FromQuery] string role,
+        [FromQuery] string? query,
+        CancellationToken cancellationToken)
+    {
+        var results = await userService.SearchByRoleAsync(role, query, cancellationToken);
+        return Ok(results);
+    }
+
+    [HttpGet("{id:guid}")]
+    [Authorize(Roles = "HR,Admin,SuperAdmin")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        try
+        {
+            var user = await userService.GetByIdAsync(id);
+            return Ok(user);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Пользователь не найден." });
+        }
+    }
+
     [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
     {
         var caller = GetCallerContext();
@@ -40,6 +68,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request)
     {
         var caller = GetCallerContext();
@@ -63,6 +92,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var caller = GetCallerContext();
@@ -86,6 +116,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpGet("permissions")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public IActionResult GetPermissions()
     {
         var permissions = PermissionType.All

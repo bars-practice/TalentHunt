@@ -19,17 +19,26 @@ public class CandidatesController(
 {
     [HttpGet]
     [RequirePermission(PermissionType.CanViewCandidates)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] Guid? excludeVacancyId,
+        CancellationToken cancellationToken)
     {
-        var candidates = await candidateService.GetAllAsync(User.IsPrivilegedUser(), cancellationToken);
+        var candidates = await candidateService.GetAllAsync(
+            User.IsPrivilegedUser(),
+            excludeVacancyId,
+            cancellationToken);
+
         return Ok(candidates);
     }
 
     [HttpGet("search")]
     [RequirePermission(PermissionType.CanViewCandidates)]
-    public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
+    public async Task<IActionResult> Search(
+        [FromQuery] string query,
+        [FromQuery] Guid? excludeVacancyId,
+        CancellationToken cancellationToken)
     {
-        var results = await candidateService.SearchAsync(query, cancellationToken);
+        var results = await candidateService.SearchAsync(query, excludeVacancyId, cancellationToken);
         return Ok(results);
     }
 

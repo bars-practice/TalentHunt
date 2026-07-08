@@ -89,6 +89,20 @@ public class UserRepository(AppDbContext context) : IUserRepository
             .Where(p => names.Contains(p.Name))
             .ToListAsync();
 
+    public async Task<IReadOnlyList<User>> SearchByRoleAsync(string role, string? query = null, CancellationToken cancellationToken = default)
+    {
+        var usersQuery = context.Users
+            .AsNoTracking()
+            .Where(u => u.Role.ToString() == role);
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            usersQuery = usersQuery.Where(u => EF.Functions.ILike(u.Login, $"%{query}%"));
+        }
+
+        return await usersQuery.ToListAsync(cancellationToken);
+    }
+
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);
 }

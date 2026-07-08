@@ -1,13 +1,17 @@
 import { useForm, Controller } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useModal } from "@/providers/ModalProvider";
 import { VacancyLevel } from "@/api/vacancies";
+import { usersService } from "@/api/users";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldLabel, FieldContent, FieldError } from "@/components/ui/field";
 import { CompetencyAutocomplete, type Competency } from "@/components/competency-autocomplete";
+import { ApproverSearchModal } from "@/components/approver-search-modal";
+import { User, X } from "lucide-react";
 import styles from "./styles.module.css";
 
 const formSchema = z.object({
@@ -17,6 +21,7 @@ const formSchema = z.object({
   }),
   businessUnit: z.string().trim().min(1, "Введите бизнес-юнит"),
   description: z.string().optional(),
+  approverId: z.string().min(1, "Выберите подтверждающего"),
   competencyIds: z.array(z.string()).min(1, "Выберите хотя бы одну компетенцию"),
 });
 
@@ -28,6 +33,7 @@ interface VacancyFormModalProps {
     level?: VacancyLevel;
     businessUnit?: string;
     description?: string;
+    approverId?: string;
     competencyIds?: string[];
   };
   onSubmit: (data: VacancyFormValues) => void;
@@ -36,7 +42,8 @@ interface VacancyFormModalProps {
 }
 
 export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNewCompetency }: VacancyFormModalProps) {
-  const { closeModal } = useModal();
+  const { closeModal, openModal } = useModal();
+  const [selectedApprover, setSelectedApprover] = useState<{ id: string; fullName: string } | null>(null);
 
   const {
     register,
@@ -52,11 +59,33 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
       level: initialData?.level || undefined,
       businessUnit: initialData?.businessUnit || "",
       description: initialData?.description || "",
+      approverId: initialData?.approverId || "",
       competencyIds: initialData?.competencyIds || [],
     },
   });
 
   const selectedCompetencyIds = watch("competencyIds");
+
+  useEffect(() => {
+    if (initialData?.approverId) {
+      usersService.getById(initialData.approverId)
+        .then((user) => {
+          setSelectedApprover({
+            id: user.id,
+            fullName: user.fullName
+          });
+        })
+        .catch((err) => {
+          console.error("Failed to load approver data:", err);
+          setSelectedApprover({
+            id: initialData.approverId!,
+            fullName: "Ошибка загрузки имени"
+          });
+        });
+    } else {
+      setSelectedApprover(null);
+    }
+  }, [initialData?.approverId]);
 
   const handleAddCompetency = (id: string) => {
     setValue("competencyIds", [...selectedCompetencyIds, id]);
@@ -67,6 +96,23 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
       "competencyIds",
       selectedCompetencyIds.filter((cId) => cId !== id)
     );
+  };
+
+  const handleOpenApproverSearch = () => {
+    openModal(
+      <ApproverSearchModal
+        onSelectApprover={(approver) => {
+          setValue("approverId", approver.id);
+          setSelectedApprover(approver);
+        }}
+      />,
+      { title: "Выбрать подтверждающего", width: "600px" }
+    );
+  };
+
+  const handleRemoveApprover = () => {
+    setValue("approverId", "");
+    setSelectedApprover(null);
   };
 
   const onFormSubmit = (values: VacancyFormValues) => {
@@ -128,6 +174,36 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
           </FieldContent>
         </Field>
 
+        <Field>
+          <FieldLabel htmlFor="approverId">Подтверждающий</FieldLabel>
+          <FieldContent>
+            {selectedApprover ? (
+              <div className={styles.approverCard}>
+                <span className={styles.approverName}>{selectedApprover.fullName}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveApprover}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleOpenApproverSearch}
+                className={styles.addApproverButton}
+              >
+                <User size={16} />
+                Добавить подтверждающего
+              </Button>
+            )}
+            <FieldError errors={[errors.approverId]} />
+          </FieldContent>
+        </Field>
+
         <CompetencyAutocomplete
           label="Компетенции"
           allCompetencies={competencies}
@@ -142,7 +218,7 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
 
       <div className={styles.actions}>
         <Button type="submit" variant="primary" className={styles.submitButton} disabled={isSubmitting}>
-          Добавить
+          {initialData ? "Сохранить" : "Добавить"}
         </Button>
       </div>
     </form>
