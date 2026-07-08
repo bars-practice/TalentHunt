@@ -5,12 +5,14 @@ import { competenciesService, type Competency } from "@/api/competencies";
 import { applicationsService } from "@/api/applications";
 import { Role } from "@/api/auth";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { GlobalSearch } from "@/components/global-search";
+import { searchService } from "@/api/search";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
 import { Briefcase } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import { useModal } from "@/providers/ModalProvider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const mapStatusToStage = (status: string | number) => {
   if (typeof status === "number") {
@@ -33,7 +35,8 @@ const mapStatusToStage = (status: string | number) => {
 export function Vacancies() {
   const { openModal } = useModal();
   const { user } = useCurrentUser();
-  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [filteredVacancies, setFilteredVacancies] = useState<Vacancy[]>([]);
+  const vacanciesRef = useRef<Vacancy[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,13 +44,15 @@ export function Vacancies() {
   const [responsesCache, setResponsesCache] = useState<Record<string, any[]>>({});
   const [loadingResponses, setLoadingResponses] = useState<Record<string, boolean>>({});
   const [fetchedVacancyIds, setFetchedVacancyIds] = useState<string[]>([]);
+  const [searchResultsCache, setSearchResultsCache] = useState<Record<string, { id: string; name: string; stage: string; date: Date | undefined }[]> | null>(null);
 
   const loadVacancies = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await vacanciesService.getAll();
-      setVacancies(data);
+      setFilteredVacancies(data);
+      vacanciesRef.current = data;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load vacancies");
     } finally {
@@ -93,6 +98,8 @@ export function Vacancies() {
   const handleAccordionChange = (values: string[]) => {
     setExpandedVacancies(values);
 
+    if (searchResultsCache !== null) return;
+
     const toFetch = values.filter(id => !fetchedVacancyIds.includes(id));
 
     if (toFetch.length > 0) {
@@ -106,7 +113,7 @@ export function Vacancies() {
     }
   };
 
-  const sortedVacancies = [...vacancies].sort((a, b) => {
+  const sortedVacancies = [...filteredVacancies].sort((a, b) => {
     if (a.isDeleted === b.isDeleted) return 0;
     return a.isDeleted ? 1 : -1;
   });
@@ -197,6 +204,50 @@ export function Vacancies() {
     }
   };
 
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setFilteredVacancies(vacanciesRef.current);
+      setSearchResultsCache(null);
+      return;
+    }
+
+    try {
+      const results = await searchService.search(query);
+
+      const mappedVacancies: Vacancy[] = results.items.map(item => ({
+        id: item.vacancyId,
+        title: item.vacancyTitle,
+        level: VacancyLevel.Middle,
+        businessUnit: item.businessUnit,
+        description: '',
+        approverId: '',
+        competencies: [],
+        isDeleted: item.isDeleted,
+      }));
+
+      const newSearchCache: Record<string, { id: string; name: string; stage: string; date: Date | undefined }[]> = {};
+      results.items.forEach(item => {
+        newSearchCache[item.vacancyId] = item.applications.map(app => ({
+          id: app.applicationId,
+          name: app.candidateFullName,
+          stage: mapStatusToStage(app.status),
+          date: undefined,
+        }));
+      });
+
+      setFilteredVacancies(mappedVacancies);
+      setSearchResultsCache(newSearchCache);
+    } catch (err) {
+      console.error("Search failed:", err);
+      const filtered = vacanciesRef.current.filter(vacancy =>
+        vacancy.title.toLowerCase().includes(query.toLowerCase()) ||
+        vacancy.businessUnit.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredVacancies(filtered);
+      setSearchResultsCache(null);
+    }
+  }, []);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -205,6 +256,9 @@ export function Vacancies() {
           <Briefcase size={20} />
           Добавить вакансию
         </Button>
+      </div>
+      <div className={styles.searchSection}>
+        <GlobalSearch onSearch={handleSearch} placeholder="Поиск по вакансиям..." />
       </div>
       {loading ? (
         <div className={styles.vacanciesList}>Загрузка...</div>
@@ -227,12 +281,17 @@ export function Vacancies() {
                   title: vacancy.title,
                   level: levelLabel,
                   businessUnit: vacancy.businessUnit,
-                  responsesCount: 0,
+                  responsesCount: searchResultsCache !== null
+                    ? (searchResultsCache[vacancy.id]?.length ?? 0)
+                    : (responsesCache[vacancy.id]?.length ?? 0),
                   status: vacancy.isDeleted ? "inactive" : "active",
                   responses: [],
                 }}
-                responses={responsesCache[vacancy.id]}
-                isLoadingResponses={loadingResponses[vacancy.id] || false}
+                responses={searchResultsCache !== null
+                  ? searchResultsCache[vacancy.id]
+                  : responsesCache[vacancy.id]
+                }
+                isLoadingResponses={searchResultsCache !== null ? false : (loadingResponses[vacancy.id] || false)}
                 onRefreshResponses={() => loadResponsesForVacancy(vacancy.id)}
                 onEdit={() => handleEdit(vacancy)}
                 onDelete={() => handleDelete(vacancy.id)}

@@ -9,7 +9,7 @@ public class GlobalSearchService(
     IVacancyRepository vacancyRepository,
     IApplicationRepository applicationRepository) : IGlobalSearchService
 {
-    private const int MinQueryLength = 2;
+    private const int MinQueryLength = 1;
     private const int DefaultPageSize = 10;
     private const int MaxPageSize = 20;
 
