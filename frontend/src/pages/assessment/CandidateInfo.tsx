@@ -30,9 +30,10 @@ function getStatusInfo(status: number): { text: string; variant: "success" | "ne
       return { text: "Принят", variant: "success" };
     case 4:
       return { text: "Отклонен", variant: "danger" };
+    default:
+      return { text: "Неизвестно", variant: "neutral" };
   }
 }
-
 export function CandidateInfo({
   name,
   role,
