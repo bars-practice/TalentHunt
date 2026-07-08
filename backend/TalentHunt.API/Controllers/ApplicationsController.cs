@@ -1,34 +1,49 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Authorization;
 using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
+using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ApplicationsController(
     IApplicationService applicationService,
     IAuditLogService auditLogService,
-    IPdfService pdfService)
+    IPdfService pdfService,
+    IDataScopeService dataScopeService)
     : BaseController(auditLogService)
 {
     [HttpGet]
-    [Authorize(Roles = "HR,Admin,Approver")]
+    [RequirePermission(PermissionType.CanViewApplications)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var applications = await applicationService.GetAllAsync(User.IsAdmin(), cancellationToken);
+        var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+        var applications = await applicationService.GetAllAsync(
+            approverFilter,
+            User.IsPrivilegedUser(),
+            cancellationToken);
+
         return Ok(applications);
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "HR,Admin,Approver")]
+    [RequirePermission(PermissionType.CanViewApplications)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var application = await applicationService.GetByIdAsync(id, User.IsAdmin(), cancellationToken);
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            var application = await applicationService.GetByIdAsync(
+                id,
+                approverFilter,
+                User.IsPrivilegedUser(),
+                cancellationToken);
+
             return Ok(application);
         }
         catch (KeyNotFoundException)
@@ -38,7 +53,7 @@ public class ApplicationsController(
     }
 
     [HttpPost]
-    [Authorize(Roles = "HR,Admin")]
+    [RequirePermission(PermissionType.CanManageApplications)]
     public async Task<IActionResult> Create(
         [FromBody] CreateApplicationRequest request,
         CancellationToken cancellationToken)
@@ -57,7 +72,7 @@ public class ApplicationsController(
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "HR,Admin")]
+    [RequirePermission(PermissionType.CanManageApplications)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateApplicationRequest request,
@@ -65,7 +80,7 @@ public class ApplicationsController(
     {
         try
         {
-            var application = await applicationService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
+            var application = await applicationService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Обновлён отклик {id}");
             return Ok(application);
         }
@@ -80,7 +95,7 @@ public class ApplicationsController(
     }
 
     [HttpPut("{id:guid}/decision")]
-    [Authorize(Roles = "Approver,Admin")]
+    [RequirePermission(PermissionType.CanMakeDecision)]
     public async Task<IActionResult> Decide(
         Guid id,
         [FromBody] ApplicationDecisionRequest request,
@@ -92,6 +107,9 @@ public class ApplicationsController(
 
         try
         {
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), userId);
+            _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
+
             var application = await applicationService.DecideAsync(id, request, userId.Value, cancellationToken);
             await LogAsync($"По отклику {id} вынесено решение: {application.Status}");
             return Ok(application);
@@ -107,12 +125,12 @@ public class ApplicationsController(
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "HR,Admin")]
+    [RequirePermission(PermissionType.CanManageApplications)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            await applicationService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
+            await applicationService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Удалён отклик с ID {id}");
             return NoContent();
         }
@@ -123,11 +141,14 @@ public class ApplicationsController(
     }
 
     [HttpGet("{id:guid}/invitation")]
-    [Authorize(Roles = "HR,Approver")]
+    [RequirePermission(PermissionType.CanExportDocuments)]
     public async Task<IActionResult> GetInvitation(Guid id, CancellationToken cancellationToken)
     {
         try
         {
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
+
             var pdf = await pdfService.GenerateInvitationAsync(id, cancellationToken);
             return File(pdf, "application/pdf", $"invitation-{id}.pdf");
         }
@@ -142,11 +163,14 @@ public class ApplicationsController(
     }
 
     [HttpGet("{id:guid}/rejection")]
-    [Authorize(Roles = "HR,Approver")]
+    [RequirePermission(PermissionType.CanExportDocuments)]
     public async Task<IActionResult> GetRejection(Guid id, CancellationToken cancellationToken)
     {
         try
         {
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
+
             var pdf = await pdfService.GenerateRejectionAsync(id, cancellationToken);
             return File(pdf, "application/pdf", $"rejection-{id}.pdf");
         }
@@ -161,11 +185,14 @@ public class ApplicationsController(
     }
 
     [HttpGet("{id:guid}/protocol")]
-    [Authorize(Roles = "HR,Approver")]
+    [RequirePermission(PermissionType.CanExportDocuments)]
     public async Task<IActionResult> GetProtocol(Guid id, CancellationToken cancellationToken)
     {
         try
         {
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
+
             var pdf = await pdfService.GenerateInterviewProtocolAsync(id, cancellationToken);
             return File(pdf, "application/pdf", $"protocol-{id}.pdf");
         }
@@ -174,5 +201,4 @@ public class ApplicationsController(
             return NotFound(new { message = "Интервью не найдено." });
         }
     }
-
 }

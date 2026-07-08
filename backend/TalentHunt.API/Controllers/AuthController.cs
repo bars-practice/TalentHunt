@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TalentHunt.API.DTO;
+using TalentHunt.API.Extensions;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
@@ -27,6 +28,8 @@ public class AuthController(IAuthService authService) : ControllerBase
             new(ClaimTypes.Role, user.Role.ToString())
         };
 
+        claims.AddRange(user.UserPermissions.Select(up => new Claim("permission", up.Permission.Name)));
+
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
 
@@ -39,7 +42,12 @@ public class AuthController(IAuthService authService) : ControllerBase
                 ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
             });
 
-        return Ok(new { login = user.Login, role = user.Role.ToString() });
+        return Ok(new
+        {
+            login = user.Login,
+            role = user.Role.ToString(),
+            permissions = user.UserPermissions.Select(up => up.Permission.Name).ToList()
+        });
     }
 
     [HttpPost("logout")]
@@ -58,7 +66,8 @@ public class AuthController(IAuthService authService) : ControllerBase
             id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
             fullName = User.FindFirst("FullName")?.Value,
             login = User.Identity?.Name,
-            role = User.FindFirst(ClaimTypes.Role)?.Value
+            role = User.FindFirst(ClaimTypes.Role)?.Value,
+            permissions = User.GetPermissions()
         });
     }
 }

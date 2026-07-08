@@ -1,25 +1,37 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Authorization;
 using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
+using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "HR,Admin,Approver")]
-public class VacanciesController(IVacancyService vacancyService, IAuditLogService auditLogService)
+[Authorize]
+public class VacanciesController(
+    IVacancyService vacancyService,
+    IAuditLogService auditLogService,
+    IDataScopeService dataScopeService)
     : BaseController(auditLogService)
 {
     [HttpGet]
+    [RequirePermission(PermissionType.CanViewVacancies)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var vacancies = await vacancyService.GetAllAsync(true, cancellationToken);
+        var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+        var vacancies = await vacancyService.GetAllAsync(
+            approverFilter,
+            User.IsPrivilegedUser(),
+            cancellationToken);
+
         return Ok(vacancies);
     }
 
     [HttpPost]
+    [RequirePermission(PermissionType.CanManageVacancies)]
     public async Task<IActionResult> Create(
         [FromBody] CreateVacancyRequest request,
         CancellationToken cancellationToken)
@@ -37,6 +49,7 @@ public class VacanciesController(IVacancyService vacancyService, IAuditLogServic
     }
 
     [HttpPut("{id:guid}")]
+    [RequirePermission(PermissionType.CanManageVacancies)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateVacancyRequest request,
@@ -44,7 +57,7 @@ public class VacanciesController(IVacancyService vacancyService, IAuditLogServic
     {
         try
         {
-            var vacancy = await vacancyService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
+            var vacancy = await vacancyService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Обновлена вакансия \"{vacancy.Title}\"");
             return Ok(vacancy);
         }
@@ -59,11 +72,12 @@ public class VacanciesController(IVacancyService vacancyService, IAuditLogServic
     }
 
     [HttpDelete("{id:guid}")]
+    [RequirePermission(PermissionType.CanManageVacancies)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            await vacancyService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
+            await vacancyService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Удалена вакансия с ID {id}");
             return NoContent();
         }

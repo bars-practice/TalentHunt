@@ -9,14 +9,19 @@ namespace TalentHunt.Infrastructure.Repositories;
 public class VacancyRepository(AppDbContext context) : IVacancyRepository
 {
     public async Task<IEnumerable<Vacancy>> GetAllWithCompetenciesAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var vacancies = await context.Vacancies
+        var query = context.Vacancies
             .IncludeDeletedIf(includeDeleted)
             .Include(v => v.VacancyCompetencies)
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
+            .AsNoTracking();
+
+        if (approverUserId.HasValue)
+            query = query.Where(v => v.ApproverId == approverUserId.Value);
+
+        var vacancies = await query.ToListAsync(cancellationToken);
 
         await AttachCompetenciesAsync(vacancies, includeDeleted, cancellationToken);
         return vacancies;

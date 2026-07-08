@@ -17,19 +17,33 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
             .Include(a => a.Interview);
 
     public async Task<IReadOnlyList<ApplicationEntity>> GetAllAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
-        CancellationToken cancellationToken = default) =>
-        await QueryWithDetails(includeDeleted)
-            .AsNoTracking()
+        CancellationToken cancellationToken = default)
+    {
+        var query = QueryWithDetails(includeDeleted).AsNoTracking();
+
+        if (approverUserId.HasValue)
+            query = query.Where(a => a.ApproverId == approverUserId.Value);
+
+        return await query
             .OrderByDescending(a => a.Id)
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<ApplicationEntity?> GetByIdAsync(
         Guid id,
+        Guid? approverUserId = null,
         bool includeDeleted = false,
-        CancellationToken cancellationToken = default) =>
-        await QueryWithDetails(includeDeleted)
-            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        var query = QueryWithDetails(includeDeleted).Where(a => a.Id == id);
+
+        if (approverUserId.HasValue)
+            query = query.Where(a => a.ApproverId == approverUserId.Value);
+
+        return await query.FirstOrDefaultAsync(cancellationToken);
+    }
 
     public Task<bool> PairExistsAsync(
         Guid candidateId,

@@ -5,11 +5,13 @@ namespace TalentHunt.Application.Interfaces;
 public interface IApplicationRepository
 {
     Task<IReadOnlyList<ApplicationEntity>> GetAllAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 
     Task<ApplicationEntity?> GetByIdAsync(
         Guid id,
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 

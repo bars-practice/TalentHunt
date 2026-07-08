@@ -3,7 +3,8 @@ import { api } from './client.ts'
 export const Role = {
   Admin: 0,
   HR: 1,
-  Approver: 2
+  Approver: 2,
+  SuperAdmin: 3
 } as const
 
 export type Role = typeof Role[keyof typeof Role]
@@ -17,9 +18,11 @@ export const convertStringRoleToNumber = (role: string | number): Role => {
     'Admin': Role.Admin,
     'HR': Role.HR,
     'Approver': Role.Approver,
+    'SuperAdmin': Role.SuperAdmin,
     '0': Role.Admin,
     '1': Role.HR,
     '2': Role.Approver,
+    '3': Role.SuperAdmin,
   };
 
   return roleMap[role] ?? Role.Approver;

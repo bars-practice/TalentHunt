@@ -6,11 +6,13 @@ namespace TalentHunt.Application.Interfaces;
 public interface IApplicationService
 {
     Task<IEnumerable<ApplicationResponse>> GetAllAsync(
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 
     Task<ApplicationResponse> GetByIdAsync(
         Guid id,
+        Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 

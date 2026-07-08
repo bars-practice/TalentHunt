@@ -7,7 +7,7 @@ namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/audit-logs")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,SuperAdmin")]
 public class AuditLogController(IAuditLogService auditLogService) : ControllerBase
 {
     [HttpGet]

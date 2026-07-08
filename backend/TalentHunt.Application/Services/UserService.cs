@@ -5,40 +5,33 @@ using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.Application.Services;
 
-public class UserService : IUserService
+public class UserService(IUserRepository userRepository, IPasswordHasher passwordHasher) : IUserService
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
-
-    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
-    {
-        _userRepository = userRepository;
-        _passwordHasher = passwordHasher;
-    }
-
     public async Task<IEnumerable<UserResponse>> GetAllAsync()
     {
-        var users = await _userRepository.GetAllWithPermissionsAsync(includeDeleted: true);
+        var users = await userRepository.GetAllWithPermissionsAsync(includeDeleted: true);
         return users.Select(ToResponse);
     }
 
-    public async Task<UserResponse> CreateAsync(CreateUserRequest request)
+    public async Task<UserResponse> CreateAsync(CreateUserRequest request, UserOperationContext caller)
     {
+        UserManagementPolicy.ValidateCreate(caller.Role, request.Role);
+
         var fullName = NormalizeFullName(request.FullName);
         var login = GenerateLogin(fullName);
 
-        if (await _userRepository.LoginExistsAsync(login))
+        if (await userRepository.LoginExistsAsync(login))
             throw new InvalidOperationException($"Пользователь с логином '{login}' уже существует.");
 
-        var permissionNames = request.Permissions ?? RolePermissions.GetDefaultPermissions(request.Role);
-        var permissions = (await _userRepository.GetPermissionsByNamesAsync(permissionNames)).ToList();
+        var permissionNames = ResolvePermissionNames(request.Permissions, request.Role);
+        var permissions = await LoadPermissionsAsync(permissionNames);
 
         var user = new User
         {
             Id = Guid.NewGuid(),
             FullName = fullName,
             Login = login,
-            PasswordHash = _passwordHasher.Hash(request.Password),
+            PasswordHash = passwordHasher.Hash(request.Password),
             Role = request.Role,
             UserPermissions = permissions.Select(p => new UserPermission
             {
@@ -47,22 +40,48 @@ public class UserService : IUserService
             }).ToList()
         };
 
-        await _userRepository.AddAsync(user);
-        await _userRepository.SaveAsync();
+        await userRepository.AddAsync(user);
+        await userRepository.SaveAsync();
 
         return ToResponse(user);
     }
 
-    public async Task<UserResponse> UpdateAsync(Guid id, UpdateUserRequest request)
+    public async Task<UserResponse> UpdateAsync(Guid id, UpdateUserRequest request, UserOperationContext caller)
     {
-        var user = await _userRepository.GetByIdWithPermissionsAsync(id, includeDeleted: true)
+        var user = await userRepository.GetByIdWithPermissionsAsync(id, includeDeleted: true)
             ?? throw new KeyNotFoundException("Пользователь не найден.");
+
+        UserManagementPolicy.ValidateUpdate(
+            caller.Role,
+            caller.UserId,
+            user,
+            request.Role,
+            request.IsDeleted);
+
+        if (request.IsDeleted == false && user.IsDeleted)
+            UserManagementPolicy.ValidateRestore(caller.Role, user);
+
+        if (request.Role.HasValue
+            && UserManagementPolicy.IsAdministrativeRole(user.Role)
+            && !UserManagementPolicy.IsAdministrativeRole(request.Role.Value))
+        {
+            var remaining = await userRepository.CountActiveAdministratorsAsync(user.Id);
+            UserManagementPolicy.ValidateAdministratorsRemain(remaining);
+        }
+
+        if (request.IsDeleted == true
+            && !user.IsDeleted
+            && UserManagementPolicy.IsAdministrativeRole(user.Role))
+        {
+            var remaining = await userRepository.CountActiveAdministratorsAsync(user.Id);
+            UserManagementPolicy.ValidateAdministratorsRemain(remaining);
+        }
 
         if (!string.IsNullOrWhiteSpace(request.FullName) && request.FullName != user.FullName)
         {
             var fullName = NormalizeFullName(request.FullName);
             var newLogin = GenerateLogin(fullName);
-            if (await _userRepository.LoginExistsAsync(newLogin, id))
+            if (await userRepository.LoginExistsAsync(newLogin, id))
                 throw new InvalidOperationException($"Пользователь с логином '{newLogin}' уже существует.");
 
             user.FullName = fullName;
@@ -70,17 +89,15 @@ public class UserService : IUserService
         }
 
         if (!string.IsNullOrEmpty(request.Password))
-            user.PasswordHash = _passwordHasher.Hash(request.Password);
+            user.PasswordHash = passwordHasher.Hash(request.Password);
 
         if (request.Role.HasValue)
             user.Role = request.Role.Value;
 
         if (request.IsDeleted.HasValue)
-        {
             user.IsDeleted = request.IsDeleted.Value;
-        }
 
-        await _userRepository.UpdateAsync(user);
+        await userRepository.UpdateAsync(user);
 
         var permissionNames = request.Permissions
             ?? (request.Role.HasValue ? RolePermissions.GetDefaultPermissions(user.Role) : null);
@@ -89,8 +106,8 @@ public class UserService : IUserService
 
         if (permissionNames != null)
         {
-            var permissions = (await _userRepository.GetPermissionsByNamesAsync(permissionNames)).ToList();
-            await _userRepository.ReplacePermissionsAsync(id, permissions.Select(p => p.Id));
+            var permissions = await LoadPermissionsAsync(permissionNames);
+            await userRepository.ReplacePermissionsAsync(id, permissions.Select(p => p.Id));
             responsePermissions = permissions.Select(p => p.Name).ToList();
         }
         else
@@ -98,21 +115,49 @@ public class UserService : IUserService
             responsePermissions = user.UserPermissions.Select(up => up.Permission.Name).ToList();
         }
 
-        await _userRepository.SaveAsync();
+        await userRepository.SaveAsync();
 
         return new UserResponse(user.Id, user.FullName, user.Login, user.Role, responsePermissions, user.IsDeleted);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, UserOperationContext caller)
     {
-        var user = await _userRepository.GetByIdWithPermissionsAsync(id, includeDeleted: true)
+        var user = await userRepository.GetByIdWithPermissionsAsync(id, includeDeleted: true)
             ?? throw new KeyNotFoundException("Пользователь не найден.");
+
+        UserManagementPolicy.ValidateDelete(caller.Role, caller.UserId, user);
 
         if (user.IsDeleted)
             return;
 
-        await _userRepository.DeleteAsync(user);
-        await _userRepository.SaveAsync();
+        if (UserManagementPolicy.IsAdministrativeRole(user.Role))
+        {
+            var remaining = await userRepository.CountActiveAdministratorsAsync(user.Id);
+            UserManagementPolicy.ValidateAdministratorsRemain(remaining);
+        }
+
+        await userRepository.DeleteAsync(user);
+        await userRepository.SaveAsync();
+    }
+
+    private static List<string> ResolvePermissionNames(List<string>? requested, Role role)
+    {
+        var permissionNames = requested ?? RolePermissions.GetDefaultPermissions(role);
+        if (permissionNames.Count == 0)
+            throw new InvalidOperationException("Пользователю необходимо назначить хотя бы одно право.");
+
+        return permissionNames;
+    }
+
+    private async Task<List<Permission>> LoadPermissionsAsync(IEnumerable<string> permissionNames)
+    {
+        var names = permissionNames.Distinct().ToList();
+        var permissions = (await userRepository.GetPermissionsByNamesAsync(names)).ToList();
+
+        if (permissions.Count != names.Count)
+            throw new InvalidOperationException("Указаны недопустимые права.");
+
+        return permissions;
     }
 
     private static string NormalizeFullName(string fullName)
@@ -130,7 +175,6 @@ public class UserService : IUserService
         if (parts.Length < 2)
             throw new InvalidOperationException("FullName must contain at least 2 parts: LastName FirstName.");
 
-        // Format: "Фамилия Имя [Отчество...]" = login: имя.фамилия
         var lastName = parts[0].ToLowerInvariant();
         var firstName = parts[1].ToLowerInvariant();
         return $"{firstName}.{lastName}";

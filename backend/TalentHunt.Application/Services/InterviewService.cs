@@ -46,8 +46,8 @@ public class InterviewService(
         var interview = await interviewRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Собеседование не найдено.");
 
-        if (callerRole == Role.Approver && !CanApproverView(interview))
-            throw new UnauthorizedAccessException("Нет доступа к этому собеседованию.");
+        if (callerRole == Role.Approver && !CanApproverAccess(interview, callerUserId))
+            throw new KeyNotFoundException("Собеседование не найдено.");
 
         return ToDetailResponse(interview);
     }
@@ -109,8 +109,8 @@ public class InterviewService(
         var interviewer = await userRepository.GetByIdWithPermissionsAsync(interviewerUserId)
             ?? throw new InvalidOperationException("Пользователь не найден.");
 
-        if (interviewer.Role is not (Role.HR or Role.Admin))
-            throw new InvalidOperationException("Интервьюером может быть только пользователь с ролью HR или Admin.");
+        if (interviewer.Role is not (Role.HR or Role.Admin or Role.SuperAdmin))
+            throw new InvalidOperationException("Интервьюером может быть только пользователь с ролью HR, Admin или SuperAdmin.");
 
         interview.InterviewerId = interviewerUserId;
         interview.Application.Status = ApplicationStatus.InProgress;
@@ -274,6 +274,11 @@ public class InterviewService(
             }
         }
     }
+
+    private static bool CanApproverAccess(Interview interview, Guid? callerUserId) =>
+        callerUserId.HasValue
+        && interview.Application.ApproverId == callerUserId
+        && CanApproverView(interview);
 
     private static bool CanApproverView(Interview interview) =>
         interview.Application.Status is ApplicationStatus.PendingDecision

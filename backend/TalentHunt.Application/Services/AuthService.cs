@@ -7,7 +7,7 @@ public class AuthService(IUserRepository userRepository, IPasswordHasher passwor
 {
     public async Task<User?> LoginAsync(string login, string password, CancellationToken cancellationToken = default)
     {
-        var user = await userRepository.GetByLoginAsync(login, cancellationToken);
+        var user = await userRepository.GetByLoginWithPermissionsAsync(login, cancellationToken);
         if (user is null)
             return null;
 

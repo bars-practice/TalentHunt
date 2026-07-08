@@ -1,27 +1,32 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Authorization;
 using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
+using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "HR,Admin")]
-public class CandidatesController(ICandidateService candidateService,
+[Authorize]
+public class CandidatesController(
+    ICandidateService candidateService,
     IAuditLogService auditLogService,
     IPdfService pdfService)
     : BaseController(auditLogService)
 {
     [HttpGet]
+    [RequirePermission(PermissionType.CanViewCandidates)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var candidates = await candidateService.GetAllAsync(User.IsAdmin(), cancellationToken);
+        var candidates = await candidateService.GetAllAsync(User.IsPrivilegedUser(), cancellationToken);
         return Ok(candidates);
     }
 
     [HttpGet("search")]
+    [RequirePermission(PermissionType.CanViewCandidates)]
     public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
     {
         var results = await candidateService.SearchAsync(query, cancellationToken);
@@ -29,11 +34,12 @@ public class CandidatesController(ICandidateService candidateService,
     }
 
     [HttpGet("{id:guid}")]
+    [RequirePermission(PermissionType.CanViewCandidates)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var candidate = await candidateService.GetByIdAsync(id, User.IsAdmin(), cancellationToken);
+            var candidate = await candidateService.GetByIdAsync(id, User.IsPrivilegedUser(), cancellationToken);
             return Ok(candidate);
         }
         catch (KeyNotFoundException)
@@ -43,6 +49,7 @@ public class CandidatesController(ICandidateService candidateService,
     }
 
     [HttpPost]
+    [RequirePermission(PermissionType.CanManageCandidates)]
     public async Task<IActionResult> Create(
         [FromBody] CreateCandidateRequest request,
         CancellationToken cancellationToken)
@@ -60,6 +67,7 @@ public class CandidatesController(ICandidateService candidateService,
     }
 
     [HttpPut("{id:guid}")]
+    [RequirePermission(PermissionType.CanManageCandidates)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateCandidateRequest request,
@@ -67,7 +75,7 @@ public class CandidatesController(ICandidateService candidateService,
     {
         try
         {
-            var candidate = await candidateService.UpdateAsync(id, request, User.IsAdmin(), cancellationToken);
+            var candidate = await candidateService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Обновлён кандидат \"{candidate.FullName}\"");
             return Ok(candidate);
         }
@@ -82,11 +90,12 @@ public class CandidatesController(ICandidateService candidateService,
     }
 
     [HttpDelete("{id:guid}")]
+    [RequirePermission(PermissionType.CanManageCandidates)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            await candidateService.DeleteAsync(id, User.IsAdmin(), cancellationToken);
+            await candidateService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
             await LogAsync($"Удалён кандидат с ID {id}");
             return NoContent();
         }
@@ -97,7 +106,7 @@ public class CandidatesController(ICandidateService candidateService,
     }
 
     [HttpGet("{id:guid}/card")]
-    [Authorize(Roles = "HR,Approver")] 
+    [RequirePermission(PermissionType.CanExportDocuments)]
     public async Task<IActionResult> GetCard(Guid id, CancellationToken cancellationToken)
     {
         try

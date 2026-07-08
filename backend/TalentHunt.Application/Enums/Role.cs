@@ -4,5 +4,6 @@ public enum Role
 {
     Admin,
     HR,
-    Approver
+    Approver,
+    SuperAdmin
 }

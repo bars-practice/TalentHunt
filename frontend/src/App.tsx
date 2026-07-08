@@ -56,7 +56,7 @@ function App() {
               <Route path="/" element={<div>Главная</div>} />
 
               <Route
-                element={<ProtectedRoute allowedRoles={[Role.HR, Role.Approver, Role.Admin]} />}
+                element={<ProtectedRoute allowedRoles={[Role.HR, Role.Approver, Role.Admin, Role.SuperAdmin]} />}
               >
                 <Route path="/candidates" element={<div>Кандидаты</div>} />
                 <Route path="/interviews" element={<div>Собеседования</div>} />
@@ -64,7 +64,7 @@ function App() {
               </Route>
 
               <Route
-                element={<ProtectedRoute allowedRoles={[Role.Admin]} />}
+                element={<ProtectedRoute allowedRoles={[Role.Admin, Role.SuperAdmin]} />}
               >
                 <Route path="/users" element={<Users />} />
                 <Route path="/audit-log" element={<AuditLog />} />
