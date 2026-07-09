@@ -12,8 +12,8 @@
 
   /* Checked */
   &[data-state="checked"] {
-    border-color: var(--color-primary);
-    background-color: var(--color-primary);
+    border-color: var(--foreground);
+    background-color: var(--foreground);
     color: var(--color-primary-foreground);
   }
 

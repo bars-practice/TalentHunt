@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom"
+import { DocumentTitle } from "@/components/document-title"
 import Login from "@/pages/login"
 import { Users } from "@/pages/users"
 import { usePermissions } from "@/hooks/usePermissions"
@@ -73,6 +74,7 @@ function App() {
   return (
     <ModalProvider>
       <BrowserRouter>
+        <DocumentTitle />
         <Routes>
           <Route path="/login" element={<Login />} />
 

@@ -14,6 +14,7 @@ import {
   ApplicationStatus,
 } from "@/api/interviews";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Permission } from "@/utils/permissions";
 import { useModal } from "@/providers/ModalProvider";
 import { CircleCheck, CircleX } from "lucide-react";
@@ -103,6 +104,12 @@ export function CompetencyAssessment() {
     hasPermission(Permission.CanMakeDecision) &&
     !hasPermission(Permission.CanManageInterviews);
   const canExportDocuments = hasPermission(Permission.CanExportDocuments);
+
+  useDocumentTitle(
+    interview
+      ? `${interview.candidateFullName} — Оценка компетенций`
+      : "Оценка компетенций"
+  );
 
   const loadInterview = useCallback(async () => {
     if (!id) return;

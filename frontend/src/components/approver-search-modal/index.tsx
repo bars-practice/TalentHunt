@@ -4,7 +4,7 @@ import { useModal } from "@/providers/ModalProvider";
 import Input from "@/components/ui/input";
 import Button from "@/components/ui/button";
 import { usersService, type UserSearchResult } from "@/api/users";
-import { UserRoundPlus } from "lucide-react";
+import { Search, UserRoundPlus } from "lucide-react";
 import styles from "./styles.module.css";
 
 interface ApproverSearchModalProps {
@@ -55,12 +55,14 @@ export function ApproverSearchModal({ onSelectApprover }: ApproverSearchModalPro
   return (
     <>
       <div className={styles.searchHeaderRow}>
-        <div style={{ flex: 1 }}>
+        <div className={styles.searchInputWrapper}>
+          <Search size={18} className={styles.searchIcon} />
           <Input
             type="text"
             placeholder="Введите логин или ФИО..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className={styles.searchInput}
           />
         </div>
       </div>
