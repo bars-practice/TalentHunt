@@ -2,34 +2,30 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 import Login from "@/pages/login"
 import { Users } from "@/pages/users"
 import { usePermissions } from "@/hooks/usePermissions"
-import { Role } from "@/api/auth"
 import { SideMenu } from "@/components/side-menu"
 import { ModalProvider } from "@/providers/ModalProvider"
 import Modal from "@/components/ui/modal"
 import styles from "./App.module.css"
 import { Vacancies } from "./pages/vacancies"
+import { Candidates } from "@/pages/candidates"
 import { AuditLog } from "@/pages/audit-log"
 import { CompetencyAssessment } from "@/pages/assessment"
-import { Permission, hasPermission, isAdministrativeRole } from "@/utils/permissions"
+import { Permission } from "@/utils/permissions"
 import "simplebar-react/dist/simplebar.min.css";
 
 interface ProtectedRouteProps {
-  allowedRoles?: Role[]
   requiredPermission?: Permission
 }
 
-export function ProtectedRoute({ allowedRoles, requiredPermission }: ProtectedRouteProps) {
-  const { user, loading } = usePermissions()
+export function ProtectedRoute({ requiredPermission }: ProtectedRouteProps) {
+  const { user, loading, hasPermission } = usePermissions()
   if (loading) {
     return null
   }
   if (!user) {
     return <Navigate to="/login" replace />
   }
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />
-  }
-  if (requiredPermission && !hasPermission(user, requiredPermission)) {
+  if (requiredPermission && !hasPermission(requiredPermission)) {
     return <Navigate to="/" replace />
   }
 
@@ -50,23 +46,23 @@ function Layout() {
 }
 
 function HomeRedirect() {
-  const { user, loading } = usePermissions()
+  const { user, loading, hasPermission } = usePermissions()
 
   if (loading || !user) {
     return null
   }
 
-  if (isAdministrativeRole(user.role)) {
+  if (hasPermission(Permission.CanViewVacancies)) {
     return <Navigate to="/vacancies" replace />
   }
-  if (hasPermission(user, Permission.CanViewVacancies)) {
-    return <Navigate to="/vacancies" replace />
-  }
-  if (hasPermission(user, Permission.CanViewCandidates)) {
+  if (hasPermission(Permission.CanViewCandidates)) {
     return <Navigate to="/candidates" replace />
   }
-  if (hasPermission(user, Permission.CanViewInterviews)) {
+  if (hasPermission(Permission.CanViewInterviews)) {
     return <Navigate to="/interviews" replace />
+  }
+  if (hasPermission(Permission.CanManageUsers)) {
+    return <Navigate to="/users" replace />
   }
 
   return <div>Добро пожаловать</div>
@@ -85,7 +81,7 @@ function App() {
               <Route path="/" element={<HomeRedirect />} />
 
               <Route element={<ProtectedRoute requiredPermission={Permission.CanViewCandidates} />}>
-                <Route path="/candidates" element={<div>Кандидаты</div>} />
+                <Route path="/candidates" element={<Candidates />} />
               </Route>
 
               <Route element={<ProtectedRoute requiredPermission={Permission.CanViewInterviews} />}>
@@ -100,10 +96,11 @@ function App() {
                 <Route path="/assessment/:id" element={<CompetencyAssessment />} />
               </Route>
 
-              <Route
-                element={<ProtectedRoute allowedRoles={[Role.Admin, Role.SuperAdmin]} />}
-              >
+              <Route element={<ProtectedRoute requiredPermission={Permission.CanManageUsers} />}>
                 <Route path="/users" element={<Users />} />
+              </Route>
+
+              <Route element={<ProtectedRoute requiredPermission={Permission.CanViewAuditLog} />}>
                 <Route path="/audit-log" element={<AuditLog />} />
               </Route>
 

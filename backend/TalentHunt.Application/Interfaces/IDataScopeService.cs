@@ -4,7 +4,9 @@ namespace TalentHunt.Application.Interfaces;
 
 public interface IDataScopeService
 {
-    Guid? GetApproverFilter(Role? role, Guid? userId);
+    Guid? GetApproverFilter(IReadOnlyList<string> permissions, Guid? userId);
 
-    bool BypassesDataScope(Role? role);
+    bool IsScopedApprover(IReadOnlyList<string> permissions);
+
+    bool CanIncludeDeletedRecords(IReadOnlyList<string> permissions);
 }

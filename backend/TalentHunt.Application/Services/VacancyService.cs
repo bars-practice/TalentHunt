@@ -6,15 +6,26 @@ namespace TalentHunt.Application.Services;
 
 public class VacancyService(
     IVacancyRepository vacancyRepository,
-    ICompetencyRepository competencyRepository) : IVacancyService
+    ICompetencyRepository competencyRepository,
+    IApplicationRepository applicationRepository) : IVacancyService
 {
     public async Task<IEnumerable<VacancyResponse>> GetAllAsync(
         Guid? approverUserId = null,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var vacancies = await vacancyRepository.GetAllWithCompetenciesAsync(approverUserId, includeDeleted, cancellationToken);
-        return vacancies.Select(ToResponse);
+        var vacancies = (await vacancyRepository.GetAllWithCompetenciesAsync(
+            approverUserId,
+            includeDeleted,
+            cancellationToken)).ToList();
+
+        var applicationCounts = await applicationRepository.GetActiveCountsByVacancyIdsAsync(
+            vacancies.Select(v => v.Id).ToList(),
+            cancellationToken);
+
+        return vacancies.Select(v => ToResponse(
+            v,
+            applicationCounts.GetValueOrDefault(v.Id)));
     }
 
     public async Task<VacancyResponse> CreateAsync(
@@ -48,17 +59,21 @@ public class VacancyService(
         await vacancyRepository.SaveAsync(cancellationToken);
 
         var created = await vacancyRepository.GetByIdWithCompetenciesAsync(vacancy.Id, cancellationToken: cancellationToken);
-        return ToResponse(created!);
+        return ToResponse(created!, 0);
     }
 
     public async Task<VacancyResponse> UpdateAsync(
         Guid id,
         UpdateVacancyRequest request,
         bool includeDeleted = false,
+        bool canRestoreVacancies = false,
         CancellationToken cancellationToken = default)
     {
         var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Вакансия не найдена.");
+
+        if (vacancy.IsDeleted && request.IsDeleted == false && !canRestoreVacancies)
+            throw new UnauthorizedAccessException("Недостаточно прав для восстановления вакансии.");
 
         if (vacancy.IsDeleted && (!request.IsDeleted.HasValue || request.IsDeleted.Value))
             throw new InvalidOperationException("Нельзя изменить удалённую вакансию.");
@@ -100,7 +115,11 @@ public class VacancyService(
             includeDeleted || vacancy.IsDeleted, 
             cancellationToken);
 
-        return ToResponse(updated!);
+        var applicationCounts = await applicationRepository.GetActiveCountsByVacancyIdsAsync(
+            [id],
+            cancellationToken);
+
+        return ToResponse(updated!, applicationCounts.GetValueOrDefault(id));
     }
 
     public async Task DeleteAsync(
@@ -140,7 +159,7 @@ public class VacancyService(
         return value.Trim();
     }
 
-    private static VacancyResponse ToResponse(Vacancy vacancy) => new(
+    private static VacancyResponse ToResponse(Vacancy vacancy, int applicationsCount = 0) => new(
         vacancy.Id,
         vacancy.Title,
         vacancy.Level,
@@ -157,6 +176,7 @@ public class VacancyService(
                 vc.Competency.IsDeleted))
             .OrderBy(c => c.Name)
             .ToList(),
-        vacancy.IsDeleted
+        vacancy.IsDeleted,
+        applicationsCount
     );
 }

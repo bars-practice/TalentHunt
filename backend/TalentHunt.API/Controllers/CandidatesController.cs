@@ -24,7 +24,7 @@ public class CandidatesController(
         CancellationToken cancellationToken)
     {
         var candidates = await candidateService.GetAllAsync(
-            User.IsPrivilegedUser(),
+            User.CanIncludeDeletedRecords(),
             excludeVacancyId,
             cancellationToken);
 
@@ -48,7 +48,7 @@ public class CandidatesController(
     {
         try
         {
-            var candidate = await candidateService.GetByIdAsync(id, User.IsPrivilegedUser(), cancellationToken);
+            var candidate = await candidateService.GetByIdAsync(id, User.CanIncludeDeletedRecords(), cancellationToken);
             return Ok(candidate);
         }
         catch (KeyNotFoundException)
@@ -84,7 +84,7 @@ public class CandidatesController(
     {
         try
         {
-            var candidate = await candidateService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
+            var candidate = await candidateService.UpdateAsync(id, request, User.CanIncludeDeletedRecords(), cancellationToken);
             await LogAsync($"Обновлён кандидат \"{candidate.FullName}\"");
             return Ok(candidate);
         }
@@ -104,8 +104,8 @@ public class CandidatesController(
     {
         try
         {
-            await candidateService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
-            await LogAsync($"Удалён кандидат с ID {id}");
+            await candidateService.DeleteAsync(id, User.CanIncludeDeletedRecords(), cancellationToken);
+            await LogAsync($"Заблокирован кандидат с ID {id}");
             return NoContent();
         }
         catch (KeyNotFoundException)

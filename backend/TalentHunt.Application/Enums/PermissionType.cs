@@ -11,8 +11,11 @@ public static class PermissionType
     public const string CanMakeDecision = "CanMakeDecision";
     public const string CanViewVacancies = "CanViewVacancies";
     public const string CanManageVacancies = "CanManageVacancies";
+    public const string CanRestoreVacancies = "CanRestoreVacancies";
     public const string CanManageCompetencies = "CanManageCompetencies";
     public const string CanExportDocuments = "CanExportDocuments";
+    public const string CanManageUsers = "CanManageUsers";
+    public const string CanViewAuditLog = "CanViewAuditLog";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -25,8 +28,11 @@ public static class PermissionType
         CanMakeDecision,
         CanViewVacancies,
         CanManageVacancies,
+        CanRestoreVacancies,
         CanManageCompetencies,
-        CanExportDocuments
+        CanExportDocuments,
+        CanManageUsers,
+        CanViewAuditLog
     ];
 
     public static readonly IReadOnlyDictionary<string, string> DisplayNames =
@@ -41,8 +47,11 @@ public static class PermissionType
             [CanMakeDecision] = "Вынесение решения",
             [CanViewVacancies] = "Просмотр вакансий",
             [CanManageVacancies] = "Управление вакансиями",
+            [CanRestoreVacancies] = "Восстановление вакансий",
             [CanManageCompetencies] = "Управление компетенциями",
-            [CanExportDocuments] = "Экспорт документов"
+            [CanExportDocuments] = "Экспорт документов",
+            [CanManageUsers] = "Управление пользователями",
+            [CanViewAuditLog] = "Просмотр журнала аудита"
         };
 
     public static readonly IReadOnlyList<string> ViewPermissions =

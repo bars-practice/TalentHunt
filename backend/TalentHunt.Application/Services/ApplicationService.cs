@@ -41,7 +41,8 @@ public class ApplicationService(
                 request.CandidateId, request.VacancyId, cancellationToken: cancellationToken))
             throw new InvalidOperationException("Отклик этого кандидата на данную вакансию уже существует.");
 
-        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(request.VacancyId, cancellationToken: cancellationToken);
+        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(request.VacancyId, cancellationToken: cancellationToken)
+            ?? throw new InvalidOperationException("Вакансия не найдена.");
 
         var application = new ApplicationEntity
         {
@@ -139,8 +140,7 @@ public class ApplicationService(
         if (candidate is null)
             throw new InvalidOperationException("Кандидат не найден.");
 
-        var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(vacancyId, cancellationToken: cancellationToken);
-        if (vacancy is null)
+        if (await vacancyRepository.GetByIdWithCompetenciesAsync(vacancyId, cancellationToken: cancellationToken) is null)
             throw new InvalidOperationException("Вакансия не найдена.");
     }
 

@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TalentHunt.Application.DTO;
+using TalentHunt.API.Authorization;
+using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 
 namespace TalentHunt.API.Controllers;
 
 [ApiController]
 [Route("api/audit-logs")]
-[Authorize(Roles = "Admin,SuperAdmin")]
+[Authorize]
+[RequirePermission(PermissionType.CanViewAuditLog)]
 public class AuditLogController(IAuditLogService auditLogService) : ControllerBase
 {
     [HttpGet]
@@ -19,5 +21,4 @@ public class AuditLogController(IAuditLogService auditLogService) : ControllerBa
         var log = await auditLogService.GetByIdAsync(id);
         return log is null ? NotFound() : Ok(log);
     }
-
 }

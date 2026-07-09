@@ -9,7 +9,8 @@ public class InterviewService(
     IInterviewRepository interviewRepository,
     IApplicationRepository applicationRepository,
     IVacancyRepository vacancyRepository,
-    IUserRepository userRepository) : IInterviewService
+    IUserRepository userRepository,
+    IDataScopeService dataScopeService) : IInterviewService
 {
     private const int MinScore = 1;
     private const int MaxScore = 5;
@@ -19,11 +20,12 @@ public class InterviewService(
         Guid? vacancyId = null,
         ApplicationStatus? applicationStatus = null,
         bool includeDeleted = false,
-        Role? callerRole = null,
+        IReadOnlyList<string>? callerPermissions = null,
         Guid? callerUserId = null,
         CancellationToken cancellationToken = default)
     {
-        Guid? approverUserId = callerRole == Role.Approver ? callerUserId : null;
+        var permissions = callerPermissions ?? [];
+        Guid? approverUserId = dataScopeService.GetApproverFilter(permissions, callerUserId);
 
         var interviews = await interviewRepository.GetAllAsync(
             candidateId,
@@ -39,14 +41,15 @@ public class InterviewService(
     public async Task<InterviewDetailResponse> GetByIdAsync(
         Guid id,
         bool includeDeleted = false,
-        Role? callerRole = null,
+        IReadOnlyList<string>? callerPermissions = null,
         Guid? callerUserId = null,
         CancellationToken cancellationToken = default)
     {
+        var permissions = callerPermissions ?? [];
         var interview = await interviewRepository.GetByIdAsync(id, includeDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Собеседование не найдено.");
 
-        if (callerRole == Role.Approver && !CanApproverAccess(interview, callerUserId))
+        if (dataScopeService.IsScopedApprover(permissions) && !CanApproverAccess(interview, callerUserId))
             throw new KeyNotFoundException("Собеседование не найдено.");
 
         return ToDetailResponse(interview);
@@ -113,8 +116,8 @@ public class InterviewService(
         var interviewer = await userRepository.GetByIdWithPermissionsAsync(interviewerUserId)
             ?? throw new InvalidOperationException("Пользователь не найден.");
 
-        if (interviewer.Role is not (Role.HR or Role.Admin or Role.SuperAdmin))
-            throw new InvalidOperationException("Интервьюером может быть только пользователь с ролью HR, Admin или SuperAdmin.");
+        if (!interviewer.UserPermissions.Any(up => up.Permission.Name == PermissionType.CanManageInterviews))
+            throw new InvalidOperationException("Интервьюером может быть только пользователь с правом управления собеседованиями.");
 
         interview.InterviewerId = interviewerUserId;
 

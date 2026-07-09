@@ -15,6 +15,7 @@ public interface IVacancyService
         Guid id,
         UpdateVacancyRequest request,
         bool includeDeleted = false,
+        bool canRestoreVacancies = false,
         CancellationToken cancellationToken = default);
 
     Task DeleteAsync(

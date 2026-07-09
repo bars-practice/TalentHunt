@@ -11,5 +11,6 @@ public record VacancyResponse(
     Guid? ApproverId,
     string? ApproverFullName,
     List<CompetencyResponse> Competencies,
-    bool IsDeleted
+    bool IsDeleted,
+    int ApplicationsCount
 );

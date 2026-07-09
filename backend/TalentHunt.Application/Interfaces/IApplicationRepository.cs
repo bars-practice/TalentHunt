@@ -29,6 +29,10 @@ public interface IApplicationRepository
 
     Task SaveAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyDictionary<Guid, int>> GetActiveCountsByVacancyIdsAsync(
+        IReadOnlyCollection<Guid> vacancyIds,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ApplicationEntity>> SearchForGlobalByCandidateAsync(
         string query,
         Guid? approverId,

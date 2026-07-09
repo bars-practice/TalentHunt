@@ -28,15 +28,11 @@ public class SearchController(IGlobalSearchService globalSearchService) : Contro
         [FromQuery] string? vacancyStatus = null,
         CancellationToken cancellationToken = default)
     {
-        var role = User.GetRole();
-        if (role is null)
-            return Unauthorized(new { message = "Пользователь не авторизован." });
-
         var result = await globalSearchService.SearchAsync(
             query,
             page,
             pageSize,
-            role.Value,
+            User.GetPermissions(),
             User.GetUserId(),
             levels,
             candidateStatuses,

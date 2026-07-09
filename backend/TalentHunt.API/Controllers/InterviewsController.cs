@@ -30,8 +30,8 @@ public class InterviewsController(
                 candidateId,
                 vacancyId,
                 applicationStatus,
-                User.IsPrivilegedUser(),
-                User.GetRole(),
+                User.CanIncludeDeletedRecords(),
+                User.GetPermissions(),
                 User.GetUserId(),
                 cancellationToken);
 
@@ -51,8 +51,8 @@ public class InterviewsController(
         {
             var interview = await interviewService.GetByIdAsync(
                 id,
-                User.IsPrivilegedUser(),
-                User.GetRole(),
+                User.CanIncludeDeletedRecords(),
+                User.GetPermissions(),
                 User.GetUserId(),
                 cancellationToken);
 
@@ -139,7 +139,7 @@ public class InterviewsController(
     }
 
     [HttpPut("{id:guid}/status")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [RequirePermission(PermissionType.CanManageUsers)]
     public async Task<IActionResult> ForceSetStatus(
         Guid id,
         [FromBody] AdminSetInterviewStatusRequest request,
@@ -163,7 +163,7 @@ public class InterviewsController(
     {
         try
         {
-            await interviewService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
+            await interviewService.DeleteAsync(id, User.CanIncludeDeletedRecords(), cancellationToken);
             await LogAsync($"Удалено собеседование {id}");
             return NoContent();
         }

@@ -9,7 +9,7 @@ public interface IGlobalSearchService
         string? query,
         int page,
         int pageSize,
-        Role callerRole,
+        IReadOnlyList<string> callerPermissions,
         Guid? callerUserId,
         IReadOnlyList<int>? levels = null,
         IReadOnlyList<int>? candidateStatuses = null,

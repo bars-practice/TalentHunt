@@ -212,7 +212,7 @@ export function CompetencyAssessment() {
       <div>
         <p className={styles.modalDescription}>{message}</p>
         <div className={styles.modalActions}>
-          <Button variant="outline" onClick={closeModal}>
+          <Button variant="primary" onClick={closeModal}>
             Понятно
           </Button>
         </div>
@@ -242,7 +242,34 @@ export function CompetencyAssessment() {
       );
       return;
     }
-    void handleSave(false);
+    showFinishConfirm();
+  };
+
+  const showFinishConfirm = () => {
+    openModal(
+      <div>
+        <p className={styles.modalDescription}>
+          Результаты оценки будут отправлены на согласование.
+          После завершения вернуться к редактированию не получится.
+        </p>
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={closeModal} disabled={saving}>
+            Отмена
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              closeModal();
+              void handleSave(false);
+            }}
+            disabled={saving}
+          >
+            Завершить
+          </Button>
+        </div>
+      </div>,
+      { title: "Завершить собеседование?", width: "440px" }
+    );
   };
 
   const handleDecision = async (status: typeof ApplicationStatus.Approved | typeof ApplicationStatus.Rejected) => {

@@ -10,14 +10,14 @@ public interface IInterviewService
         Guid? vacancyId = null,
         ApplicationStatus? applicationStatus = null,
         bool includeDeleted = false,
-        Role? callerRole = null,
+        IReadOnlyList<string>? callerPermissions = null,
         Guid? callerUserId = null,
         CancellationToken cancellationToken = default);
 
     Task<InterviewDetailResponse> GetByIdAsync(
         Guid id,
         bool includeDeleted = false,
-        Role? callerRole = null,
+        IReadOnlyList<string>? callerPermissions = null,
         Guid? callerUserId = null,
         CancellationToken cancellationToken = default);
 
