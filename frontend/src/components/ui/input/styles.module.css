@@ -63,6 +63,51 @@
   }
 }
 
+.passwordWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.passwordInput {
+  padding-right: calc(var(--spacing) * 10);
+}
+
+.passwordToggle {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--spacing) * 2);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--spacing) * 8);
+  height: calc(var(--spacing) * 8);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition: color var(--default-transition-duration) var(--default-transition-timing-function);
+}
+
+.passwordToggle:hover {
+  color: var(--color-foreground);
+}
+
+.passwordToggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-ring) 50%, transparent);
+}
+
+.passwordWrapper:has(.input[aria-invalid="true"]) .passwordToggle {
+  color: var(--color-destructive);
+}
+
+.passwordWrapper:has(.input[aria-invalid="true"]) .passwordToggle:hover {
+  color: var(--color-destructive);
+}
+
 :global(.dark) {
   .input {
     background-color: color-mix(in oklab, var(--color-input) 30%, transparent);
