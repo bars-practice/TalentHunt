@@ -35,6 +35,12 @@ export const applicationsService = {
   decide: (id: string, status: number) =>
     api.put<Application>(`/Applications/${id}/decision`, { status }),
 
+  downloadInvitation: (id: string) =>
+    api.download(`/Applications/${id}/invitation`, `invitation-${id}.pdf`),
+
+  downloadRejection: (id: string) =>
+    api.download(`/Applications/${id}/rejection`, `rejection-${id}.pdf`),
+
   downloadProtocol: (id: string) =>
     api.download(`/Applications/${id}/protocol`, `protocol-${id}.pdf`),
 }

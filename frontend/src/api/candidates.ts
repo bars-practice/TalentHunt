@@ -79,4 +79,7 @@ export const candidatesService = {
 
   restore: (id: string) =>
     api.put<Candidate>(`/Candidates/${id}/restore`, {}),
+
+  downloadCard: (id: string) =>
+    api.download(`/Candidates/${id}/card`, `candidate-card-${id}.pdf`),
 }

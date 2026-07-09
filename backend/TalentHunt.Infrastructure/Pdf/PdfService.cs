@@ -240,8 +240,19 @@ public class PdfService(
 public async Task<byte[]> GenerateInterviewProtocolAsync(
     Guid applicationId, CancellationToken cancellationToken = default)
     {
-    var iv = await interviewRepository.GetByApplicationIdAsync(applicationId, cancellationToken: cancellationToken)
-        ?? throw new KeyNotFoundException("Для данного отклика ещё не создано собеседование.");
+    var iv = await interviewRepository.GetByApplicationIdAsync(applicationId, cancellationToken: cancellationToken);
+
+    if (iv is null)
+    {
+        var application = await applicationRepository.GetByIdAsync(applicationId, cancellationToken: cancellationToken);
+        if (application?.Interview is not null && !application.Interview.IsDeleted)
+        {
+            iv = await interviewRepository.GetByIdAsync(application.Interview.Id, cancellationToken: cancellationToken);
+        }
+    }
+
+    if (iv is null)
+        throw new KeyNotFoundException("Для данного отклика ещё не создано собеседование.");
 
     var competencyIds = iv.SkillMatrix.Select(e => e.CompetencyId).Distinct().ToList();
     var competencies = await competencyRepository.GetByIdsAsync(competencyIds, cancellationToken: cancellationToken);

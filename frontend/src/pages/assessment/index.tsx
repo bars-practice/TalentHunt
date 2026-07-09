@@ -2,8 +2,10 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { CandidateInfo } from "./CandidateInfo";
 import { CompetencyMatrix } from "./CompetencyMatrix";
+import { PrintDocumentsMenu } from "./PrintDocumentsMenu";
 import Button from "@/components/ui/button";
 import { applicationsService, type Application } from "@/api/applications";
+import { candidatesService } from "@/api/candidates";
 import { vacanciesService } from "@/api/vacancies";
 import {
   interviewsService,
@@ -14,7 +16,9 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { Permission } from "@/utils/permissions";
 import { useModal } from "@/providers/ModalProvider";
-import { CircleCheck, CircleX, FileDown } from "lucide-react";
+import { CircleCheck, CircleX } from "lucide-react";
+import { PrintForm } from "@/utils/printForms";
+import type { PrintFormOption } from "@/utils/printForms";
 import styles from "./styles.module.css";
 
 function areAllScoresFilled(matrix: SkillMatrixItem[]): boolean {
@@ -91,7 +95,7 @@ export function CompetencyAssessment() {
   const [starting, setStarting] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [deciding, setDeciding] = useState(false);
-  const [downloadingProtocol, setDownloadingProtocol] = useState(false);
+  const [downloadingForm, setDownloadingForm] = useState<PrintForm | null>(null);
 
   const canManageInterviews = hasPermission(Permission.CanManageInterviews);
   const canMakeDecision =
@@ -312,15 +316,29 @@ export function CompetencyAssessment() {
     );
   };
 
-  const handleDownloadProtocol = async () => {
-    if (!id) return;
+  const handleDownloadForm = async (form: PrintFormOption) => {
+    if (!id || !interview) return;
+
     try {
-      setDownloadingProtocol(true);
-      await applicationsService.downloadProtocol(id);
+      setDownloadingForm(form.type);
+      switch (form.type) {
+        case PrintForm.CandidateCard:
+          await candidatesService.downloadCard(interview.candidateId);
+          break;
+        case PrintForm.InterviewProtocol:
+          await applicationsService.downloadProtocol(id);
+          break;
+        case PrintForm.Invitation:
+          await applicationsService.downloadInvitation(id);
+          break;
+        case PrintForm.Rejection:
+          await applicationsService.downloadRejection(id);
+          break;
+      }
     } catch (err) {
-      console.error("Failed to download protocol:", err);
+      console.error("Failed to download document:", err);
     } finally {
-      setDownloadingProtocol(false);
+      setDownloadingForm(null);
     }
   };
 
@@ -359,10 +377,7 @@ export function CompetencyAssessment() {
   const showDecisionPanel =
     canMakeDecision && appStatus === ApplicationStatus.PendingDecision;
 
-  const showProtocolPanel =
-    canExportDocuments &&
-    (appStatus === ApplicationStatus.Approved ||
-      appStatus === ApplicationStatus.Rejected);
+  const showPrintMenu = canExportDocuments;
 
   const interviewDate = interview.scheduledAt
     ? new Date(interview.scheduledAt).toLocaleString("ru-RU")
@@ -414,17 +429,12 @@ export function CompetencyAssessment() {
               </Button>
             </>
           )}
-          {showProtocolPanel && (
-            <Button
-              size="lg"
-              variant="primary"
-              className={styles.startButton}
-              onClick={handleDownloadProtocol}
-              disabled={downloadingProtocol}
-            >
-              <FileDown size={20} />
-              {downloadingProtocol ? "Формирование..." : "Сформировать протокол"}
-            </Button>
+          {showPrintMenu && (
+            <PrintDocumentsMenu
+              applicationStatus={appStatus}
+              downloadingForm={downloadingForm}
+              onDownload={handleDownloadForm}
+            />
           )}
         </div>
       </div>

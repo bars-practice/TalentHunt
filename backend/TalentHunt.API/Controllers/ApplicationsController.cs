@@ -191,14 +191,18 @@ public class ApplicationsController(
         try
         {
             var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), User.GetUserId());
-            _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
+            _ = await applicationService.GetByIdAsync(
+                id,
+                approverFilter,
+                User.CanIncludeDeletedRecords(),
+                cancellationToken: cancellationToken);
 
             var pdf = await pdfService.GenerateInterviewProtocolAsync(id, cancellationToken);
             return File(pdf, "application/pdf", $"protocol-{id}.pdf");
         }
-        catch (KeyNotFoundException)
+        catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = "Интервью не найдено." });
+            return NotFound(new { message = ex.Message });
         }
     }
 }
