@@ -29,11 +29,11 @@ export function AuditLog() {
       <h1 className={styles.title}>Журнал аудита</h1>
 
       {loading ? (
-        <div className={`${styles.tableWrapper} styles.messageCell`}>
+        <div className={`${styles.tableWrapper} ${styles.messageCell}`}>
           Загрузка логов...
         </div>
       ) : error ? (
-        <div className={`${styles.tableWrapper} styles.errorCell`}>
+        <div className={`${styles.tableWrapper} ${styles.errorCell}`}>
           Ошибка: {error}
         </div>
       ) : (
