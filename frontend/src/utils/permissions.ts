@@ -3,6 +3,7 @@ import { Role, type User } from "@/api/auth";
 export const Permission = {
   CanViewCandidates: "CanViewCandidates",
   CanManageCandidates: "CanManageCandidates",
+  CanRestoreCandidates: "CanRestoreCandidates",
   CanViewApplications: "CanViewApplications",
   CanManageApplications: "CanManageApplications",
   CanViewInterviews: "CanViewInterviews",
@@ -22,6 +23,7 @@ export type Permission = (typeof Permission)[keyof typeof Permission];
 export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.CanViewCandidates]: "Просмотр кандидатов",
   [Permission.CanManageCandidates]: "Управление кандидатами",
+  [Permission.CanRestoreCandidates]: "Восстановление кандидатов",
   [Permission.CanViewApplications]: "Просмотр откликов",
   [Permission.CanManageApplications]: "Управление откликами",
   [Permission.CanViewInterviews]: "Просмотр собеседований",
@@ -39,7 +41,11 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
 export const PERMISSION_GROUPS: { label: string; permissions: Permission[] }[] = [
   {
     label: "Кандидаты",
-    permissions: [Permission.CanViewCandidates, Permission.CanManageCandidates],
+    permissions: [
+      Permission.CanViewCandidates,
+      Permission.CanManageCandidates,
+      Permission.CanRestoreCandidates,
+    ],
   },
   {
     label: "Отклики",
@@ -124,6 +130,31 @@ export const getAssignableRoles = (callerRole: Role): Role[] => {
   return [];
 };
 
+export type PermissionAssignmentState = "assignable" | "unavailable" | "not-granted";
+
+export const getPermissionAssignmentState = (
+  caller: User | null | undefined,
+  permission: Permission,
+  availablePermissionNames: ReadonlySet<string>
+): PermissionAssignmentState => {
+  if (!availablePermissionNames.has(permission)) return "unavailable";
+  if (!hasPermission(caller, permission)) return "not-granted";
+  return "assignable";
+};
+
+export const getAssignablePermissions = (
+  caller: User | null | undefined,
+  availablePermissionNames: ReadonlySet<string>
+): Permission[] =>
+  Object.values(Permission).filter(
+    (permission) => getPermissionAssignmentState(caller, permission, availablePermissionNames) === "assignable"
+  );
+
+export const PERMISSION_ASSIGNMENT_HINTS: Record<Exclude<PermissionAssignmentState, "assignable">, string> = {
+  unavailable: "Право недоступно в системе",
+  "not-granted": "У вас нет этого права для выдачи",
+};
+
 export const canManageUser = (
   caller: User,
   target: User
@@ -147,3 +178,7 @@ export const isScopedApprover = (user: User | null | undefined): boolean =>
   !!user
   && hasPermission(user, Permission.CanMakeDecision)
   && !hasPermission(user, Permission.CanManageInterviews);
+
+export const canBlockCandidates = (user: User | null | undefined): boolean =>
+  hasPermission(user, Permission.CanManageCandidates)
+  || hasPermission(user, Permission.CanManageUsers);

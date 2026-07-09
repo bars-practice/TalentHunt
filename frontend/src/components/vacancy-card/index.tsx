@@ -30,6 +30,7 @@ interface VacancyCardComponentProps {
   canManageVacancies?: boolean;
   canRestoreVacancies?: boolean;
   canManageApplications?: boolean;
+  canBlockCandidates?: boolean;
   onBlockCandidate?: (candidateId: string) => void;
 }
 
@@ -48,6 +49,7 @@ export function VacancyCard({
   canManageVacancies = false,
   canRestoreVacancies = false,
   canManageApplications = false,
+  canBlockCandidates = false,
   onBlockCandidate,
 }: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
@@ -134,7 +136,7 @@ export function VacancyCard({
       <AccordionContent className={styles.list}>
         <VacancyStages
           responses={responses || []}
-          canManageApplications={canManageApplications}
+          canBlockCandidates={canBlockCandidates}
           onBlockCandidate={onBlockCandidate}
         />
       </AccordionContent>

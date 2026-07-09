@@ -31,11 +31,11 @@ function formatDate(d: Date) {
 
 function ResponseItem({
   response,
-  canManageApplications,
+  canBlockCandidates,
   onBlockCandidate,
 }: {
   response: CandidateResponse;
-  canManageApplications: boolean;
+  canBlockCandidates: boolean;
   onBlockCandidate?: (candidateId: string) => void;
 }) {
   const { openModal, closeModal } = useModal();
@@ -77,7 +77,7 @@ function ResponseItem({
           </div>
         )}
       </div>
-      {canManageApplications && onBlockCandidate && (
+      {canBlockCandidates && onBlockCandidate && (
         <Menubar className={styles.itemMenu}>
           <MenubarMenu>
             <MenubarTrigger className={styles.itemMenuTrigger}>
@@ -105,11 +105,11 @@ function sortByInterviewDate(responses: CandidateResponse[]) {
 
 export function VacancyStages({
   responses,
-  canManageApplications = false,
+  canBlockCandidates = false,
   onBlockCandidate,
 }: {
   responses: CandidateResponse[];
-  canManageApplications?: boolean;
+  canBlockCandidates?: boolean;
   onBlockCandidate?: (candidateId: string) => void;
 }) {
   return (
@@ -130,7 +130,7 @@ export function VacancyStages({
                 <ResponseItem
                   key={response.id}
                   response={response}
-                  canManageApplications={canManageApplications}
+                  canBlockCandidates={canBlockCandidates}
                   onBlockCandidate={onBlockCandidate}
                 />
               ))}

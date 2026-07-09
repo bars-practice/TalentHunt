@@ -4,11 +4,13 @@ import { z } from "zod";
 import { useEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
 import { useModal } from "@/providers/ModalProvider";
-import { Role } from "@/api/auth";
+import { Role, type User } from "@/api/auth";
 import { usersService } from "@/api/users";
+import { ApiError } from "@/api/client";
 import { getRoleLabel } from "@/utils/role";
 import {
   getAssignableRoles,
+  getAssignablePermissions,
   getDefaultPermissionsForRole,
   isAdministrativeRole,
   type Permission,
@@ -35,7 +37,7 @@ type UserFormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 interface UserFormModalProps {
   mode?: "create" | "edit";
-  callerRole: Role;
+  caller: User;
   isSelf?: boolean;
   isSuperAdminSelf?: boolean;
   initialData?: {
@@ -48,7 +50,7 @@ interface UserFormModalProps {
 
 export function UserFormModal({
   mode = "create",
-  callerRole,
+  caller,
   isSelf = false,
   isSuperAdminSelf = false,
   initialData,
@@ -56,8 +58,12 @@ export function UserFormModal({
 }: UserFormModalProps) {
   const { closeModal, openModal } = useModal();
   const [permissionsError, setPermissionsError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [availablePermissionNames, setAvailablePermissionNames] = useState<ReadonlySet<string>>(new Set());
 
+  const callerRole = caller.role;
   const assignableRoles = getAssignableRoles(callerRole);
+  const canChangeRole = !isSelf && assignableRoles.length > 0;
   const initialRole = initialData?.role ?? assignableRoles[0] ?? Role.HR;
   const initialRoleRef = useRef(initialRole);
 
@@ -82,22 +88,33 @@ export function UserFormModal({
 
   const selectedRole = watch("role");
   const canConfigurePermissions = !isAdministrativeRole(selectedRole);
+  const assignablePermissions = getAssignablePermissions(caller, availablePermissionNames);
+
+  const filterAssignable = (permissions: Permission[]) =>
+    permissions.filter((permission) => assignablePermissions.includes(permission));
 
   useEffect(() => {
-    usersService.getPermissions().catch(() => {});
+    usersService
+      .getPermissions()
+      .then((permissions) => {
+        setAvailablePermissionNames(new Set(permissions.map((permission) => permission.name)));
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (mode === "create" || selectedRole !== initialRoleRef.current) {
-      setSelectedPermissions(getDefaultPermissionsForRole(selectedRole));
+      setSelectedPermissions(filterAssignable(getDefaultPermissionsForRole(selectedRole)));
       setPermissionsError(null);
     }
-  }, [selectedRole, mode]);
+  }, [selectedRole, mode, availablePermissionNames]);
 
   const handleOpenPermissions = () => {
     openModal(
       <UserPermissionsModal
         permissions={selectedPermissions}
+        caller={caller}
+        availablePermissionNames={availablePermissionNames}
         onSave={(permissions) => {
           setSelectedPermissions(permissions);
           setPermissionsError(null);
@@ -108,6 +125,8 @@ export function UserFormModal({
   };
 
   const onFormSubmit = async (values: UserFormValues) => {
+    setSubmitError(null);
+
     const permissions = canConfigurePermissions
       ? selectedPermissions
       : getDefaultPermissionsForRole(values.role);
@@ -117,13 +136,17 @@ export function UserFormModal({
       return;
     }
 
-    await onSubmit({
-      fullName: values.fullName,
-      role: values.role,
-      password: values.password && values.password.length > 0 ? values.password : undefined,
-      permissions,
-    });
-    closeModal();
+    try {
+      await onSubmit({
+        fullName: values.fullName,
+        role: values.role,
+        password: values.password && values.password.length > 0 ? values.password : undefined,
+        permissions,
+      });
+      closeModal();
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? err.message : "Не удалось сохранить пользователя");
+    }
   };
 
   return (
@@ -177,7 +200,7 @@ export function UserFormModal({
                 render={({ field }) => (
                   <Select
                     value={field.value.toString()}
-                    disabled={isSelf}
+                    disabled={!canChangeRole}
                     onValueChange={(value) => field.onChange(Number(value) as Role)}
                   >
                     <SelectTrigger id="role" className={styles.roleSelect} aria-invalid={!!errors.role}>
@@ -216,11 +239,16 @@ export function UserFormModal({
               </span>
             </div>
             {isSelf && <p className={styles.hint}>Нельзя изменить собственную роль</p>}
+            {!isSelf && assignableRoles.length === 0 && (
+              <p className={styles.hint}>Нет доступных ролей для назначения</p>
+            )}
             {permissionsError && <p className={styles.error}>{permissionsError}</p>}
             <FieldError errors={[errors.role]} />
           </FieldContent>
         </Field>
       </div>
+
+      {submitError && <p className={styles.error}>{submitError}</p>}
 
       <div className={styles.actions}>
         <Button type="submit" variant="primary" className={styles.submitButton} disabled={isSubmitting}>

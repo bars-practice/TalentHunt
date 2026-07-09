@@ -3,6 +3,7 @@ import Button from "@/components/ui/button";
 import { Edit2, MapPin, Phone, GraduationCap, Briefcase } from "lucide-react";
 import { useModal } from "@/providers/ModalProvider";
 import { DateTimePickerModal } from "@/components/date-time-picker-modal";
+import { getApplicationStatusInfo } from "@/utils/applicationStatus";
 import styles from "./styles.module.css";
 
 interface CandidateInfoProps {
@@ -19,22 +20,6 @@ interface CandidateInfoProps {
   onDateSave?: (date: string) => void | Promise<void>;
 }
 
-function getStatusInfo(status: number): { text: string; variant: "success" | "successLight" | "neutral" | "danger" | "warning" | "info" } {
-  switch (status) {
-    case 0:
-      return { text: "Новый", variant: "info" };
-    case 1:
-      return { text: "Ожидает собеседования", variant: "warning" };
-    case 2:
-      return { text: "Ожидает решения", variant: "successLight" };
-    case 3:
-      return { text: "Принят", variant: "success" };
-    case 4:
-      return { text: "Отклонен", variant: "danger" };
-    default:
-      return { text: "Неизвестно", variant: "neutral" };
-  }
-}
 export function CandidateInfo({
   name,
   role,
@@ -49,7 +34,7 @@ export function CandidateInfo({
   onDateSave,
 }: CandidateInfoProps) {
   const { openModal, closeModal } = useModal();
-  const statusInfo = getStatusInfo(status);
+  const statusInfo = getApplicationStatusInfo(status);
 
   const handleEditDate = () => {
     openModal(

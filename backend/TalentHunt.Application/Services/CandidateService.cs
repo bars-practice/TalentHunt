@@ -8,6 +8,7 @@ public class CandidateService(ICandidateRepository candidateRepository) : ICandi
 {
     private const int MinQueryLength = 1;
     private const int MaxResults = 10;
+    private const int RegistrySearchLimit = 100;
 
     public async Task<IEnumerable<CandidateResponse>> GetAllAsync(
         bool includeDeleted = false,
@@ -116,19 +117,23 @@ public class CandidateService(ICandidateRepository candidateRepository) : ICandi
     public async Task<IReadOnlyList<CandidateSearchResultResponse>> SearchAsync(
         string query,
         Guid? excludeVacancyId = null,
+        bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < MinQueryLength)
             return [];
 
+        var limit = excludeVacancyId.HasValue ? MaxResults : RegistrySearchLimit;
+
         var candidates = await candidateRepository.SearchAsync(
             query.Trim(),
-            MaxResults,
+            limit,
             excludeVacancyId,
+            includeDeleted,
             cancellationToken);
 
         return candidates
-            .Select(c => new CandidateSearchResultResponse(c.Id, c.FullName, c.City))
+            .Select(c => new CandidateSearchResultResponse(c.Id, c.FullName, c.City, c.IsDeleted))
             .ToList();
     }
 

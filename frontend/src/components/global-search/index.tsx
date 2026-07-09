@@ -14,6 +14,7 @@ interface GlobalSearchProps {
   onFiltersChange?: (filters: SearchFilters) => void;
   filters?: SearchFilters;
   placeholder?: string;
+  showFilters?: boolean;
 }
 
 export function GlobalSearch({
@@ -21,6 +22,7 @@ export function GlobalSearch({
   onFiltersChange,
   filters,
   placeholder = "Поиск по вакансиям и кандидатам...",
+  showFilters = true,
 }: GlobalSearchProps) {
   const { openModal } = useModal();
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,6 +67,7 @@ export function GlobalSearch({
           className={styles.searchInput}
         />
       </div>
+      {showFilters && (
       <Button
         variant="outline"
         size="md"
@@ -76,6 +79,7 @@ export function GlobalSearch({
         Фильтры
 
       </Button>
+      )}
     </div>
   );
 }

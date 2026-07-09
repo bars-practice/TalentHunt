@@ -126,7 +126,7 @@ export function CandidateCreateForm({ vacancyId, onSubmit, onSuccess, onCancel }
             </Button>
           )}
           <Button type="submit" variant="primary" disabled={isSubmitting}>
-            Создать и привязать
+            {vacancyId ? "Создать и привязать" : "Создать"}
           </Button>
         </div>
       </form>
