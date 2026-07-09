@@ -32,5 +32,6 @@ public interface ICandidateService
     Task<IReadOnlyList<CandidateSearchResultResponse>> SearchAsync(
         string query,
         Guid? excludeVacancyId = null,
+        bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 }

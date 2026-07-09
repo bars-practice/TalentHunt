@@ -47,10 +47,14 @@ export function CandidateSearchModal({ vacancyId, onSuccess }: CandidateSearchMo
         setIsSearching(true);
         if (trimmedQuery.length === 0) {
           const response = await candidatesService.getAll(vacancyId);
-          setSearchResults(Array.isArray(response) ? response : []);
+          setSearchResults(
+            (Array.isArray(response) ? response : []).filter(c => !c.isDeleted)
+          );
         } else {
           const response = await candidatesService.search(trimmedQuery, vacancyId);
-          setSearchResults(Array.isArray(response) ? response : []);
+          setSearchResults(
+            (Array.isArray(response) ? response : []).filter(c => !c.isDeleted)
+          );
         }
       } catch (err) {
         console.error("Ошибка при загрузке кандидатов:", err);

@@ -82,6 +82,17 @@
   color: var(--foreground);
 }
 
+.modalDescription {
+  font-weight: 400;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
 .list {
   overflow: hidden;
   padding: 0;

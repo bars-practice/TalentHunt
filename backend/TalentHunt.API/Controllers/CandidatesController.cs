@@ -23,8 +23,9 @@ public class CandidatesController(
         [FromQuery] Guid? excludeVacancyId,
         CancellationToken cancellationToken)
     {
+        var includeDeleted = !excludeVacancyId.HasValue;
         var candidates = await candidateService.GetAllAsync(
-            User.CanIncludeDeletedRecords(),
+            includeDeleted,
             excludeVacancyId,
             cancellationToken);
 
@@ -38,7 +39,8 @@ public class CandidatesController(
         [FromQuery] Guid? excludeVacancyId,
         CancellationToken cancellationToken)
     {
-        var results = await candidateService.SearchAsync(query, excludeVacancyId, cancellationToken);
+        var includeDeleted = !excludeVacancyId.HasValue;
+        var results = await candidateService.SearchAsync(query, excludeVacancyId, includeDeleted, cancellationToken);
         return Ok(results);
     }
 
@@ -48,7 +50,7 @@ public class CandidatesController(
     {
         try
         {
-            var candidate = await candidateService.GetByIdAsync(id, User.CanIncludeDeletedRecords(), cancellationToken);
+            var candidate = await candidateService.GetByIdAsync(id, includeDeleted: true, cancellationToken);
             return Ok(candidate);
         }
         catch (KeyNotFoundException)
@@ -99,7 +101,7 @@ public class CandidatesController(
     }
 
     [HttpDelete("{id:guid}")]
-    [RequirePermission(PermissionType.CanManageCandidates)]
+    [RequireAnyPermission(PermissionType.CanManageCandidates, PermissionType.CanManageUsers)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         try
@@ -111,6 +113,30 @@ public class CandidatesController(
         catch (KeyNotFoundException)
         {
             return NotFound(new { message = "Кандидат не найден." });
+        }
+    }
+
+    [HttpPut("{id:guid}/restore")]
+    [RequirePermission(PermissionType.CanRestoreCandidates)]
+    public async Task<IActionResult> Restore(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var candidate = await candidateService.UpdateAsync(
+                id,
+                new UpdateCandidateRequest(IsDeleted: false),
+                includeDeleted: true,
+                cancellationToken);
+            await LogAsync($"Восстановлен кандидат \"{candidate.FullName}\"");
+            return Ok(candidate);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Кандидат не найден." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
     }
 

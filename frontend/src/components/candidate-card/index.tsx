@@ -2,6 +2,8 @@ import { MapPin, MoreVertical, Phone, FileText } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem } from "@/components/ui/menubar";
+import { useModal } from "@/providers/ModalProvider";
+import Button from "@/components/ui/button";
 import { CandidateApplications } from "./CandidateApplications";
 import { pluralize } from "@/utils/plural";
 import type { Application } from "@/api/applications";
@@ -22,6 +24,8 @@ interface CandidateCardProps {
   isLoadingApplications: boolean;
   canRestore?: boolean;
   onRestore?: () => void;
+  canBlock?: boolean;
+  onBlock?: () => void;
 }
 
 const CANDIDATE_STATUS = {
@@ -36,8 +40,37 @@ export function CandidateCard({
   isLoadingApplications,
   canRestore = false,
   onRestore,
+  canBlock = false,
+  onBlock,
 }: CandidateCardProps) {
   const badge = CANDIDATE_STATUS[candidate.isDeleted ? "blocked" : "active"];
+  const { openModal, closeModal } = useModal();
+
+  const handleBlockClick = () => {
+    openModal(
+      <>
+        <p className={styles.modalDescription}>
+          Кандидат будет скрыт из откликов и списка кандидатов.
+          Восстановить его сможет только администратор.
+        </p>
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={closeModal}>Отмена</Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              onBlock?.();
+              closeModal();
+            }}
+          >
+            Заблокировать
+          </Button>
+        </div>
+      </>,
+      { title: "Заблокировать кандидата?", width: "440px" }
+    );
+  };
+
+  const showMenu = (candidate.isDeleted && canRestore) || (!candidate.isDeleted && canBlock);
 
   return (
     <AccordionItem value={candidate.id} className={styles.card}>
@@ -72,14 +105,20 @@ export function CandidateCard({
           </div>
         </AccordionTrigger>
 
-        {candidate.isDeleted && canRestore && (
+        {showMenu && (
           <Menubar>
             <MenubarMenu>
               <MenubarTrigger className={styles.menuTrigger}>
                 <MoreVertical size={20} />
               </MenubarTrigger>
               <MenubarContent align="end">
-                <MenubarItem onClick={onRestore}>Восстановить кандидата</MenubarItem>
+                {candidate.isDeleted ? (
+                  <MenubarItem onClick={onRestore}>Восстановить кандидата</MenubarItem>
+                ) : (
+                  <MenubarItem variant="destructive" onClick={handleBlockClick}>
+                    Заблокировать кандидата
+                  </MenubarItem>
+                )}
               </MenubarContent>
             </MenubarMenu>
           </Menubar>

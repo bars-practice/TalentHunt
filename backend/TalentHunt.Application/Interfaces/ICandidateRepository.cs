@@ -26,5 +26,6 @@ public interface ICandidateRepository
         string query,
         int limit,
         Guid? excludeVacancyId = null,
+        bool includeDeleted = false,
         CancellationToken cancellationToken = default);
 }

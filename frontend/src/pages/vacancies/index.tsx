@@ -6,7 +6,7 @@ import { applicationsService } from "@/api/applications";
 import { candidatesService } from "@/api/candidates";
 import { GlobalSearch } from "@/components/global-search";
 import { searchService, type SearchVacancyItem, type SearchFilters, DEFAULT_SEARCH_FILTERS } from "@/api/search";
-import { Permission, isScopedApprover } from "@/utils/permissions";
+import { Permission, canBlockCandidates, isScopedApprover } from "@/utils/permissions";
 import { usePermissions } from "@/hooks/usePermissions";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
@@ -61,6 +61,7 @@ export function Vacancies() {
   const canManageVacancies = hasPermission(Permission.CanManageVacancies);
   const canRestoreVacancies = hasPermission(Permission.CanRestoreVacancies);
   const canManageApplications = hasPermission(Permission.CanManageApplications);
+  const canBlock = canBlockCandidates(user);
   const [allVacancies, setAllVacancies] = useState<Vacancy[]>([]);
   const vacanciesRef = useRef<Vacancy[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
@@ -411,7 +412,8 @@ export function Vacancies() {
                 canManageVacancies={canManageVacancies}
                 canRestoreVacancies={canRestoreVacancies}
                 canManageApplications={canManageApplications}
-                onBlockCandidate={canManageApplications ? handleBlockCandidate : undefined}
+                canBlockCandidates={canBlock}
+                onBlockCandidate={canBlock ? handleBlockCandidate : undefined}
               />
             );
           })}

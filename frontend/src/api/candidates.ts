@@ -48,6 +48,13 @@ export interface PaginatedResponse<T> {
   hasNextPage: boolean;
 }
 
+export interface CandidateSearchResult {
+  id: string
+  fullName: string
+  city: string
+  isDeleted: boolean
+}
+
 export const candidatesService = {
   getById: (id: string) =>
     api.get<Candidate>(`/Candidates/${id}`),
@@ -61,7 +68,7 @@ export const candidatesService = {
     ),
 
   search: (query: string, excludeVacancyId?: string) =>
-    api.get<Candidate[]>(
+    api.get<CandidateSearchResult[]>(
       excludeVacancyId
         ? `/Candidates/search?query=${encodeURIComponent(query)}&excludeVacancyId=${excludeVacancyId}`
         : `/Candidates/search?query=${encodeURIComponent(query)}`
@@ -71,5 +78,5 @@ export const candidatesService = {
     api.delete(`/Candidates/${id}`),
 
   restore: (id: string) =>
-    api.put<Candidate>(`/Candidates/${id}`, { isDeleted: false }),
+    api.put<Candidate>(`/Candidates/${id}/restore`, {}),
 }

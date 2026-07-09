@@ -17,10 +17,23 @@
   align-items: center;
 }
 
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .candidatesList {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.emptySearch {
+  color: var(--muted-foreground);
+  font-size: 15px;
+  text-align: center;
+  padding: 48px 16px;
 }
 
 .empty {

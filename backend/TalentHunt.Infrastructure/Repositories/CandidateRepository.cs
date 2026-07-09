@@ -64,9 +64,11 @@ public class CandidateRepository(AppDbContext context) : ICandidateRepository
         string query,
         int limit,
         Guid? excludeVacancyId = null,
+        bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
         var candidatesQuery = context.Candidates
+            .IncludeDeletedIf(includeDeleted)
             .AsNoTracking()
             .Where(c => EF.Functions.ILike(c.FullName, $"%{query}%"));
 

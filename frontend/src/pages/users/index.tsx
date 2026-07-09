@@ -46,19 +46,15 @@ export function Users() {
     openModal(
       <UserFormModal
         mode="create"
-        callerRole={currentUser.role}
+        caller={currentUser}
         onSubmit={async (data) => {
-          try {
-            await usersService.create({
-              fullName: data.fullName,
-              password: data.password!,
-              role: data.role,
-              permissions: data.permissions,
-            });
-            await loadUsers();
-          } catch (err) {
-            console.error("Failed to create user:", err);
-          }
+          await usersService.create({
+            fullName: data.fullName,
+            password: data.password!,
+            role: data.role,
+            permissions: data.permissions,
+          });
+          await loadUsers();
         }}
       />,
       { title: "Добавить пользователя", width: "560px" }
@@ -76,7 +72,7 @@ export function Users() {
     openModal(
       <UserFormModal
         mode="edit"
-        callerRole={currentUser.role}
+        caller={currentUser}
         isSelf={isSelf}
         isSuperAdminSelf={isSuperAdminSelf}
         initialData={{
@@ -85,27 +81,23 @@ export function Users() {
           permissions: user.permissions,
         }}
         onSubmit={async (data) => {
-          try {
-            if (isSuperAdminSelf) {
-              if (!data.password) return;
-              await usersService.update(userId, { password: data.password });
-            } else if (isAdminSelf) {
-              await usersService.update(userId, {
-                fullName: data.fullName,
-                password: data.password,
-              });
-            } else {
-              await usersService.update(userId, {
-                fullName: data.fullName,
-                role: data.role,
-                password: data.password,
-                permissions: data.permissions,
-              });
-            }
-            await loadUsers();
-          } catch (err) {
-            console.error("Failed to update user:", err);
+          if (isSuperAdminSelf) {
+            if (!data.password) return;
+            await usersService.update(userId, { password: data.password });
+          } else if (isAdminSelf) {
+            await usersService.update(userId, {
+              fullName: data.fullName,
+              password: data.password,
+            });
+          } else {
+            await usersService.update(userId, {
+              fullName: data.fullName,
+              role: data.role,
+              password: data.password,
+              permissions: data.permissions,
+            });
           }
+          await loadUsers();
         }}
       />,
       {

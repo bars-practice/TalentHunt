@@ -40,10 +40,19 @@
   cursor: pointer;
 }
 
+.permissionItemDisabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .permissionLabel {
   font-size: 14px;
   font-weight: 400;
   cursor: pointer;
+}
+
+.permissionItemDisabled .permissionLabel {
+  cursor: not-allowed;
 }
 
 .hint {

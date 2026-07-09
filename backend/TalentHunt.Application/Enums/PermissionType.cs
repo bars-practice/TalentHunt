@@ -4,6 +4,7 @@ public static class PermissionType
 {
     public const string CanViewCandidates = "CanViewCandidates";
     public const string CanManageCandidates = "CanManageCandidates";
+    public const string CanRestoreCandidates = "CanRestoreCandidates";
     public const string CanViewApplications = "CanViewApplications";
     public const string CanManageApplications = "CanManageApplications";
     public const string CanViewInterviews = "CanViewInterviews";
@@ -21,6 +22,7 @@ public static class PermissionType
     [
         CanViewCandidates,
         CanManageCandidates,
+        CanRestoreCandidates,
         CanViewApplications,
         CanManageApplications,
         CanViewInterviews,
@@ -40,6 +42,7 @@ public static class PermissionType
         {
             [CanViewCandidates] = "Просмотр кандидатов",
             [CanManageCandidates] = "Управление кандидатами",
+            [CanRestoreCandidates] = "Восстановление кандидатов",
             [CanViewApplications] = "Просмотр откликов",
             [CanManageApplications] = "Управление откликами",
             [CanViewInterviews] = "Просмотр собеседований",
