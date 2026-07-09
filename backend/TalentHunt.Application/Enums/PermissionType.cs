@@ -8,6 +8,7 @@ public static class PermissionType
     public const string CanViewApplications = "CanViewApplications";
     public const string CanManageApplications = "CanManageApplications";
     public const string CanViewInterviews = "CanViewInterviews";
+    public const string CanViewInterviewSchedule = "CanViewInterviewSchedule";
     public const string CanManageInterviews = "CanManageInterviews";
     public const string CanMakeDecision = "CanMakeDecision";
     public const string CanViewVacancies = "CanViewVacancies";
@@ -26,6 +27,7 @@ public static class PermissionType
         CanViewApplications,
         CanManageApplications,
         CanViewInterviews,
+        CanViewInterviewSchedule,
         CanManageInterviews,
         CanMakeDecision,
         CanViewVacancies,
@@ -46,6 +48,7 @@ public static class PermissionType
             [CanViewApplications] = "Просмотр откликов",
             [CanManageApplications] = "Управление откликами",
             [CanViewInterviews] = "Просмотр собеседований",
+            [CanViewInterviewSchedule] = "Просмотр расписания",
             [CanManageInterviews] = "Управление собеседованиями",
             [CanMakeDecision] = "Вынесение решения",
             [CanViewVacancies] = "Просмотр вакансий",
@@ -62,6 +65,7 @@ public static class PermissionType
         CanViewCandidates,
         CanViewApplications,
         CanViewInterviews,
+        CanViewInterviewSchedule,
         CanViewVacancies
     ];
 }

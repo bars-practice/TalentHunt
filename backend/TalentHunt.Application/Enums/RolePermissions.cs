@@ -10,6 +10,7 @@ public static class RolePermissions
             PermissionType.CanViewApplications,
             PermissionType.CanManageApplications,
             PermissionType.CanViewInterviews,
+            PermissionType.CanViewInterviewSchedule,
             PermissionType.CanManageInterviews,
             PermissionType.CanViewVacancies,
             PermissionType.CanManageVacancies,
@@ -19,6 +20,7 @@ public static class RolePermissions
         Role.Approver => [
             PermissionType.CanViewApplications,
             PermissionType.CanViewInterviews,
+            PermissionType.CanViewInterviewSchedule,
             PermissionType.CanViewVacancies,
             PermissionType.CanMakeDecision,
             PermissionType.CanExportDocuments
