@@ -38,6 +38,7 @@ export interface InterviewDetail {
   interviewerFullName: string | null
   generalConclusion: string
   skillMatrix: SkillMatrixItem[]
+  vacancyIsDeleted: boolean
   isDeleted: boolean
 }
 

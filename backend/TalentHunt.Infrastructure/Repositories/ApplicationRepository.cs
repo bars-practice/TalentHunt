@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TalentHunt.Application.Entities;
 using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
@@ -32,6 +33,7 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
         var vacancies = await context.Vacancies
             .IgnoreQueryFilters()
             .AsNoTracking()
+            .Include(v => v.VacancyCompetencies)
             .Where(v => vacancyIds.Contains(v.Id))
             .ToDictionaryAsync(v => v.Id, cancellationToken);
 
@@ -40,7 +42,10 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
             if (!vacancies.TryGetValue(application.VacancyId, out var vacancy))
                 continue;
 
-            application.Vacancy = context.Vacancies.Find(application.VacancyId) ?? vacancy;
+            // Навигацию заполняем только у detached-сущностей: иначе EF прикрепит
+            // весь граф вакансии и попытается вставить VacancyCompetencies заново.
+            if (context.Entry(application).State == EntityState.Detached)
+                application.Vacancy = vacancy;
         }
     }
 
@@ -77,7 +82,7 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
         if (approverUserId.HasValue)
             query = query.Where(a => a.ApproverId == approverUserId.Value);
 
-        var application = await query.FirstOrDefaultAsync(cancellationToken);
+        var application = await query.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
         if (application is null)
             return null;
 
@@ -105,14 +110,14 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
 
     public Task UpdateAsync(ApplicationEntity application)
     {
-        context.Applications.Update(application);
+        context.Entry(application).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 
     public Task DeleteAsync(ApplicationEntity application)
     {
         application.IsDeleted = true;
-        context.Applications.Update(application);
+        context.Entry(application).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 

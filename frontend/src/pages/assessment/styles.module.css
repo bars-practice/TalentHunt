@@ -340,6 +340,56 @@
   justify-content: flex-end;
 }
 
+.printMenubar {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.printMenuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: calc(var(--spacing) * 10);
+  padding: 0 calc(var(--spacing) * 4);
+  border-radius: var(--radius-md);
+  background-color: var(--foreground);
+  color: var(--primary-foreground);
+  transition: background-color 0.15s;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.printMenuTrigger:hover,
+.printMenuTrigger[data-state="open"] {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  opacity: 0.92;
+}
+
+.printMenuTrigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.printMenuChevron {
+  opacity: 0.85;
+}
+
+.printMenuContent {
+  min-width: 230px;
+  padding: 8px;
+}
+
+.printMenuContent .printMenuItem {
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 8px 6px;
+  min-height: 32px;
+}
+
 .modalDescription {
   font-weight: 400;
 }

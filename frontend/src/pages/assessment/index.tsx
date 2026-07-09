@@ -2,8 +2,10 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { CandidateInfo } from "./CandidateInfo";
 import { CompetencyMatrix } from "./CompetencyMatrix";
+import { PrintDocumentsMenu } from "./PrintDocumentsMenu";
 import Button from "@/components/ui/button";
 import { applicationsService, type Application } from "@/api/applications";
+import { candidatesService } from "@/api/candidates";
 import { vacanciesService } from "@/api/vacancies";
 import {
   interviewsService,
@@ -14,7 +16,9 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { Permission } from "@/utils/permissions";
 import { useModal } from "@/providers/ModalProvider";
-import { CircleCheck, CircleX, FileDown } from "lucide-react";
+import { CircleCheck, CircleX } from "lucide-react";
+import { PrintForm } from "@/utils/printForms";
+import type { PrintFormOption } from "@/utils/printForms";
 import styles from "./styles.module.css";
 
 function areAllScoresFilled(matrix: SkillMatrixItem[]): boolean {
@@ -71,6 +75,7 @@ async function loadEmptyInterviewView(application: Application): Promise<Intervi
     interviewerFullName: null,
     generalConclusion: "",
     skillMatrix,
+    vacancyIsDeleted: vacancy?.isDeleted ?? false,
     isDeleted: false,
   };
 }
@@ -91,7 +96,7 @@ export function CompetencyAssessment() {
   const [starting, setStarting] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [deciding, setDeciding] = useState(false);
-  const [downloadingProtocol, setDownloadingProtocol] = useState(false);
+  const [downloadingForm, setDownloadingForm] = useState<PrintForm | null>(null);
 
   const canManageInterviews = hasPermission(Permission.CanManageInterviews);
   const canMakeDecision =
@@ -135,6 +140,15 @@ export function CompetencyAssessment() {
     if (interview?.id) return interview;
     if (!id) throw new Error("Отклик не найден");
 
+    const application = await applicationsService.getById(id);
+    if (application.interviewId) {
+      const existing = await interviewsService.getById(application.interviewId);
+      setInterview(existing);
+      setDraftMatrix(existing.skillMatrix);
+      setDraftConclusion(existing.generalConclusion);
+      return existing;
+    }
+
     const created = await interviewsService.create(id);
     setInterview(created);
     setDraftMatrix(created.skillMatrix);
@@ -164,6 +178,7 @@ export function CompetencyAssessment() {
     const current = await ensureInterview();
     const updated = await interviewsService.update(current.id, { scheduledAt: date });
     setInterview(updated);
+    setDraftMatrix(updated.skillMatrix);
   };
 
   const handleScoreChange = (competencyId: string, score: number) => {
@@ -312,15 +327,29 @@ export function CompetencyAssessment() {
     );
   };
 
-  const handleDownloadProtocol = async () => {
-    if (!id) return;
+  const handleDownloadForm = async (form: PrintFormOption) => {
+    if (!id || !interview) return;
+
     try {
-      setDownloadingProtocol(true);
-      await applicationsService.downloadProtocol(id);
+      setDownloadingForm(form.type);
+      switch (form.type) {
+        case PrintForm.CandidateCard:
+          await candidatesService.downloadCard(interview.candidateId);
+          break;
+        case PrintForm.InterviewProtocol:
+          await applicationsService.downloadProtocol(id);
+          break;
+        case PrintForm.Invitation:
+          await applicationsService.downloadInvitation(id);
+          break;
+        case PrintForm.Rejection:
+          await applicationsService.downloadRejection(id);
+          break;
+      }
     } catch (err) {
-      console.error("Failed to download protocol:", err);
+      console.error("Failed to download document:", err);
     } finally {
-      setDownloadingProtocol(false);
+      setDownloadingForm(null);
     }
   };
 
@@ -329,11 +358,13 @@ export function CompetencyAssessment() {
   if (!interview) return <div className={styles.container}>Данные не найдены</div>;
 
   const appStatus = interview.applicationStatus;
+  const isVacancyArchived = interview.vacancyIsDeleted;
 
   const hasScheduledDate = !!interview.scheduledAt;
 
   const canStart =
     canManageInterviews &&
+    !isVacancyArchived &&
     !isSessionActive &&
     appStatus === ApplicationStatus.InProgress &&
     !interview.interviewerId &&
@@ -341,28 +372,30 @@ export function CompetencyAssessment() {
 
   const canResume =
     canManageInterviews &&
+    !isVacancyArchived &&
     !isSessionActive &&
     appStatus === ApplicationStatus.InProgress &&
     !!interview.interviewerId;
 
   const isEditing =
     canManageInterviews &&
+    !isVacancyArchived &&
     isSessionActive &&
     !!interview.interviewerId &&
     appStatus === ApplicationStatus.InProgress;
 
   const canScheduleDate =
     canManageInterviews &&
+    !isVacancyArchived &&
     (appStatus === ApplicationStatus.Applied ||
       appStatus === ApplicationStatus.InProgress);
 
   const showDecisionPanel =
-    canMakeDecision && appStatus === ApplicationStatus.PendingDecision;
+    canMakeDecision &&
+    !isVacancyArchived &&
+    appStatus === ApplicationStatus.PendingDecision;
 
-  const showProtocolPanel =
-    canExportDocuments &&
-    (appStatus === ApplicationStatus.Approved ||
-      appStatus === ApplicationStatus.Rejected);
+  const showPrintMenu = canExportDocuments;
 
   const interviewDate = interview.scheduledAt
     ? new Date(interview.scheduledAt).toLocaleString("ru-RU")
@@ -414,17 +447,12 @@ export function CompetencyAssessment() {
               </Button>
             </>
           )}
-          {showProtocolPanel && (
-            <Button
-              size="lg"
-              variant="primary"
-              className={styles.startButton}
-              onClick={handleDownloadProtocol}
-              disabled={downloadingProtocol}
-            >
-              <FileDown size={20} />
-              {downloadingProtocol ? "Формирование..." : "Сформировать протокол"}
-            </Button>
+          {showPrintMenu && (
+            <PrintDocumentsMenu
+              applicationStatus={appStatus}
+              downloadingForm={downloadingForm}
+              onDownload={handleDownloadForm}
+            />
           )}
         </div>
       </div>

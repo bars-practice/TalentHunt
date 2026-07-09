@@ -4,6 +4,7 @@ using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
 using TalentHunt.Infrastructure.Extensions;
+using ApplicationEntity = TalentHunt.Application.Entities.Application;
 
 namespace TalentHunt.Infrastructure.Repositories;
 
@@ -15,9 +16,64 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
             .Include(i => i.Application)
                 .ThenInclude(a => a.Candidate)
             .Include(i => i.Application)
-                .ThenInclude(a => a.Vacancy)
-                    .ThenInclude(v => v.VacancyCompetencies)
+                .ThenInclude(a => a.Approver)
             .Include(i => i.Interviewer);
+
+    private async Task AttachVacanciesAsync(
+        IReadOnlyList<Interview> interviews,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancyIds = interviews
+            .Select(i => i.Application.VacancyId)
+            .Distinct()
+            .ToList();
+
+        if (vacancyIds.Count == 0)
+            return;
+
+        var vacancies = await context.Vacancies
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Include(v => v.VacancyCompetencies)
+            .Where(v => vacancyIds.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+        foreach (var interview in interviews)
+        {
+            if (interview.Application is null)
+                continue;
+
+            if (!vacancies.TryGetValue(interview.Application.VacancyId, out var vacancy))
+                continue;
+
+            interview.Application.Vacancy = vacancy;
+        }
+    }
+
+    private void DetachInterviewGraph(Guid interviewId)
+    {
+        var applicationId = context.ChangeTracker.Entries<Interview>()
+            .Where(e => e.Entity.Id == interviewId)
+            .Select(e => (Guid?)e.Entity.ApplicationId)
+            .FirstOrDefault();
+
+        foreach (var entry in context.ChangeTracker.Entries<Interview>()
+                     .Where(e => e.Entity.Id == interviewId)
+                     .ToList())
+        {
+            entry.State = EntityState.Detached;
+        }
+
+        if (!applicationId.HasValue)
+            return;
+
+        foreach (var entry in context.ChangeTracker.Entries<ApplicationEntity>()
+                     .Where(e => e.Entity.Id == applicationId.Value)
+                     .ToList())
+        {
+            entry.State = EntityState.Detached;
+        }
+    }
 
     public async Task<IReadOnlyList<Interview>> GetAllAsync(
         Guid? candidateId = null,
@@ -46,6 +102,7 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
             .ThenByDescending(i => i.Id)
             .ToListAsync(cancellationToken);
 
+        await AttachVacanciesAsync(interviews, cancellationToken);
         await AttachCompetenciesAsync(interviews, includeDeleted, cancellationToken);
         return interviews;
     }
@@ -55,12 +112,16 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
+        DetachInterviewGraph(id);
+
         var interview = await QueryWithDetails(includeDeleted)
+            .AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
 
         if (interview is null)
             return null;
 
+        await AttachVacanciesAsync([interview], cancellationToken);
         await AttachCompetenciesAsync([interview], includeDeleted, cancellationToken);
         return interview;
     }
@@ -70,14 +131,16 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
-        var interview = await QueryWithDetails(includeDeleted)
-            .FirstOrDefaultAsync(i => i.ApplicationId == applicationId, cancellationToken);
+        var interviewId = await context.Interviews
+            .IncludeDeletedIf(includeDeleted)
+            .Where(i => i.ApplicationId == applicationId)
+            .Select(i => i.Id)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (interview is null)
+        if (interviewId == Guid.Empty)
             return null;
 
-        await AttachCompetenciesAsync([interview], includeDeleted, cancellationToken);
-        return interview;
+        return await GetByIdAsync(interviewId, includeDeleted, cancellationToken);
     }
 
     public Task AddAsync(Interview interview, CancellationToken cancellationToken = default) =>
@@ -85,14 +148,16 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
 
     public Task UpdateAsync(Interview interview)
     {
-        context.Interviews.Update(interview);
+        // Помечаем модифицированной только саму сущность, без обхода навигаций,
+        // иначе EF попытается вставить VacancyCompetencies заново или удалить связанные записи.
+        context.Entry(interview).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 
     public Task DeleteAsync(Interview interview)
     {
         interview.IsDeleted = true;
-        context.Interviews.Update(interview);
+        context.Entry(interview).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 
@@ -105,7 +170,8 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
         CancellationToken cancellationToken)
     {
         var competencyIds = interviews
-            .SelectMany(i => i.Application.Vacancy.VacancyCompetencies)
+            .Where(i => i.Application.Vacancy is not null)
+            .SelectMany(i => i.Application.Vacancy!.VacancyCompetencies)
             .Select(vc => vc.CompetencyId)
             .Distinct()
             .ToList();
@@ -115,10 +181,13 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
 
         var competencies = await context.Competencies
             .IncludeDeletedIf(includeDeleted)
+            .AsNoTracking()
             .Where(c => competencyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, cancellationToken);
 
-        foreach (var link in interviews.SelectMany(i => i.Application.Vacancy.VacancyCompetencies))
+        foreach (var link in interviews
+                     .Where(i => i.Application.Vacancy is not null)
+                     .SelectMany(i => i.Application.Vacancy!.VacancyCompetencies))
         {
             if (competencies.TryGetValue(link.CompetencyId, out var competency))
                 link.Competency = competency;
