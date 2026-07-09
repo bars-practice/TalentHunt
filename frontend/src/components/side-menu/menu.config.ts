@@ -17,9 +17,9 @@ export const menuItems: MenuItem[] = [
   },
   {
     path: "/interviews",
-    label: "Собеседования",
+    label: "Расписание",
     icon: Calendar,
-    permission: Permission.CanViewInterviews,
+    permission: Permission.CanViewInterviewSchedule,
   },
   {
     path: "/vacancies",

@@ -10,6 +10,7 @@ import { Vacancies } from "./pages/vacancies"
 import { Candidates } from "@/pages/candidates"
 import { AuditLog } from "@/pages/audit-log"
 import { CompetencyAssessment } from "@/pages/assessment"
+import { Interviews } from "@/pages/interviews"
 import { Permission } from "@/utils/permissions"
 import "simplebar-react/dist/simplebar.min.css";
 
@@ -58,7 +59,7 @@ function HomeRedirect() {
   if (hasPermission(Permission.CanViewCandidates)) {
     return <Navigate to="/candidates" replace />
   }
-  if (hasPermission(Permission.CanViewInterviews)) {
+  if (hasPermission(Permission.CanViewInterviewSchedule)) {
     return <Navigate to="/interviews" replace />
   }
   if (hasPermission(Permission.CanManageUsers)) {
@@ -84,8 +85,8 @@ function App() {
                 <Route path="/candidates" element={<Candidates />} />
               </Route>
 
-              <Route element={<ProtectedRoute requiredPermission={Permission.CanViewInterviews} />}>
-                <Route path="/interviews" element={<div>Собеседования</div>} />
+              <Route element={<ProtectedRoute requiredPermission={Permission.CanViewInterviewSchedule} />}>
+                <Route path="/interviews" element={<Interviews />} />
               </Route>
 
               <Route element={<ProtectedRoute requiredPermission={Permission.CanViewVacancies} />}>

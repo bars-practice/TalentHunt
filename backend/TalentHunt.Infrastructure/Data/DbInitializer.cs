@@ -92,36 +92,80 @@ public static class DbInitializer
             .Select(u => u.Id)
             .ToListAsync();
 
-        if (adminUserIds.Count == 0)
-            return;
-
-        var allPermissions = await context.Permissions.ToListAsync();
-
-        var existingAssignments = await context.UserPermissions
-            .Where(up => adminUserIds.Contains(up.UserId))
-            .Select(up => new { up.UserId, up.PermissionId })
-            .ToListAsync();
-
-        var toAdd = new List<UserPermission>();
-        foreach (var userId in adminUserIds)
+        if (adminUserIds.Count > 0)
         {
-            foreach (var permission in allPermissions)
-            {
-                if (existingAssignments.Any(a => a.UserId == userId && a.PermissionId == permission.Id))
-                    continue;
+            var allPermissions = await context.Permissions.ToListAsync();
 
-                toAdd.Add(new UserPermission
+            var existingAssignments = await context.UserPermissions
+                .Where(up => adminUserIds.Contains(up.UserId))
+                .Select(up => new { up.UserId, up.PermissionId })
+                .ToListAsync();
+
+            var toAdd = new List<UserPermission>();
+            foreach (var userId in adminUserIds)
+            {
+                foreach (var permission in allPermissions)
                 {
-                    UserId = userId,
-                    PermissionId = permission.Id
-                });
+                    if (existingAssignments.Any(a => a.UserId == userId && a.PermissionId == permission.Id))
+                        continue;
+
+                    toAdd.Add(new UserPermission
+                    {
+                        UserId = userId,
+                        PermissionId = permission.Id
+                    });
+                }
+            }
+
+            if (toAdd.Count > 0)
+            {
+                await context.UserPermissions.AddRangeAsync(toAdd);
+                await context.SaveChangesAsync();
             }
         }
 
-        if (toAdd.Count == 0)
+        await GrantSchedulePermissionToInterviewViewersAsync(context);
+    }
+
+    private static async Task GrantSchedulePermissionToInterviewViewersAsync(AppDbContext context)
+    {
+        var permissions = await context.Permissions
+            .Where(p => p.Name == PermissionType.CanViewInterviews
+                        || p.Name == PermissionType.CanViewInterviewSchedule)
+            .ToDictionaryAsync(p => p.Name, p => p.Id);
+
+        if (!permissions.ContainsKey(PermissionType.CanViewInterviews)
+            || !permissions.ContainsKey(PermissionType.CanViewInterviewSchedule))
             return;
 
-        await context.UserPermissions.AddRangeAsync(toAdd);
+        var viewerUserIds = await context.UserPermissions
+            .Where(up => up.PermissionId == permissions[PermissionType.CanViewInterviews])
+            .Select(up => up.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        if (viewerUserIds.Count == 0)
+            return;
+
+        var schedulePermissionId = permissions[PermissionType.CanViewInterviewSchedule];
+        var alreadyAssigned = await context.UserPermissions
+            .Where(up => up.PermissionId == schedulePermissionId)
+            .Select(up => up.UserId)
+            .ToListAsync();
+
+        var toGrant = viewerUserIds
+            .Except(alreadyAssigned)
+            .Select(userId => new UserPermission
+            {
+                UserId = userId,
+                PermissionId = schedulePermissionId
+            })
+            .ToList();
+
+        if (toGrant.Count == 0)
+            return;
+
+        await context.UserPermissions.AddRangeAsync(toGrant);
         await context.SaveChangesAsync();
     }
 }

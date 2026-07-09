@@ -56,7 +56,37 @@ export interface UpdateInterviewRequest {
   isDraft?: boolean
 }
 
+export interface InterviewListItem {
+  id: string
+  applicationId: string
+  candidateId: string
+  candidateFullName: string
+  vacancyId: string
+  vacancyTitle: string
+  applicationStatus: ApplicationStatus
+  scheduledAt: string | null
+  interviewerId: string | null
+  interviewerFullName: string | null
+}
+
+export interface InterviewListParams {
+  candidateId?: string
+  vacancyId?: string
+  applicationStatus?: ApplicationStatus
+}
+
 export const interviewsService = {
+  getAll: (params?: InterviewListParams) => {
+    const search = new URLSearchParams()
+    if (params?.candidateId) search.set('candidateId', params.candidateId)
+    if (params?.vacancyId) search.set('vacancyId', params.vacancyId)
+    if (params?.applicationStatus !== undefined) {
+      search.set('applicationStatus', String(params.applicationStatus))
+    }
+    const query = search.toString()
+    return api.get<InterviewListItem[]>(`/Interviews${query ? `?${query}` : ''}`)
+  },
+
   getById: (id: string) =>
     api.get<InterviewDetail>(`/Interviews/${id}`),
 

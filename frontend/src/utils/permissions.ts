@@ -7,6 +7,7 @@ export const Permission = {
   CanViewApplications: "CanViewApplications",
   CanManageApplications: "CanManageApplications",
   CanViewInterviews: "CanViewInterviews",
+  CanViewInterviewSchedule: "CanViewInterviewSchedule",
   CanManageInterviews: "CanManageInterviews",
   CanMakeDecision: "CanMakeDecision",
   CanViewVacancies: "CanViewVacancies",
@@ -27,6 +28,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.CanViewApplications]: "Просмотр откликов",
   [Permission.CanManageApplications]: "Управление откликами",
   [Permission.CanViewInterviews]: "Просмотр собеседований",
+  [Permission.CanViewInterviewSchedule]: "Просмотр расписания",
   [Permission.CanManageInterviews]: "Управление собеседованиями",
   [Permission.CanMakeDecision]: "Вынесение решения",
   [Permission.CanViewVacancies]: "Просмотр вакансий",
@@ -53,7 +55,11 @@ export const PERMISSION_GROUPS: { label: string; permissions: Permission[] }[] =
   },
   {
     label: "Собеседования",
-    permissions: [Permission.CanViewInterviews, Permission.CanManageInterviews],
+    permissions: [
+      Permission.CanViewInterviews,
+      Permission.CanViewInterviewSchedule,
+      Permission.CanManageInterviews,
+    ],
   },
   {
     label: "Решения",
@@ -98,6 +104,7 @@ export const getDefaultPermissionsForRole = (role: Role): Permission[] => {
         Permission.CanViewApplications,
         Permission.CanManageApplications,
         Permission.CanViewInterviews,
+        Permission.CanViewInterviewSchedule,
         Permission.CanManageInterviews,
         Permission.CanViewVacancies,
         Permission.CanManageVacancies,
@@ -108,6 +115,7 @@ export const getDefaultPermissionsForRole = (role: Role): Permission[] => {
       return [
         Permission.CanViewApplications,
         Permission.CanViewInterviews,
+        Permission.CanViewInterviewSchedule,
         Permission.CanViewVacancies,
         Permission.CanMakeDecision,
         Permission.CanExportDocuments,

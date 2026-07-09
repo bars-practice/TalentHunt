@@ -17,7 +17,7 @@ public class InterviewsController(
     : BaseController(auditLogService)
 {
     [HttpGet]
-    [RequirePermission(PermissionType.CanViewInterviews)]
+    [RequireAnyPermission(PermissionType.CanViewInterviewSchedule, PermissionType.CanViewInterviews)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? candidateId,
         [FromQuery] Guid? vacancyId,
