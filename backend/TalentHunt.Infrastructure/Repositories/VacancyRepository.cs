@@ -34,6 +34,7 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
     {
         var vacancy = await context.Vacancies
             .IncludeDeletedIf(includeDeleted)
+            .AsNoTracking()
             .Include(v => v.VacancyCompetencies)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
@@ -164,6 +165,7 @@ public class VacancyRepository(AppDbContext context) : IVacancyRepository
 
         var competencies = await context.Competencies
             .IncludeDeletedIf(includeDeleted)
+            .AsNoTracking()
             .Where(c => competencyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, cancellationToken);
 

@@ -4,6 +4,7 @@ using TalentHunt.Application.Enums;
 using TalentHunt.Application.Interfaces;
 using TalentHunt.Infrastructure.Data;
 using TalentHunt.Infrastructure.Extensions;
+using ApplicationEntity = TalentHunt.Application.Entities.Application;
 
 namespace TalentHunt.Infrastructure.Repositories;
 
@@ -39,8 +40,38 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
 
         foreach (var interview in interviews)
         {
-            if (vacancies.TryGetValue(interview.Application.VacancyId, out var vacancy))
-                interview.Application.Vacancy = vacancy;
+            if (interview.Application is null)
+                continue;
+
+            if (!vacancies.TryGetValue(interview.Application.VacancyId, out var vacancy))
+                continue;
+
+            interview.Application.Vacancy = vacancy;
+        }
+    }
+
+    private void DetachInterviewGraph(Guid interviewId)
+    {
+        var applicationId = context.ChangeTracker.Entries<Interview>()
+            .Where(e => e.Entity.Id == interviewId)
+            .Select(e => (Guid?)e.Entity.ApplicationId)
+            .FirstOrDefault();
+
+        foreach (var entry in context.ChangeTracker.Entries<Interview>()
+                     .Where(e => e.Entity.Id == interviewId)
+                     .ToList())
+        {
+            entry.State = EntityState.Detached;
+        }
+
+        if (!applicationId.HasValue)
+            return;
+
+        foreach (var entry in context.ChangeTracker.Entries<ApplicationEntity>()
+                     .Where(e => e.Entity.Id == applicationId.Value)
+                     .ToList())
+        {
+            entry.State = EntityState.Detached;
         }
     }
 
@@ -81,7 +112,10 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
     {
+        DetachInterviewGraph(id);
+
         var interview = await QueryWithDetails(includeDeleted)
+            .AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
 
         if (interview is null)
@@ -114,14 +148,16 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
 
     public Task UpdateAsync(Interview interview)
     {
-        context.Interviews.Update(interview);
+        // Помечаем модифицированной только саму сущность, без обхода навигаций,
+        // иначе EF попытается вставить VacancyCompetencies заново или удалить связанные записи.
+        context.Entry(interview).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 
     public Task DeleteAsync(Interview interview)
     {
         interview.IsDeleted = true;
-        context.Interviews.Update(interview);
+        context.Entry(interview).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 
@@ -145,6 +181,7 @@ public class InterviewRepository(AppDbContext context) : IInterviewRepository
 
         var competencies = await context.Competencies
             .IncludeDeletedIf(includeDeleted)
+            .AsNoTracking()
             .Where(c => competencyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, cancellationToken);
 

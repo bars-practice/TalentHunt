@@ -62,16 +62,21 @@ public class InterviewService(
         var application = await applicationRepository.GetByIdAsync(request.ApplicationId, cancellationToken: cancellationToken)
             ?? throw new InvalidOperationException("Отклик не найден.");
 
-        if (application.Status != ApplicationStatus.Applied)
-            throw new InvalidOperationException("Собеседование можно создать только для отклика в статусе Applied.");
-
         if (await interviewRepository.GetByApplicationIdAsync(request.ApplicationId, cancellationToken: cancellationToken) is not null)
             throw new InvalidOperationException("Собеседование для этого отклика уже существует.");
 
+        // Applied — обычный случай. InProgress без существующего собеседования допускаем
+        // как восстановление (собеседование могло быть создано ранее, но отсутствует).
+        if (application.Status is not (ApplicationStatus.Applied or ApplicationStatus.InProgress))
+            throw new InvalidOperationException("Собеседование можно создать только для отклика в статусе «Новый».");
+
         var vacancy = await vacancyRepository.GetByIdWithCompetenciesAsync(
             application.VacancyId,
+            includeDeleted: true,
             cancellationToken: cancellationToken)
             ?? throw new InvalidOperationException("Вакансия не найдена.");
+
+        EnsureVacancyIsActive(vacancy);
 
         var competencyIds = GetActiveVacancyCompetencyIds(vacancy);
         if (competencyIds.Count == 0)
@@ -102,6 +107,8 @@ public class InterviewService(
     {
         var interview = await interviewRepository.GetByIdAsync(id, cancellationToken: cancellationToken)
             ?? throw new KeyNotFoundException("Собеседование не найдено.");
+
+        EnsureVacancyIsActive(interview.Application.Vacancy);
 
         if (interview.Application.Status != ApplicationStatus.InProgress)
             throw new InvalidOperationException(
@@ -136,6 +143,8 @@ public class InterviewService(
     {
         var interview = await interviewRepository.GetByIdAsync(id, cancellationToken: cancellationToken)
             ?? throw new KeyNotFoundException("Собеседование не найдено.");
+
+        EnsureVacancyIsActive(interview.Application.Vacancy);
 
         var status = interview.Application.Status;
 
@@ -341,38 +350,42 @@ public class InterviewService(
 
     private static InterviewDetailResponse ToDetailResponse(Interview interview)
     {
-        var vacancy = interview.Application.Vacancy;
-        var matrixByCompetency = interview.SkillMatrix.ToDictionary(x => x.CompetencyId);
+        var application = interview.Application
+            ?? throw new InvalidOperationException("Не удалось загрузить данные отклика для собеседования.");
 
-        var skillMatrix = vacancy.VacancyCompetencies
-            .Where(vc => vc.Competency is not null && !vc.Competency.IsDeleted)
+        var vacancy = application.Vacancy;
+        var matrixByCompetency = (interview.SkillMatrix ?? [])
+            .ToDictionary(x => x.CompetencyId);
+
+        var skillMatrix = (vacancy?.VacancyCompetencies ?? [])
+            .Where(vc => vc.Competency is null || !vc.Competency.IsDeleted)
             .Select(vc =>
             {
                 matrixByCompetency.TryGetValue(vc.CompetencyId, out var entry);
                 return new SkillMatrixItemResponse(
                     vc.CompetencyId,
-                    vc.Competency!.Name,
-                    vc.Competency.Description,
+                    vc.Competency?.Name ?? string.Empty,
+                    vc.Competency?.Description ?? string.Empty,
                     entry?.Score,
                     entry?.Comment ?? string.Empty);
             })
             .OrderBy(x => x.CompetencyName)
             .ToList();
 
-        var candidate = interview.Application.Candidate;
+        var candidate = application.Candidate;
 
         return new InterviewDetailResponse(
             interview.Id,
             interview.ApplicationId,
-            interview.Application.Status,
-            interview.Application.CandidateId,
+            application.Status,
+            application.CandidateId,
             candidate?.FullName ?? string.Empty,
             candidate?.Phone ?? string.Empty,
             candidate?.City ?? string.Empty,
             candidate?.Education ?? string.Empty,
             candidate?.Experience ?? string.Empty,
             candidate?.PlacesOfWork ?? [],
-            interview.Application.VacancyId,
+            application.VacancyId,
             vacancy?.Title ?? string.Empty,
             vacancy?.Level ?? VacancyLevel.Junior,
             interview.ScheduledAt,
@@ -381,8 +394,15 @@ public class InterviewService(
             interview.Interviewer?.FullName,
             interview.GeneralConclusion,
             skillMatrix,
+            vacancy?.IsDeleted ?? false,
             interview.IsDeleted
         );
+    }
+
+    private static void EnsureVacancyIsActive(Vacancy? vacancy)
+    {
+        if (vacancy?.IsDeleted == true)
+            throw new InvalidOperationException("Вакансия находится в архиве. Действия с собеседованием недоступны.");
     }
 
     public async Task<InterviewDetailResponse> ForceSetStatusAsync(

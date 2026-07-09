@@ -75,6 +75,7 @@ async function loadEmptyInterviewView(application: Application): Promise<Intervi
     interviewerFullName: null,
     generalConclusion: "",
     skillMatrix,
+    vacancyIsDeleted: vacancy?.isDeleted ?? false,
     isDeleted: false,
   };
 }
@@ -139,6 +140,15 @@ export function CompetencyAssessment() {
     if (interview?.id) return interview;
     if (!id) throw new Error("Отклик не найден");
 
+    const application = await applicationsService.getById(id);
+    if (application.interviewId) {
+      const existing = await interviewsService.getById(application.interviewId);
+      setInterview(existing);
+      setDraftMatrix(existing.skillMatrix);
+      setDraftConclusion(existing.generalConclusion);
+      return existing;
+    }
+
     const created = await interviewsService.create(id);
     setInterview(created);
     setDraftMatrix(created.skillMatrix);
@@ -168,6 +178,7 @@ export function CompetencyAssessment() {
     const current = await ensureInterview();
     const updated = await interviewsService.update(current.id, { scheduledAt: date });
     setInterview(updated);
+    setDraftMatrix(updated.skillMatrix);
   };
 
   const handleScoreChange = (competencyId: string, score: number) => {
@@ -347,11 +358,13 @@ export function CompetencyAssessment() {
   if (!interview) return <div className={styles.container}>Данные не найдены</div>;
 
   const appStatus = interview.applicationStatus;
+  const isVacancyArchived = interview.vacancyIsDeleted;
 
   const hasScheduledDate = !!interview.scheduledAt;
 
   const canStart =
     canManageInterviews &&
+    !isVacancyArchived &&
     !isSessionActive &&
     appStatus === ApplicationStatus.InProgress &&
     !interview.interviewerId &&
@@ -359,23 +372,28 @@ export function CompetencyAssessment() {
 
   const canResume =
     canManageInterviews &&
+    !isVacancyArchived &&
     !isSessionActive &&
     appStatus === ApplicationStatus.InProgress &&
     !!interview.interviewerId;
 
   const isEditing =
     canManageInterviews &&
+    !isVacancyArchived &&
     isSessionActive &&
     !!interview.interviewerId &&
     appStatus === ApplicationStatus.InProgress;
 
   const canScheduleDate =
     canManageInterviews &&
+    !isVacancyArchived &&
     (appStatus === ApplicationStatus.Applied ||
       appStatus === ApplicationStatus.InProgress);
 
   const showDecisionPanel =
-    canMakeDecision && appStatus === ApplicationStatus.PendingDecision;
+    canMakeDecision &&
+    !isVacancyArchived &&
+    appStatus === ApplicationStatus.PendingDecision;
 
   const showPrintMenu = canExportDocuments;
 

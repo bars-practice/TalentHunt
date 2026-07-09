@@ -102,6 +102,9 @@ public class ApplicationService(
         var application = await applicationRepository.GetByIdAsync(id, cancellationToken: cancellationToken)
             ?? throw new KeyNotFoundException("Отклик не найден.");
 
+        if (application.Vacancy?.IsDeleted == true)
+            throw new InvalidOperationException("Вакансия находится в архиве. Вынесение решения недоступно.");
+
         if (application.Status != ApplicationStatus.PendingDecision)
             throw new InvalidOperationException("Решение можно вынести только для отклика в статусе PendingDecision.");
 

@@ -22,6 +22,7 @@ public record InterviewDetailResponse(
     string? InterviewerFullName,
     string GeneralConclusion,
     List<SkillMatrixItemResponse> SkillMatrix,
+    bool VacancyIsDeleted,
     bool IsDeleted
 );
 
