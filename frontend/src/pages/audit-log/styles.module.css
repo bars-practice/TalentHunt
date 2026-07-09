@@ -17,16 +17,32 @@
   overflow: hidden;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  &.messageCell {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  &.errorCell {
+    padding: 20px;
+    color: #ef4444;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
-.messageCell {
-  padding: 20px;
-}
 
-.errorCell {
-  padding: 20px;
-  color: #ef4444;
-}
+
+
 .table {
   width: 100%;
   border-collapse: collapse;

@@ -72,7 +72,7 @@ function Login() {
                 {...register("password")}
                 type="password"
                 placeholder="Введите пароль"
-                autoComplete="new-password"
+                autoComplete="current-password"
                 aria-invalid={!!errors.password}
               />
             </FieldContent>

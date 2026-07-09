@@ -91,7 +91,7 @@ export function Vacancies() {
   const loadCompetencies = async () => {
     try {
       const data = await competenciesService.getAll();
-      setCompetencies(data);
+      setCompetencies(data.filter((c) => !c.isDeleted));
     } catch (err) {
       console.error("Failed to load competencies:", err);
     }
@@ -214,9 +214,11 @@ export function Vacancies() {
         }
         onAddNewCompetency={async (name) => {
           const newCompetency = await competenciesService.create({ name, description: "" });
-          setCompetencies([...competencies, newCompetency]);
+          const updated = [...competencies, newCompetency];
+          setCompetencies(updated);
           return newCompetency.id;
         }}
+        onCompetenciesUpdated={setCompetencies}
         onSubmit={async (data) => {
           try {
             await vacanciesService.create({
@@ -251,9 +253,11 @@ export function Vacancies() {
         competencies={competencies}
         onAddNewCompetency={async (name) => {
           const newCompetency = await competenciesService.create({ name, description: "" });
-          setCompetencies([...competencies, newCompetency]);
+          const updated = [...competencies, newCompetency];
+          setCompetencies(updated);
           return newCompetency.id;
         }}
+        onCompetenciesUpdated={setCompetencies}
         onSubmit={async (data) => {
           try {
             await vacanciesService.update(vacancy.id, {

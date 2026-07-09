@@ -398,7 +398,14 @@ export function CompetencyAssessment() {
   const showPrintMenu = canExportDocuments;
 
   const interviewDate = interview.scheduledAt
-    ? new Date(interview.scheduledAt).toLocaleString("ru-RU")
+    ? new Date(interview.scheduledAt).toLocaleString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).replace(",", "")
+ 
     : "Не назначено";
 
   return (

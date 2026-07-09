@@ -106,3 +106,19 @@
   width: 100%;
   justify-content: center;
 }
+
+.addApproverButton[aria-invalid="true"] {
+  border-color: var(--color-destructive);
+  color: var(--color-destructive);
+}
+
+.addApproverButton[data-variant="outline"][aria-invalid="true"]:hover {
+  border-color: var(--color-destructive);
+  color: var(--color-destructive);
+  background-color: color-mix(in oklab, var(--color-destructive) 8%, var(--color-background));
+}
+
+.addApproverButton[aria-invalid="true"]:focus-visible {
+  border-color: var(--color-destructive);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-destructive) 20%, transparent);
+}
