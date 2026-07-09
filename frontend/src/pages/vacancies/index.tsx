@@ -355,7 +355,7 @@ export function Vacancies() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Управление вакансиями</h1>
+        <h1 className={styles.title}>Реестр вакансий</h1>
         {canManageVacancies && (
           <Button
             size="lg"

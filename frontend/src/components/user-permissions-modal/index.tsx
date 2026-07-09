@@ -85,18 +85,21 @@ export function UserPermissionsModal({
                 const hint = !isAssignable ? PERMISSION_ASSIGNMENT_HINTS[assignmentState] : undefined;
 
                 return (
-                  <label
+                  <div
                     key={permission}
                     className={`${styles.permissionItem} ${!isAssignable ? styles.permissionItemDisabled : ""}`}
                     title={hint}
                   >
                     <Checkbox
+                      id={`permission-${permission}`}
                       checked={isChecked}
                       disabled={!isAssignable}
                       onCheckedChange={(checked) => togglePermission(permission, checked === true)}
                     />
-                    <Label className={styles.permissionLabel}>{PERMISSION_LABELS[permission]}</Label>
-                  </label>
+                    <Label htmlFor={`permission-${permission}`} className={styles.permissionLabel}>
+                      {PERMISSION_LABELS[permission]}
+                    </Label>
+                  </div>
                 );
               })}
             </div>

@@ -6,7 +6,7 @@ import Input from "@/components/ui/input";
 import { candidatesService } from "@/api/candidates";
 import { applicationsService } from "@/api/applications";
 import { CandidateCreateForm } from "@/components/candidate-create-form";
-import { UserPlus } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
 import { CandidateItem } from "./candidate-item";
 import styles from "./styles.module.css";
 
@@ -97,12 +97,14 @@ export function CandidateSearchModal({ vacancyId, onSuccess }: CandidateSearchMo
       {!showCreateForm ? (
         <>
           <div className={styles.searchHeaderRow}>
-            <div style={{ flex: 1 }}>
+            <div className={styles.searchInputWrapper}>
+              <Search size={18} className={styles.searchIcon} />
               <Input
                 type="text"
                 placeholder="Введите ФИО кандидата..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
               />
             </div>
             <Button
