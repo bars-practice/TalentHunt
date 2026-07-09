@@ -9,8 +9,10 @@ import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FieldLabel, FieldContent, FieldError } from "@/components/ui/field";
-import { CompetencyAutocomplete, type Competency } from "@/components/competency-autocomplete";
+import { CompetencyAutocomplete } from "@/components/competency-autocomplete";
+import { CompetencyManageModal } from "@/components/competency-manage-modal";
 import { ApproverSearchModal } from "@/components/approver-search-modal";
+import { competenciesService, type Competency } from "@/api/competencies";
 import { User, X } from "lucide-react";
 import styles from "./styles.module.css";
 
@@ -39,6 +41,7 @@ interface VacancyFormModalProps {
   onSubmit: (data: VacancyFormValues) => void;
   competencies: Competency[];
   onAddNewCompetency?: (name: string) => string | undefined | Promise<string | undefined>;
+  onCompetenciesUpdated?: (competencies: Competency[]) => void;
   defaultApprover?: { id: string; fullName: string };
 }
 
@@ -47,11 +50,13 @@ export function VacancyFormModal({
   onSubmit,
   competencies,
   onAddNewCompetency,
+  onCompetenciesUpdated,
   defaultApprover,
 }: VacancyFormModalProps) {
   const { closeModal, openModal } = useModal();
   const isApproverCreate = !initialData && !!defaultApprover;
   const [selectedApprover, setSelectedApprover] = useState<{ id: string; fullName: string } | null>(null);
+  const [availableCompetencies, setAvailableCompetencies] = useState<Competency[]>(competencies);
 
   const {
     register,
@@ -59,6 +64,7 @@ export function VacancyFormModal({
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<VacancyFormValues>({
     resolver: zodResolver(formSchema),
@@ -73,6 +79,17 @@ export function VacancyFormModal({
   });
 
   const selectedCompetencyIds = watch("competencyIds");
+
+  useEffect(() => {
+    setAvailableCompetencies(competencies);
+  }, [competencies]);
+
+  const refreshCompetencies = async (): Promise<void> => {
+    const data = await competenciesService.getAll();
+    const active = data.filter((c) => !c.isDeleted);
+    setAvailableCompetencies(active);
+    onCompetenciesUpdated?.(active);
+  };
 
   useEffect(() => {
     if (initialData?.approverId) {
@@ -105,7 +122,17 @@ export function VacancyFormModal({
   const handleRemoveCompetency = (id: string) => {
     setValue(
       "competencyIds",
-      selectedCompetencyIds.filter((cId) => cId !== id)
+      getValues("competencyIds").filter((cId) => cId !== id)
+    );
+  };
+
+  const handleOpenCompetencyManage = () => {
+    openModal(
+      <CompetencyManageModal
+        onUpdated={refreshCompetencies}
+        onDeleted={handleRemoveCompetency}
+      />,
+      { title: "Справочник компетенций", width: "560px" }
     );
   };
 
@@ -208,6 +235,7 @@ export function VacancyFormModal({
                 variant="outline"
                 onClick={handleOpenApproverSearch}
                 className={styles.addApproverButton}
+                aria-invalid={!!errors.approverId}
               >
                 <User size={16} />
                 Добавить подтверждающего
@@ -219,11 +247,18 @@ export function VacancyFormModal({
 
         <CompetencyAutocomplete
           label="Компетенции"
-          allCompetencies={competencies}
+          allCompetencies={availableCompetencies}
           selectedIds={selectedCompetencyIds}
           onAdd={handleAddCompetency}
           onRemove={handleRemoveCompetency}
-          onAddNewCompetency={onAddNewCompetency}
+          onAddNewCompetency={async (name) => {
+            const newId = await onAddNewCompetency?.(name);
+            if (newId) {
+              await refreshCompetencies();
+            }
+            return newId;
+          }}
+          onManageClick={handleOpenCompetencyManage}
           error={errors.competencyIds?.message}
           placeholder="Поиск компетенций..."
         />

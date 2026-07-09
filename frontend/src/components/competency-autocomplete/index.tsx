@@ -1,18 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Settings } from "lucide-react";
 import SimpleBar from "simplebar-react";
 import Input from "@/components/ui/input";
 import Button from "@/components/ui/button";
 import { Field, FieldLabel, FieldContent, FieldError } from "@/components/ui/field";
+import type { Competency } from "@/api/competencies";
 import styles from "./styles.module.css";
 
 import "simplebar-react/dist/simplebar.min.css";
-
-export interface Competency {
-  id: string;
-  name: string;
-}
 
 interface CompetencyAutocompleteProps {
   label: string;
@@ -21,6 +17,7 @@ interface CompetencyAutocompleteProps {
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
   onAddNewCompetency?: (name: string) => string | undefined | Promise<string | undefined>;
+  onManageClick?: () => void;
   error?: string;
   placeholder?: string;
 }
@@ -32,6 +29,7 @@ export function CompetencyAutocomplete({
   onAdd,
   onRemove,
   onAddNewCompetency,
+  onManageClick,
   error,
   placeholder = "Поиск компетенций...",
 }: CompetencyAutocompleteProps) {
@@ -134,7 +132,7 @@ export function CompetencyAutocomplete({
     if (searchQuery.trim() && onAddNewCompetency) {
       const newId = await onAddNewCompetency(searchQuery.trim());
       if (newId) {
-        setNewCompetencies((prev) => [...prev, { id: newId, name: searchQuery.trim() }]);
+        setNewCompetencies((prev) => [...prev, { id: newId, name: searchQuery.trim(), description: "" }]);
         onAdd(newId);
         setSearchQuery("");
         setIsOpen(false);
@@ -173,32 +171,47 @@ export function CompetencyAutocomplete({
       <div ref={containerRef} className={styles.autocompleteWrapper}>
         <FieldLabel htmlFor="competency-search">{label}</FieldLabel>
         <FieldContent>
-          <div ref={inputWrapperRef} className={styles.inputWrapper}>
-            <Input
-              id="competency-search"
-              type="text"
-              placeholder={placeholder}
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setIsOpen(true);
-              }}
-              onFocus={() => setIsOpen(true)}
-              onKeyDown={handleKeyDown}
-              aria-invalid={!!error}
-              autoComplete="off"
-              className={styles.inputWithButton}
-            />
-            {searchQuery.trim() && filteredCompetencies.length === 0 && onAddNewCompetency && (
+          <div className={styles.inputRow}>
+            <div ref={inputWrapperRef} className={styles.inputWrapper}>
+              <Input
+                id="competency-search"
+                type="text"
+                placeholder={placeholder}
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsOpen(true);
+                }}
+                onFocus={() => setIsOpen(true)}
+                onKeyDown={handleKeyDown}
+                aria-invalid={!!error}
+                autoComplete="off"
+                className={styles.inputWithButton}
+              />
+              {searchQuery.trim() && filteredCompetencies.length === 0 && onAddNewCompetency && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={styles.addButton}
+                  onClick={handleAddNewCompetency}
+                  title="Добавить новую компетенцию"
+                >
+                  <Plus size={14} />
+                </Button>
+              )}
+            </div>
+            {onManageClick && (
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className={styles.addButton}
-                onClick={handleAddNewCompetency}
-                title="Добавить новую компетенцию"
+                className={styles.manageButton}
+                aria-label="Управление компетенциями"
+                title="Управление компетенциями"
+                onClick={onManageClick}
               >
-                <Plus size={14} />
+                <Settings size={18} />
               </Button>
             )}
           </div>
