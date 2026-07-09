@@ -39,10 +39,18 @@ interface VacancyFormModalProps {
   onSubmit: (data: VacancyFormValues) => void;
   competencies: Competency[];
   onAddNewCompetency?: (name: string) => string | undefined | Promise<string | undefined>;
+  defaultApprover?: { id: string; fullName: string };
 }
 
-export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNewCompetency }: VacancyFormModalProps) {
+export function VacancyFormModal({
+  initialData,
+  onSubmit,
+  competencies,
+  onAddNewCompetency,
+  defaultApprover,
+}: VacancyFormModalProps) {
   const { closeModal, openModal } = useModal();
+  const isApproverCreate = !initialData && !!defaultApprover;
   const [selectedApprover, setSelectedApprover] = useState<{ id: string; fullName: string } | null>(null);
 
   const {
@@ -82,10 +90,13 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
             fullName: "Ошибка загрузки имени"
           });
         });
+    } else if (defaultApprover) {
+      setValue("approverId", defaultApprover.id);
+      setSelectedApprover(defaultApprover);
     } else {
       setSelectedApprover(null);
     }
-  }, [initialData?.approverId]);
+  }, [initialData?.approverId, defaultApprover, setValue]);
 
   const handleAddCompetency = (id: string) => {
     setValue("competencyIds", [...selectedCompetencyIds, id]);
@@ -180,14 +191,16 @@ export function VacancyFormModal({ initialData, onSubmit, competencies, onAddNew
             {selectedApprover ? (
               <div className={styles.approverCard}>
                 <span className={styles.approverName}>{selectedApprover.fullName}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveApprover}
-                >
-                  <X size={16} />
-                </Button>
+                {!isApproverCreate && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveApprover}
+                  >
+                    <X size={16} />
+                  </Button>
+                )}
               </div>
             ) : (
               <Button

@@ -1,6 +1,7 @@
 using TalentHunt.Application.DTO;
 using TalentHunt.Application.Entities;
 using TalentHunt.Application.Interfaces;
+using TalentHunt.Application.Utils;
 
 namespace TalentHunt.Application.Services;
 
@@ -24,7 +25,7 @@ public class AuditLogService(IAuditLogRepository repository) : IAuditLogService
             Id = Guid.NewGuid(),
             Timestamp = DateTime.UtcNow,
             User = request.User,
-            IpAddress = request.IpAddress,
+            IpAddress = IpAddressNormalizer.Normalize(request.IpAddress),
             Action = request.Action,
         };
         await repository.AddAsync(log);
@@ -37,7 +38,7 @@ public class AuditLogService(IAuditLogRepository repository) : IAuditLogService
         log.Id,
         log.Timestamp,
         log.User,
-        log.IpAddress,
+        IpAddressNormalizer.Normalize(log.IpAddress),
         log.Action
     );
 }

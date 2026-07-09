@@ -15,15 +15,15 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
     : BaseController(auditLogService)
 {
     [HttpGet]
-    [RequirePermission(PermissionType.CanManageCompetencies)]
+    [RequireAnyPermission(PermissionType.CanManageCompetencies, PermissionType.CanManageVacancies)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var competencies = await competencyService.GetAllAsync(User.IsPrivilegedUser(), cancellationToken);
+        var competencies = await competencyService.GetAllAsync(User.CanIncludeDeletedRecords(), cancellationToken);
         return Ok(competencies);
     }
 
     [HttpGet("search")]
-    [RequirePermission(PermissionType.CanManageCompetencies)]
+    [RequireAnyPermission(PermissionType.CanManageCompetencies, PermissionType.CanManageVacancies)]
     public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
     {
         var results = await competencyService.SearchAsync(query, cancellationToken);
@@ -57,7 +57,7 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
     {
         try
         {
-            var competency = await competencyService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
+            var competency = await competencyService.UpdateAsync(id, request, User.CanIncludeDeletedRecords(), cancellationToken);
             await LogAsync($"Обновлена компетенция \"{competency.Name}\"");
             return Ok(competency);
         }
@@ -77,7 +77,7 @@ public class CompetenciesController(ICompetencyService competencyService, IAudit
     {
         try
         {
-            await competencyService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
+            await competencyService.DeleteAsync(id, User.CanIncludeDeletedRecords(), cancellationToken);
             await LogAsync($"Удалена компетенция с ID {id}");
             return NoContent();
         }

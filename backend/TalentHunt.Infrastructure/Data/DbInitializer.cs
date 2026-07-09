@@ -20,6 +20,7 @@ public static class DbInitializer
 
         var passwordHasher = provider.GetRequiredService<IPasswordHasher>();
         await SeedSuperAdminAsync(db, passwordHasher);
+        await SyncMissingPermissionsAsync(db);
     }
 
     private static async Task SeedPermissionsAsync(AppDbContext context)
@@ -62,6 +63,65 @@ public static class DbInitializer
         };
 
         context.Users.Add(superAdmin);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SyncMissingPermissionsAsync(AppDbContext context)
+    {
+        var existingNames = await context.Permissions
+            .Select(p => p.Name)
+            .ToListAsync();
+
+        var missingNames = PermissionType.All
+            .Except(existingNames)
+            .ToList();
+
+        if (missingNames.Count > 0)
+        {
+            await context.Permissions.AddRangeAsync(missingNames.Select(name => new Permission
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                DisplayName = PermissionType.DisplayNames[name]
+            }));
+            await context.SaveChangesAsync();
+        }
+
+        var adminUserIds = await context.Users
+            .Where(u => u.Role == Role.Admin || u.Role == Role.SuperAdmin)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        if (adminUserIds.Count == 0)
+            return;
+
+        var allPermissions = await context.Permissions.ToListAsync();
+
+        var existingAssignments = await context.UserPermissions
+            .Where(up => adminUserIds.Contains(up.UserId))
+            .Select(up => new { up.UserId, up.PermissionId })
+            .ToListAsync();
+
+        var toAdd = new List<UserPermission>();
+        foreach (var userId in adminUserIds)
+        {
+            foreach (var permission in allPermissions)
+            {
+                if (existingAssignments.Any(a => a.UserId == userId && a.PermissionId == permission.Id))
+                    continue;
+
+                toAdd.Add(new UserPermission
+                {
+                    UserId = userId,
+                    PermissionId = permission.Id
+                });
+            }
+        }
+
+        if (toAdd.Count == 0)
+            return;
+
+        await context.UserPermissions.AddRangeAsync(toAdd);
         await context.SaveChangesAsync();
     }
 }

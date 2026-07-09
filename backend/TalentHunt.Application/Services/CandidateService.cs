@@ -66,7 +66,7 @@ public class CandidateService(ICandidateRepository candidateRepository) : ICandi
         if (request.IsDeleted.HasValue)
         {
             if (!includeDeleted)
-                throw new InvalidOperationException("Недостаточно прав для изменения статуса архивации.");
+                throw new InvalidOperationException("Недостаточно прав для восстановления кандидата.");
 
             candidate.IsDeleted = request.IsDeleted.Value;
         }

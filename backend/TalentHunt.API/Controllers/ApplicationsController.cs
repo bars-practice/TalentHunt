@@ -22,10 +22,10 @@ public class ApplicationsController(
     [RequirePermission(PermissionType.CanViewApplications)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+        var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), User.GetUserId());
         var applications = await applicationService.GetAllAsync(
             approverFilter,
-            User.IsPrivilegedUser(),
+            User.CanIncludeDeletedRecords(),
             cancellationToken);
 
         return Ok(applications);
@@ -37,11 +37,11 @@ public class ApplicationsController(
     {
         try
         {
-            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), User.GetUserId());
             var application = await applicationService.GetByIdAsync(
                 id,
                 approverFilter,
-                User.IsPrivilegedUser(),
+                User.CanIncludeDeletedRecords(),
                 cancellationToken);
 
             return Ok(application);
@@ -80,7 +80,7 @@ public class ApplicationsController(
     {
         try
         {
-            var application = await applicationService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
+            var application = await applicationService.UpdateAsync(id, request, User.CanIncludeDeletedRecords(), cancellationToken);
             await LogAsync($"Обновлён отклик {id}");
             return Ok(application);
         }
@@ -107,7 +107,7 @@ public class ApplicationsController(
 
         try
         {
-            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), userId);
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), userId);
             _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
 
             var application = await applicationService.DecideAsync(id, request, userId.Value, cancellationToken);
@@ -130,7 +130,7 @@ public class ApplicationsController(
     {
         try
         {
-            await applicationService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
+            await applicationService.DeleteAsync(id, User.CanIncludeDeletedRecords(), cancellationToken);
             await LogAsync($"Удалён отклик с ID {id}");
             return NoContent();
         }
@@ -146,7 +146,7 @@ public class ApplicationsController(
     {
         try
         {
-            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), User.GetUserId());
             _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
 
             var pdf = await pdfService.GenerateInvitationAsync(id, cancellationToken);
@@ -168,7 +168,7 @@ public class ApplicationsController(
     {
         try
         {
-            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), User.GetUserId());
             _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
 
             var pdf = await pdfService.GenerateRejectionAsync(id, cancellationToken);
@@ -190,7 +190,7 @@ public class ApplicationsController(
     {
         try
         {
-            var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+            var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), User.GetUserId());
             _ = await applicationService.GetByIdAsync(id, approverFilter, cancellationToken: cancellationToken);
 
             var pdf = await pdfService.GenerateInterviewProtocolAsync(id, cancellationToken);

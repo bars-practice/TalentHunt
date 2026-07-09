@@ -21,7 +21,7 @@ public class VacanciesController(
     [RequirePermission(PermissionType.CanViewVacancies)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var approverFilter = dataScopeService.GetApproverFilter(User.GetRole(), User.GetUserId());
+        var approverFilter = dataScopeService.GetApproverFilter(User.GetPermissions(), User.GetUserId());
         var vacancies = await vacancyService.GetAllAsync(
             approverFilter,
             includeDeleted: true,
@@ -49,21 +49,36 @@ public class VacanciesController(
     }
 
     [HttpPut("{id:guid}")]
-    [RequirePermission(PermissionType.CanManageVacancies)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateVacancyRequest request,
         CancellationToken cancellationToken)
     {
+        var canManage = User.HasPermission(PermissionType.CanManageVacancies);
+        var canRestore = User.HasPermission(PermissionType.CanRestoreVacancies);
+
+        if (!canManage && !canRestore)
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Недостаточно прав." });
+
+        if (!canManage && request.IsDeleted != false)
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Недостаточно прав для изменения вакансии." });
+
+        var includeDeleted = User.CanIncludeDeletedRecords() || canRestore;
+
         try
         {
-            var vacancy = await vacancyService.UpdateAsync(id, request, User.IsPrivilegedUser(), cancellationToken);
+            var vacancy = await vacancyService.UpdateAsync(
+                id, request, includeDeleted, canRestore, cancellationToken);
             await LogAsync($"Обновлена вакансия \"{vacancy.Title}\"");
             return Ok(vacancy);
         }
         catch (KeyNotFoundException)
         {
             return NotFound(new { message = "Вакансия не найдена." });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
@@ -77,7 +92,7 @@ public class VacanciesController(
     {
         try
         {
-            await vacancyService.DeleteAsync(id, User.IsPrivilegedUser(), cancellationToken);
+            await vacancyService.DeleteAsync(id, User.CanIncludeDeletedRecords(), cancellationToken);
             await LogAsync($"Удалена вакансия с ID {id}");
             return NoContent();
         }

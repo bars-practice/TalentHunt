@@ -6,28 +6,19 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { menuItems } from "./menu.config";
 import { getRoleLabel } from "@/utils/role";
 import { authService } from "@/api/auth";
-import { isAdministrativeRole } from "@/utils/permissions";
 
 interface SideMenuProps {
   onLogout: () => void;
 }
 
 export function SideMenu({ onLogout }: SideMenuProps) {
-  const { user, loading } = usePermissions();
+  const { user, loading, hasPermission } = usePermissions();
 
   if (loading || !user) {
     return null;
   }
 
-  const filteredMenuItems = menuItems.filter((item) => {
-    if (item.roles) {
-      return item.roles.includes(user.role);
-    }
-    if (item.permission) {
-      return isAdministrativeRole(user.role) || user.permissions.includes(item.permission);
-    }
-    return true;
-  });
+  const filteredMenuItems = menuItems.filter((item) => hasPermission(item.permission));
 
   return (
     <aside className={styles.sidebar}>

@@ -11,21 +11,21 @@
   margin: 0;
 }
 
-.vacanciesList {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.emptySearch {
+.empty {
   color: var(--muted-foreground);
   font-size: 15px;
   text-align: center;
   padding: 48px 16px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }

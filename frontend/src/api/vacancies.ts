@@ -23,6 +23,7 @@ export interface Vacancy {
   approverId: string
   competencies: Competency[]
   isDeleted: boolean
+  applicationsCount: number
 }
 
 export interface CreateVacancyRequest {

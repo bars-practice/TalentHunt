@@ -10,6 +10,7 @@ export interface Candidate {
   education: string
   experience: string
   placesOfWork: string[]
+  isDeleted?: boolean
 }
 
 export interface CreateCandidateRequest {
@@ -65,4 +66,10 @@ export const candidatesService = {
         ? `/Candidates/search?query=${encodeURIComponent(query)}&excludeVacancyId=${excludeVacancyId}`
         : `/Candidates/search?query=${encodeURIComponent(query)}`
     ),
+
+  block: (id: string) =>
+    api.delete(`/Candidates/${id}`),
+
+  restore: (id: string) =>
+    api.put<Candidate>(`/Candidates/${id}`, { isDeleted: false }),
 }

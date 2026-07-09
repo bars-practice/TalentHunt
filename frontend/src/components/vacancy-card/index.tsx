@@ -27,9 +27,10 @@ interface VacancyCardComponentProps {
   onEdit: () => void;
   onDelete: () => void;
   onRestore: () => void;
-  isAdmin?: boolean;
   canManageVacancies?: boolean;
+  canRestoreVacancies?: boolean;
   canManageApplications?: boolean;
+  onBlockCandidate?: (candidateId: string) => void;
 }
 
 const STATUS_CONFIG = {
@@ -44,9 +45,10 @@ export function VacancyCard({
   onEdit,
   onDelete,
   onRestore,
-  isAdmin,
   canManageVacancies = false,
+  canRestoreVacancies = false,
   canManageApplications = false,
+  onBlockCandidate,
 }: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
   const { openModal, closeModal } = useModal();
@@ -107,7 +109,8 @@ export function VacancyCard({
           </Button>
         )}
 
-        {(vacancy.status === "active" && canManageVacancies) || isAdmin ? (
+        {((vacancy.status === "active" && canManageVacancies)
+          || (vacancy.status === "inactive" && canRestoreVacancies)) && (
           <Menubar>
             <MenubarMenu>
               <MenubarTrigger className={styles.menuTrigger}>
@@ -116,22 +119,24 @@ export function VacancyCard({
               <MenubarContent align="end">
                 {vacancy.status === "active" ? (
                   <>
-                    {canManageVacancies && <MenubarItem onClick={onEdit}>Изменить вакансию</MenubarItem>}
-                    {canManageVacancies && (
-                      <MenubarItem variant="destructive" onClick={handleDeleteClick}>Удалить вакансию</MenubarItem>
-                    )}
+                    <MenubarItem onClick={onEdit}>Изменить вакансию</MenubarItem>
+                    <MenubarItem variant="destructive" onClick={handleDeleteClick}>Закрыть вакансию</MenubarItem>
                   </>
                 ) : (
-                  isAdmin && <MenubarItem onClick={onRestore}>Восстановить вакансию</MenubarItem>
+                  <MenubarItem onClick={onRestore}>Восстановить вакансию</MenubarItem>
                 )}
               </MenubarContent>
             </MenubarMenu>
           </Menubar>
-        ) : null}
+        )}
       </div>
 
       <AccordionContent className={styles.list}>
-        <VacancyStages responses={responses || []} canManageApplications={canManageApplications} />
+        <VacancyStages
+          responses={responses || []}
+          canManageApplications={canManageApplications}
+          onBlockCandidate={onBlockCandidate}
+        />
       </AccordionContent>
     </AccordionItem>
   );

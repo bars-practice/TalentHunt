@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentHunt.API.Authorization;
 using TalentHunt.API.Extensions;
 using TalentHunt.Application.DTO;
 using TalentHunt.Application.Enums;
@@ -14,7 +15,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     : BaseController(auditLogService)
 {
     [HttpGet]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [RequirePermission(PermissionType.CanManageUsers)]
     public async Task<IActionResult> GetAll()
     {
         var users = await userService.GetAllAsync();
@@ -22,7 +23,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpGet("search")]
-    [Authorize(Roles = "HR,Admin,SuperAdmin")]
+    [RequireAnyPermission(PermissionType.CanManageUsers, PermissionType.CanManageVacancies)]
     public async Task<IActionResult> SearchByRole(
         [FromQuery] string role,
         [FromQuery] string? query,
@@ -33,7 +34,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "HR,Admin,SuperAdmin")]
+    [RequireAnyPermission(PermissionType.CanManageUsers, PermissionType.CanManageVacancies)]
     public async Task<IActionResult> GetById(Guid id)
     {
         try
@@ -48,7 +49,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [RequirePermission(PermissionType.CanManageUsers)]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
     {
         var caller = GetCallerContext();
@@ -68,7 +69,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [RequirePermission(PermissionType.CanManageUsers)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request)
     {
         var caller = GetCallerContext();
@@ -92,7 +93,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [RequirePermission(PermissionType.CanManageUsers)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var caller = GetCallerContext();
@@ -116,7 +117,7 @@ public class UsersController(IUserService userService, IAuditLogService auditLog
     }
 
     [HttpGet("permissions")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [RequirePermission(PermissionType.CanManageUsers)]
     public IActionResult GetPermissions()
     {
         var permissions = PermissionType.All

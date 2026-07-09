@@ -10,8 +10,11 @@ export const Permission = {
   CanMakeDecision: "CanMakeDecision",
   CanViewVacancies: "CanViewVacancies",
   CanManageVacancies: "CanManageVacancies",
+  CanRestoreVacancies: "CanRestoreVacancies",
   CanManageCompetencies: "CanManageCompetencies",
   CanExportDocuments: "CanExportDocuments",
+  CanManageUsers: "CanManageUsers",
+  CanViewAuditLog: "CanViewAuditLog",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -26,8 +29,11 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.CanMakeDecision]: "Вынесение решения",
   [Permission.CanViewVacancies]: "Просмотр вакансий",
   [Permission.CanManageVacancies]: "Управление вакансиями",
+  [Permission.CanRestoreVacancies]: "Восстановление вакансий",
   [Permission.CanManageCompetencies]: "Управление компетенциями",
   [Permission.CanExportDocuments]: "Экспорт документов",
+  [Permission.CanManageUsers]: "Управление пользователями",
+  [Permission.CanViewAuditLog]: "Просмотр журнала аудита",
 };
 
 export const PERMISSION_GROUPS: { label: string; permissions: Permission[] }[] = [
@@ -49,7 +55,11 @@ export const PERMISSION_GROUPS: { label: string; permissions: Permission[] }[] =
   },
   {
     label: "Вакансии",
-    permissions: [Permission.CanViewVacancies, Permission.CanManageVacancies],
+    permissions: [
+      Permission.CanViewVacancies,
+      Permission.CanManageVacancies,
+      Permission.CanRestoreVacancies,
+    ],
   },
   {
     label: "Компетенции",
@@ -59,6 +69,10 @@ export const PERMISSION_GROUPS: { label: string; permissions: Permission[] }[] =
     label: "Документы",
     permissions: [Permission.CanExportDocuments],
   },
+  {
+    label: "Администрирование",
+    permissions: [Permission.CanManageUsers, Permission.CanViewAuditLog],
+  },
 ];
 
 export const isAdministrativeRole = (role: Role): boolean =>
@@ -66,7 +80,6 @@ export const isAdministrativeRole = (role: Role): boolean =>
 
 export const hasPermission = (user: User | null | undefined, permission: Permission): boolean => {
   if (!user) return false;
-  if (isAdministrativeRole(user.role)) return true;
   return user.permissions.includes(permission);
 };
 
@@ -129,3 +142,8 @@ export const canManageUser = (
 
   return { canEdit: true, canDelete: true, canRestore: true };
 };
+
+export const isScopedApprover = (user: User | null | undefined): boolean =>
+  !!user
+  && hasPermission(user, Permission.CanMakeDecision)
+  && !hasPermission(user, Permission.CanManageInterviews);

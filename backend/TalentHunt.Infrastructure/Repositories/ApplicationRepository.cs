@@ -13,9 +13,36 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
         context.Applications
             .IncludeDeletedIf(includeDeleted)
             .Include(a => a.Candidate)
-            .Include(a => a.Vacancy)
             .Include(a => a.DecidedBy)
-            .Include(a => a.Interview);
+            .Include(a => a.Interview)
+            .Include(a => a.Approver);
+
+    private async Task AttachVacanciesAsync(
+        IReadOnlyList<ApplicationEntity> applications,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancyIds = applications
+            .Select(a => a.VacancyId)
+            .Distinct()
+            .ToList();
+
+        if (vacancyIds.Count == 0)
+            return;
+
+        var vacancies = await context.Vacancies
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(v => vacancyIds.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+        foreach (var application in applications)
+        {
+            if (!vacancies.TryGetValue(application.VacancyId, out var vacancy))
+                continue;
+
+            application.Vacancy = context.Vacancies.Find(application.VacancyId) ?? vacancy;
+        }
+    }
 
     public async Task<IReadOnlyList<ApplicationEntity>> GetAllAsync(
         Guid? approverUserId = null,
@@ -27,9 +54,16 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
         if (approverUserId.HasValue)
             query = query.Where(a => a.ApproverId == approverUserId.Value);
 
-        return await query
+        query = query.Where(a => context.Candidates
+            .IgnoreQueryFilters()
+            .Any(c => c.Id == a.CandidateId && !c.IsDeleted));
+
+        var applications = await query
             .OrderByDescending(a => a.Id)
             .ToListAsync(cancellationToken);
+
+        await AttachVacanciesAsync(applications, cancellationToken);
+        return applications;
     }
 
     public async Task<ApplicationEntity?> GetByIdAsync(
@@ -43,7 +77,12 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
         if (approverUserId.HasValue)
             query = query.Where(a => a.ApproverId == approverUserId.Value);
 
-        return await query.FirstOrDefaultAsync(cancellationToken);
+        var application = await query.FirstOrDefaultAsync(cancellationToken);
+        if (application is null)
+            return null;
+
+        await AttachVacanciesAsync([application], cancellationToken);
+        return application;
     }
 
     public Task<bool> PairExistsAsync(
@@ -80,6 +119,24 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
     public Task SaveAsync(CancellationToken cancellationToken = default) =>
         context.SaveChangesAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, int>> GetActiveCountsByVacancyIdsAsync(
+        IReadOnlyCollection<Guid> vacancyIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (vacancyIds.Count == 0)
+            return new Dictionary<Guid, int>();
+
+        return await context.Applications
+            .AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId) && !a.IsDeleted)
+            .Where(a => context.Candidates
+                .IgnoreQueryFilters()
+                .Any(c => c.Id == a.CandidateId && !c.IsDeleted))
+            .GroupBy(a => a.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<ApplicationEntity>> SearchForGlobalByCandidateAsync(
         string query,
         Guid? approverId,
@@ -93,7 +150,8 @@ public class ApplicationRepository(AppDbContext context) : IApplicationRepositor
             .AsNoTracking()
             .Include(a => a.Candidate)
             .Include(a => a.Interview)
-            .Where(a => EF.Functions.ILike(a.Candidate.FullName, pattern));
+            .Where(a => EF.Functions.ILike(a.Candidate.FullName, pattern))
+            .Where(a => !a.Candidate.IsDeleted);
 
         if (approverId.HasValue)
         {

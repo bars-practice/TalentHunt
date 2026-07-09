@@ -3,9 +3,10 @@ import { VacancyFormModal } from "@/components/vacancy-form-modal";
 import { vacanciesService, type Vacancy, VacancyLevel } from "@/api/vacancies";
 import { competenciesService, type Competency } from "@/api/competencies";
 import { applicationsService } from "@/api/applications";
+import { candidatesService } from "@/api/candidates";
 import { GlobalSearch } from "@/components/global-search";
 import { searchService, type SearchVacancyItem, type SearchFilters, DEFAULT_SEARCH_FILTERS } from "@/api/search";
-import { Permission } from "@/utils/permissions";
+import { Permission, isScopedApprover } from "@/utils/permissions";
 import { usePermissions } from "@/hooks/usePermissions";
 import styles from "./styles.module.css";
 import Button from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 interface MappedResponse {
   id: string;
+  candidateId: string;
   name: string;
   stage: string;
   date: Date | undefined;
@@ -55,8 +57,9 @@ const mapStatusToNumber = (status: string | number): number => {
 
 export function Vacancies() {
   const { openModal } = useModal();
-  const { hasPermission, isAdmin } = usePermissions();
+  const { hasPermission, user } = usePermissions();
   const canManageVacancies = hasPermission(Permission.CanManageVacancies);
+  const canRestoreVacancies = hasPermission(Permission.CanRestoreVacancies);
   const canManageApplications = hasPermission(Permission.CanManageApplications);
   const [allVacancies, setAllVacancies] = useState<Vacancy[]>([]);
   const vacanciesRef = useRef<Vacancy[]>([]);
@@ -112,6 +115,7 @@ export function Vacancies() {
 
       const mapped: MappedResponse[] = vacancyApplications.map(app => ({
         id: app.id,
+        candidateId: app.candidateId,
         name: app.candidateFullName,
         stage: mapStatusToStage(app.status),
         date: app.interviewScheduledAt ? new Date(app.interviewScheduledAt) : undefined,
@@ -158,6 +162,7 @@ export function Vacancies() {
         approverId: "",
         competencies: [],
         isDeleted: item.isDeleted,
+        applicationsCount: item.applications.length,
       }));
     } else {
       vacancies = [...allVacancies];
@@ -185,6 +190,7 @@ export function Vacancies() {
       if (!item) return [];
       return item.applications.map(a => ({
         id: a.applicationId,
+        candidateId: a.candidateId,
         name: a.candidateFullName,
         stage: mapStatusToStage(a.status),
         date: a.interviewScheduledAt ? new Date(a.interviewScheduledAt) : undefined,
@@ -200,6 +206,11 @@ export function Vacancies() {
     openModal(
       <VacancyFormModal
         competencies={competencies}
+        defaultApprover={
+          user && isScopedApprover(user)
+            ? { id: user.id, fullName: user.fullName }
+            : undefined
+        }
         onAddNewCompetency={async (name) => {
           const newCompetency = await competenciesService.create({ name, description: "" });
           setCompetencies([...competencies, newCompetency]);
@@ -280,6 +291,30 @@ export function Vacancies() {
     }
   };
 
+  const handleBlockCandidate = async (candidateId: string) => {
+    try {
+      await candidatesService.block(candidateId);
+      setResponsesCache(prev => {
+        const next = { ...prev };
+        for (const vacancyId of Object.keys(next)) {
+          next[vacancyId] = next[vacancyId].filter(r => r.candidateId !== candidateId);
+        }
+        return next;
+      });
+      if (rawSearchResults !== null) {
+        setRawSearchResults(prev =>
+          prev?.map(item => ({
+            ...item,
+            applications: item.applications.filter(a => a.candidateId !== candidateId),
+          })) ?? null
+        );
+      }
+      await reloadVacancies();
+    } catch (err) {
+      console.error("Failed to block candidate:", err);
+    }
+  };
+
   const runSearch = useCallback(async (query: string, filters: SearchFilters) => {
     const hasQuery = query.trim().length > 0;
     const hasFilters =
@@ -340,6 +375,8 @@ export function Vacancies() {
         <div className={styles.vacanciesList}>Загрузка...</div>
       ) : error ? (
         <div className={styles.vacanciesList}>Ошибка: {error}</div>
+      ) : rawSearchResults !== null && sortedVacancies.length === 0 ? (
+        <div className={styles.emptySearch}>По вашему запросу ничего не найдено</div>
       ) : (
         <Accordion
           type="multiple"
@@ -350,6 +387,9 @@ export function Vacancies() {
           {sortedVacancies.map((vacancy) => {
             const levelLabel = vacancy.level === VacancyLevel.Junior ? "Junior" : vacancy.level === VacancyLevel.Middle ? "Middle" : "Senior";
             const responses = getResponsesForVacancy(vacancy.id);
+            const responsesCount = responses !== undefined
+              ? responses.length
+              : vacancy.applicationsCount;
             return (
               <VacancyCard
                 key={vacancy.id}
@@ -358,7 +398,7 @@ export function Vacancies() {
                   title: vacancy.title,
                   level: levelLabel,
                   businessUnit: vacancy.businessUnit,
-                  responsesCount: responses?.length ?? 0,
+                  responsesCount,
                   status: vacancy.isDeleted ? "inactive" : "active",
                   responses: [],
                 }}
@@ -368,9 +408,10 @@ export function Vacancies() {
                 onEdit={() => handleEdit(vacancy)}
                 onDelete={() => handleDelete(vacancy.id)}
                 onRestore={() => handleRestore(vacancy.id)}
-                isAdmin={isAdmin}
                 canManageVacancies={canManageVacancies}
+                canRestoreVacancies={canRestoreVacancies}
                 canManageApplications={canManageApplications}
+                onBlockCandidate={canManageApplications ? handleBlockCandidate : undefined}
               />
             );
           })}

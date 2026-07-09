@@ -7,7 +7,8 @@ namespace TalentHunt.Application.Services;
 
 public class GlobalSearchService(
     IVacancyRepository vacancyRepository,
-    IApplicationRepository applicationRepository) : IGlobalSearchService
+    IApplicationRepository applicationRepository,
+    IDataScopeService dataScopeService) : IGlobalSearchService
 {
     private const int MinQueryLength = 1;
     private const int DefaultPageSize = 10;
@@ -17,7 +18,7 @@ public class GlobalSearchService(
         string? query,
         int page,
         int pageSize,
-        Role callerRole,
+        IReadOnlyList<string> callerPermissions,
         Guid? callerUserId,
         IReadOnlyList<int>? levels = null,
         IReadOnlyList<int>? candidateStatuses = null,
@@ -37,7 +38,7 @@ public class GlobalSearchService(
         if (!hasQuery && !hasFilters)
             return Empty(page, pageSize);
 
-        Guid? approverId = callerRole == Role.Approver ? callerUserId : null;
+        Guid? approverId = dataScopeService.GetApproverFilter(callerPermissions, callerUserId);
 
         var titleMatchIds = await vacancyRepository.SearchIdsByTextAsync(
             cleanQuery,

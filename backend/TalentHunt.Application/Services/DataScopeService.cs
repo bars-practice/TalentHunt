@@ -5,9 +5,13 @@ namespace TalentHunt.Application.Services;
 
 public class DataScopeService : IDataScopeService
 {
-    public Guid? GetApproverFilter(Role? role, Guid? userId) =>
-        role == Role.Approver ? userId : null;
+    public Guid? GetApproverFilter(IReadOnlyList<string> permissions, Guid? userId) =>
+        IsScopedApprover(permissions) ? userId : null;
 
-    public bool BypassesDataScope(Role? role) =>
-        role is Role.Admin or Role.SuperAdmin;
+    public bool IsScopedApprover(IReadOnlyList<string> permissions) =>
+        permissions.Contains(PermissionType.CanMakeDecision)
+        && !permissions.Contains(PermissionType.CanManageInterviews);
+
+    public bool CanIncludeDeletedRecords(IReadOnlyList<string> permissions) =>
+        permissions.Contains(PermissionType.CanManageUsers);
 }
