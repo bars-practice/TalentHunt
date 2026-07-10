@@ -34,6 +34,8 @@ export const applicationsService = {
     api.post<Application>('/Applications', data),
   decide: (id: string, status: number) =>
     api.put<Application>(`/Applications/${id}/decision`, { status }),
+  revokeDecision: (id: string) =>
+    api.put<Application>(`/Applications/${id}/revoke-decision`),
 
   downloadInvitation: (id: string) =>
     api.download(`/Applications/${id}/invitation`, `invitation-${id}.pdf`),

@@ -32,6 +32,10 @@ public interface IApplicationService
         Guid decidedByUserId,
         CancellationToken cancellationToken = default);
 
+    Task<ApplicationResponse> RevokeDecisionAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
     Task DeleteAsync(
         Guid id,
         bool includeDeleted = false,

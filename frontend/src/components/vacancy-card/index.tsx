@@ -32,6 +32,8 @@ interface VacancyCardComponentProps {
   canManageApplications?: boolean;
   canBlockCandidates?: boolean;
   onBlockCandidate?: (candidateId: string) => void;
+  canRevokeDecision?: boolean;
+  onRevokeDecision?: (applicationId: string) => void;
 }
 
 const STATUS_CONFIG = {
@@ -51,6 +53,8 @@ export function VacancyCard({
   canManageApplications = false,
   canBlockCandidates = false,
   onBlockCandidate,
+  canRevokeDecision = false,
+  onRevokeDecision,
 }: VacancyCardComponentProps) {
   const badge = STATUS_CONFIG[vacancy.status];
   const { openModal, closeModal } = useModal();
@@ -138,6 +142,8 @@ export function VacancyCard({
           responses={responses || []}
           canBlockCandidates={canBlockCandidates}
           onBlockCandidate={onBlockCandidate}
+          canRevokeDecision={canRevokeDecision}
+          onRevokeDecision={onRevokeDecision}
         />
       </AccordionContent>
     </AccordionItem>
