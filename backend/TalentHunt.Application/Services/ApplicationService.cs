@@ -119,6 +119,30 @@ public class ApplicationService(
         return ToResponse(updated!);
     }
 
+    public async Task<ApplicationResponse> RevokeDecisionAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var application = await applicationRepository.GetByIdAsync(id, cancellationToken: cancellationToken)
+            ?? throw new KeyNotFoundException("Отклик не найден.");
+
+        if (application.Vacancy?.IsDeleted == true)
+            throw new InvalidOperationException("Вакансия находится в архиве. Отмена решения недоступна.");
+
+        if (application.Status is not (ApplicationStatus.Approved or ApplicationStatus.Rejected))
+            throw new InvalidOperationException("Отменить можно только решение по принятому или отклонённому отклику.");
+
+        application.Status = ApplicationStatus.PendingDecision;
+        application.DecidedByUserId = null;
+        application.DecidedAt = null;
+
+        await applicationRepository.UpdateAsync(application);
+        await applicationRepository.SaveAsync(cancellationToken);
+
+        var updated = await applicationRepository.GetByIdAsync(id, cancellationToken: cancellationToken);
+        return ToResponse(updated!);
+    }
+
     public async Task DeleteAsync(
         Guid id,
         bool includeDeleted = false,

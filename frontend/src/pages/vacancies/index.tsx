@@ -61,6 +61,7 @@ export function Vacancies() {
   const canManageVacancies = hasPermission(Permission.CanManageVacancies);
   const canRestoreVacancies = hasPermission(Permission.CanRestoreVacancies);
   const canManageApplications = hasPermission(Permission.CanManageApplications);
+  const canRevokeDecision = hasPermission(Permission.CanManageUsers);
   const canBlock = canBlockCandidates(user);
   const [allVacancies, setAllVacancies] = useState<Vacancy[]>([]);
   const vacanciesRef = useRef<Vacancy[]>([]);
@@ -352,6 +353,19 @@ export function Vacancies() {
     await runSearch(currentQueryRef.current, filters);
   }, [runSearch]);
 
+  const handleRevokeDecision = async (vacancyId: string, applicationId: string) => {
+    try {
+      await applicationsService.revokeDecision(applicationId);
+      if (rawSearchResults !== null) {
+        await runSearch(currentQueryRef.current, activeFilters);
+      } else {
+        await loadResponsesForVacancy(vacancyId);
+      }
+    } catch (err) {
+      console.error("Failed to revoke decision:", err);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -418,6 +432,12 @@ export function Vacancies() {
                 canManageApplications={canManageApplications}
                 canBlockCandidates={canBlock}
                 onBlockCandidate={canBlock ? handleBlockCandidate : undefined}
+                canRevokeDecision={canRevokeDecision}
+                onRevokeDecision={
+                  canRevokeDecision
+                    ? (applicationId) => handleRevokeDecision(vacancy.id, applicationId)
+                    : undefined
+                }
               />
             );
           })}

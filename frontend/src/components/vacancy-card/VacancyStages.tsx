@@ -33,12 +33,24 @@ function ResponseItem({
   response,
   canBlockCandidates,
   onBlockCandidate,
+  canRevokeDecision,
+  onRevokeDecision,
 }: {
   response: CandidateResponse;
   canBlockCandidates: boolean;
   onBlockCandidate?: (candidateId: string) => void;
+  canRevokeDecision: boolean;
+  onRevokeDecision?: (applicationId: string) => void;
 }) {
   const { openModal, closeModal } = useModal();
+
+  const canRevoke =
+    canRevokeDecision &&
+    onRevokeDecision &&
+    (response.stage === "offer" || response.stage === "rejected");
+
+  const showMenu =
+    (canBlockCandidates && onBlockCandidate) || canRevoke;
 
   const handleBlockClick = () => {
     openModal(
@@ -64,6 +76,29 @@ function ResponseItem({
     );
   };
 
+  const handleRevokeClick = () => {
+    openModal(
+      <div className={styles.modalContent}>
+        <p className={styles.modalDescription}>
+          Отклик вернётся на этап «Ожидают решения». Решала сможет вынести решение заново.
+        </p>
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={closeModal}>Отмена</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              onRevokeDecision?.(response.id);
+              closeModal();
+            }}
+          >
+            Вернуть на решение
+          </Button>
+        </div>
+      </div>,
+      { title: "Отменить решение?", width: "440px" }
+    );
+  };
+
   return (
     <div className={styles.item}>
       <div className={styles.itemInfo}>
@@ -77,16 +112,23 @@ function ResponseItem({
           </div>
         )}
       </div>
-      {canBlockCandidates && onBlockCandidate && (
+      {showMenu && (
         <Menubar className={styles.itemMenu}>
           <MenubarMenu>
             <MenubarTrigger className={styles.itemMenuTrigger}>
               <MoreHorizontal size={16} />
             </MenubarTrigger>
             <MenubarContent align="end">
-              <MenubarItem variant="destructive" onClick={handleBlockClick}>
-                Заблокировать кандидата
-              </MenubarItem>
+              {canRevoke && (
+                <MenubarItem onClick={handleRevokeClick}>
+                  Вернуть на решение
+                </MenubarItem>
+              )}
+              {canBlockCandidates && onBlockCandidate && (
+                <MenubarItem variant="destructive" onClick={handleBlockClick}>
+                  Заблокировать кандидата
+                </MenubarItem>
+              )}
             </MenubarContent>
           </MenubarMenu>
         </Menubar>
@@ -107,10 +149,14 @@ export function VacancyStages({
   responses,
   canBlockCandidates = false,
   onBlockCandidate,
+  canRevokeDecision = false,
+  onRevokeDecision,
 }: {
   responses: CandidateResponse[];
   canBlockCandidates?: boolean;
   onBlockCandidate?: (candidateId: string) => void;
+  canRevokeDecision?: boolean;
+  onRevokeDecision?: (applicationId: string) => void;
 }) {
   return (
     <Accordion type="multiple" className={styles.stagesAccordion}>
@@ -132,6 +178,8 @@ export function VacancyStages({
                   response={response}
                   canBlockCandidates={canBlockCandidates}
                   onBlockCandidate={onBlockCandidate}
+                  canRevokeDecision={canRevokeDecision}
+                  onRevokeDecision={onRevokeDecision}
                 />
               ))}
               {stageResponses.length === 0 && (

@@ -124,6 +124,26 @@ public class ApplicationsController(
         }
     }
 
+    [HttpPut("{id:guid}/revoke-decision")]
+    [RequirePermission(PermissionType.CanManageUsers)]
+    public async Task<IActionResult> RevokeDecision(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var application = await applicationService.RevokeDecisionAsync(id, cancellationToken);
+            await LogAsync($"Отменено решение по отклику {id}, статус: {application.Status}");
+            return Ok(application);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Отклик не найден." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     [RequirePermission(PermissionType.CanManageApplications)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
