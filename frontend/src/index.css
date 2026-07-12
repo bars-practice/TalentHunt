@@ -270,3 +270,7 @@ a:visited {
   width: 7px !important;
   right: 2px !important;
 }
+
+a:not(:visited) {
+  color: currentColor !important;
+}
